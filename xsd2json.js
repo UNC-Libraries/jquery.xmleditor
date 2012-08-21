@@ -46,6 +46,7 @@ function Xsd2Json(xsd, topLevelName, options) {
 			"xmlns": "http://www.w3.org/2000/xmlns/",
 			"html": "http://www.w3.org/1999/xhtml/"
 	};
+	this.namespacePrefixes = {};
 	this.defaultNS = null;
 	this.targetNS = null;
 	this.rootElement = null;
@@ -97,6 +98,9 @@ Xsd2Json.prototype.importAjax = function(url, originalAttempt) {
 					}
 				}
 			});
+			$.each(thiz.namespaces, function(prefix, uri){
+				thiz.namespacePrefixes[uri] = prefix;
+			});
 			thiz.targetNS = thiz.xsd.attr("targetNamespace");
 			thiz.xsd.children("xs|import").each(function(){
 				var importXSD = new Xsd2Json($(this).attr("schemaLocation"), null, thiz.options);
@@ -108,6 +112,8 @@ Xsd2Json.prototype.importAjax = function(url, originalAttempt) {
 				var selected = thiz.xsd.children("xs|element[name='" + thiz.topLevelName + "']").first();
 				try {
 					thiz.rootElement = thiz.buildElement(selected);
+					// Add namespace prefixes to match the scoping of this document
+					thiz.adjustPrefixes(thiz.rootElement);
 				} catch (e) {
 					console.log(e);
 				}
@@ -120,7 +126,28 @@ Xsd2Json.prototype.importAjax = function(url, originalAttempt) {
 		}
 	});
 };
+
+Xsd2Json.prototype.adjustPrefixes = function(object) {
+	if (object.name.indexOf(":") == -1){
+		// Replace object name's prefix with the relative
+		var prefix = this.namespacePrefixes[object.namespace];
+		if (prefix != null && prefix != "") {
+			object.name = prefix + ":" + object.name;
+		}
+	}
 	
+	if (object.element) {
+		var thiz = this;
+		$.each(object.elements, function(){
+			thiz.adjustPrefixes(this);
+		});
+		$.each(object.attributes, function(){
+			thiz.adjustPrefixes(this);
+		});
+	}
+	
+};
+
 Xsd2Json.prototype.buildElement = function(node, parentObject) {
 	if ($(node).attr("ref") != null){
 		this.execute(node, 'buildElement', parentObject);
@@ -145,6 +172,7 @@ Xsd2Json.prototype.buildElement = function(node, parentObject) {
 		if (element.type == null)
 			this.execute($(node)[0], 'buildType', element);
 	}
+	
 	if (parentObject != null)
 		parentObject.elements.push(element);
 	
@@ -174,9 +202,10 @@ Xsd2Json.prototype.buildAttribute = function(node, object) {
 		}
 	}
 	
-	
-	if (object != null)
+	if (object != null) {
 		object.attributes.push(attributeObject);
+	}
+		
 	
 	return attributeObject;
 };

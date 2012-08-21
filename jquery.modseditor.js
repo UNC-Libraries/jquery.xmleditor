@@ -39,6 +39,7 @@
 	});
 	
 	var modsNS = "http://www.loc.gov/mods/v3";
+	var modsPrefix = "mods";
 
 	$.ModsEditor = function(target, schemaIn, options) {
 		defaults = {
@@ -198,6 +199,9 @@
 		
 		function setupEditor(xmlString) {
 			xmlState = new DocumentState(xmlString);
+			modsPrefix = xmlState.extractNamespacePrefix(modsNS);
+			if (modsPrefix != "")
+				modsPrefix += ":";
 			constructEditor();
 			refreshDisplay();
 			// Capture baseline undo state
@@ -303,7 +307,6 @@
 			var newElement = xmlElement.addElement(elementType);
 			
 			activeEditor.addElementEvent(xmlElement, newElement);
-			xmlState.documentChangedEvent();
 		}
 		
 		function addAttributeButtonCallback() {
@@ -449,7 +452,7 @@
 				success : function(response) {
 					var responseObject = $(response);
 					if (responseObject.length > 0 && responseObject[responseObject.length - 1].localName == "sword:error") {
-						xmlState.changeEvent();
+						xmlState.syncedChangeEvent();
 						$("#" + options.submissionStatusId).html("Failed to submit<br/>See errors at top").css("background-color", "#ffbbbb").animate({backgroundColor: "#ffffff"}, 1000);
 						addProblem("Failed to submit MODS document", responseObject.find("atom\\:summary").html());
 						return;
@@ -515,16 +518,6 @@
 						selected : (startingValue == this)
 					}).appendTo(input);
 				});
-			} else if (elementType.type == 'date' || (elementType.attribute && elementType.type == 'string')){
-				input = $('<input/>').attr({
-					'id' : inputID,
-					'type' : 'text',
-					'value' : startingValue
-				}).appendTo(appendTarget).one('focus', function() {
-					if ($(this).val() == " ") {
-						$(this).val("");
-					}
-				});
 			} else if (elementType.element && elementType.type == 'string'){
 				input = $('<textarea/>').attr({
 					'id' : inputID,
@@ -534,6 +527,17 @@
 						$(this).val("");
 					}
 				}).expandingTextarea();
+			} else if (elementType.type == 'ID' || elementType.type == 'date' || elementType.type == 'anyURI' 
+					|| elementType.attribute){
+				input = $('<input/>').attr({
+					'id' : inputID,
+					'type' : 'text',
+					'value' : startingValue
+				}).appendTo(appendTarget).one('focus', function() {
+					if ($(this).val() == " ") {
+						$(this).val("");
+					}
+				});
 			}
 			return input;
 		}
@@ -944,10 +948,9 @@
 			if (!this.allowChildren)
 				return null;
 			
-			// Create the new element in a dummy document with the mods namespace
-			// It will retain its namespace after attaching to the xml document regardless of mods ns prefix
-			var newElement = $($.parseXML("<wrap xmlns:mods='" + modsNS + "'><mods:" + elementType.name + "/></wrap>")).find("*|wrap > *|*").clone();
-			newElement.text(" ");
+			// Create the new element in the mods namespace with the matching prefix
+			var newElement = xmlState.xml[0].createElementNS(modsNS, modsPrefix + elementType.name);
+			$(newElement).text(" ");
 			this.xmlNode.append(newElement);
 			
 			var childElement = new XMLElement(newElement, elementType);
@@ -1117,7 +1120,7 @@
 				attributeValue = this.attributeType.defaultValue;
 			}
 			
-			this.attributeInput = createElementInput(this.attributeType, this.attributeID, attributeValue, this.attributeContainer);
+			this.attributeInput = createElementInput(this.attributeType, this.attributeID.replace(":", "-"), attributeValue, this.attributeContainer);
 			
 			this.attributeInput.data('xmlAttribute', this).change(function(){
 				thiz.syncValue();
@@ -1182,6 +1185,11 @@
 			this.updateStateMessage();
 		};
 		
+		DocumentState.prototype.syncedChangeEvent = function() {
+			this.changeState = 2;
+			this.updateStateMessage();
+		};
+		
 		DocumentState.prototype.unsyncedChangeEvent = function() {
 			this.changeState = 3;
 			this.updateStateMessage();
@@ -1193,6 +1201,24 @@
 			} else {
 				$("#" + options.submissionStatusId).html("All changes saved");
 			}
+		};
+		
+		DocumentState.prototype.extractNamespacePrefix = function(nsURI) {
+			var prefix = null;
+			var attributes = $("mods|mods", this.xml)[0].attributes;
+			$.each(attributes, function(){
+				key = this.name;
+				value = this.value;
+				if (value == nsURI && key.indexOf("xmlns") == 0){
+					if ((prefixIndex = key.indexOf(":")) > 0){
+						prefix = key.substring(prefixIndex+1)
+					} else {
+						prefix = "";
+					}
+					return false;
+				}
+			});
+			return prefix;
 		};
 		
 		DocumentState.prototype.setXMLFromString = function(xmlString) {
@@ -1223,6 +1249,8 @@
 				}
 			}
 			this.xml = $(xmlDoc);
+			if (guiEditor != null && guiEditor.rootElement != null)
+				guiEditor.rootElement.xmlNode = this.xml.children().first();
 			if (guiEditor.modsContent != null)
 				guiEditor.modsContent.data("mods").elementNode = this.xml.children().first();
 			if (problemsPanel != null)
@@ -2225,6 +2253,7 @@
 		};
 		
 		TextEditor.prototype.refreshDisplay = function() {
+			guiEditor.rootElement.xmlNode = xmlState.xml.children().first();
 			var markers = this.editor.session.getMarkers();
 			var thiz = this;
 			$.each(markers, function(index) {
@@ -2298,7 +2327,7 @@
 					//Refresh the xml if it has changed
 					try {
 						setXMLFromEditor();
-						xmlState.changeEvent();
+						xmlState.syncedChangeEvent();
 					} catch (e) {
 						// XML isn't valid, so can't continue
 						return this;
@@ -2387,8 +2416,8 @@
 		};
 		
 		TextEditor.prototype.addAttributeEvent = function() {
-			textEditor.reload();
-			xmlState.changeEvent();
+			this.reload();
+			xmlState.syncedChangeEvent();
 		};
 		
 		// Start up the editor
