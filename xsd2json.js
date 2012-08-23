@@ -28,16 +28,17 @@
  * @author Ben Pennell
  */
 ;
-function Xsd2Json(xsd, topLevelName, options) {
+function Xsd2Json(xsd, options) {
 	var defaults = {
-		"schemaURI": ""
+		"schemaURI": "",
+		"rootElement": null,
+		"generateRoot": false
 	};
 	this.options = $.extend({}, defaults, options);
 	this.xsNS = "http://www.w3.org/2001/XMLSchema";
 	this.xsPrefix = "xs:";
 	$.xmlns['xs'] = this.xsNS;
 	this.xsd = null;
-	this.topLevelName = topLevelName;
 	this.imports = {};
 	this.elements = {};
 	this.types = {};
@@ -49,7 +50,7 @@ function Xsd2Json(xsd, topLevelName, options) {
 	this.namespacePrefixes = {};
 	this.defaultNS = null;
 	this.targetNS = null;
-	this.rootElement = null;
+	this.root = null;
 	
 	if (xsd instanceof File){
 		// Not implemented yet
@@ -59,7 +60,7 @@ function Xsd2Json(xsd, topLevelName, options) {
 	        return function(e) {
 	        	thiz.xsd = $($($.parseXML(e.target.result)).children("xs:schema")[0]);
 	        	var selected = thiz.xsd.children("xs|element[name='" + thiz.topLevelName + "']").first();
-	        	this.rootElement = thiz.buildElement(selected);
+	        	this.root = thiz.buildElement(selected);
 	        };
 	      })(xsd);
 		
@@ -80,45 +81,10 @@ Xsd2Json.prototype.importAjax = function(url, originalAttempt) {
 		dataType: "text",
 		async: false,
 		success: function(data){
-			console.time("xsd2json" + thiz.topLevelName);
+			console.time("xsd2json" + thiz.options.rootElement);
 			thiz.xsd = $($($.parseXML(data)).children("xs|schema")[0]);
-			$.each(thiz.xsd[0].attributes, function(){
-				var namespaceIndex = this.nodeName.indexOf("xmlns");
-				if (namespaceIndex == 0){
-					namespacePrefix = this.nodeName.substring(5).replace(":", "");
-					// Local namespaces
-					thiz.namespaces[namespacePrefix] = this.nodeValue;
-					if (namespacePrefix == "")
-						thiz.defaultNS = this.nodeValue;
-					// Store the namespace prefix for the xs namespace
-					if (this.nodeValue == thiz.xsNS){
-						thiz.xsPrefix = namespacePrefix;
-						if (thiz.xsPrefix != "")
-							thiz.xsPrefix = thiz.xsPrefix + ":";
-					}
-				}
-			});
-			$.each(thiz.namespaces, function(prefix, uri){
-				thiz.namespacePrefixes[uri] = prefix;
-			});
-			thiz.targetNS = thiz.xsd.attr("targetNamespace");
-			thiz.xsd.children("xs|import").each(function(){
-				var importXSD = new Xsd2Json($(this).attr("schemaLocation"), null, thiz.options);
-				var namespace = $(this).attr("namespace");
-				thiz.imports[namespace] = importXSD;
-			});
-			
-			if (thiz.topLevelName != null) {
-				var selected = thiz.xsd.children("xs|element[name='" + thiz.topLevelName + "']").first();
-				try {
-					thiz.rootElement = thiz.buildElement(selected);
-					// Add namespace prefixes to match the scoping of this document
-					thiz.adjustPrefixes(thiz.rootElement);
-				} catch (e) {
-					console.log(e);
-				}
-			}
-			console.timeEnd("xsd2json" + thiz.topLevelName);
+			thiz.processSchema();
+			console.timeEnd("xsd2json" + thiz.options.rootElement);
 		}, error: function() {
 			if (!originalAttempt)
 				throw new Error("Unable to import " + url);
@@ -126,6 +92,55 @@ Xsd2Json.prototype.importAjax = function(url, originalAttempt) {
 		}
 	});
 };
+
+Xsd2Json.prototype.processSchema = function() {
+	var thiz = this;
+	// Extract all the namespaces in use by this schema
+	$.each(this.xsd[0].attributes, function(){
+		var namespaceIndex = this.nodeName.indexOf("xmlns");
+		if (namespaceIndex == 0){
+			namespacePrefix = this.nodeName.substring(5).replace(":", "");
+			// Local namespaces
+			thiz.namespaces[namespacePrefix] = this.nodeValue;
+			if (namespacePrefix == "")
+				thiz.defaultNS = this.nodeValue;
+			// Store the namespace prefix for the xs namespace
+			if (this.nodeValue == thiz.xsNS){
+				thiz.xsPrefix = namespacePrefix;
+				if (thiz.xsPrefix != "")
+					thiz.xsPrefix = thiz.xsPrefix + ":";
+			}
+		}
+	});
+	// Store namespaces so the prefixes can be found by uri
+	$.each(this.namespaces, function(prefix, uri){
+		thiz.namespacePrefixes[uri] = prefix;
+	});
+	// Store the target namespace of this schema.
+	this.targetNS = this.xsd.attr("targetNamespace");
+	// Load all of the imported schemas
+	this.xsd.children("xs|import").each(function(){
+		var importXSD = new Xsd2Json($(this).attr("schemaLocation"), $.extend({}, thiz.options, {"rootElement": null, "generateRoot": false}));
+		var namespace = $(this).attr("namespace");
+		thiz.imports[namespace] = importXSD;
+	});
+	// Begin constructing the element tree, either from a root element or from a generated root
+	if (this.options.rootElement != null || this.options.generateRoot) {
+		var selected = null;
+		if (this.options.rootElement != null)
+			selected = this.xsd.children("xs|element[name='" + this.options.rootElement + "']")[0];
+		else selected = this.xsd[0];
+		try {
+			if (this.options.rootElement != null)
+				this.root = this.buildElement(selected);
+			else this.root = this.buildSchema(selected);
+			// Add namespace prefixes to match the scoping of this document
+			this.adjustPrefixes(this.root);
+		} catch (e) {
+			console.log(e);
+		}
+	}
+}
 
 Xsd2Json.prototype.adjustPrefixes = function(object) {
 	if (object.name.indexOf(":") == -1){
@@ -135,8 +150,8 @@ Xsd2Json.prototype.adjustPrefixes = function(object) {
 			object.name = prefix + ":" + object.name;
 		}
 	}
-	
-	if (object.element) {
+	// Adjust all the children
+	if (object.element || object.schema) {
 		var thiz = this;
 		$.each(object.elements, function(){
 			thiz.adjustPrefixes(this);
@@ -145,7 +160,22 @@ Xsd2Json.prototype.adjustPrefixes = function(object) {
 			thiz.adjustPrefixes(this);
 		});
 	}
-	
+};
+
+Xsd2Json.prototype.buildSchema = function(node) {
+	var object = {
+		"name": "",
+		"elements": [],
+		"namespace": this.targetNS,
+		"schema": true
+	};
+	var thiz = this;
+	$(node).children().not("xs|annotation").each(function(){
+		if (thiz.xsEq(this, "element")) {
+			thiz.buildElement(this, object);
+		}
+	});
+	return object;
 };
 
 Xsd2Json.prototype.buildElement = function(node, parentObject) {
@@ -164,16 +194,34 @@ Xsd2Json.prototype.buildElement = function(node, parentObject) {
 			"namespace": this.targetNS,
 			"element": true
 	};
-	var type = $(node).attr("type");
-	if (type == null) {
-		this.buildType($(node).children().not("xs|annotation")[0], element);
-	} else {
-		element.type = this.resolveType(type);
-		if (element.type == null)
-			this.execute($(node)[0], 'buildType', element);
+	// Cache global elements for future use
+	if ($(node).parents().length == 1) {
+		this.elements[$(node).attr("name")] = element;
 	}
 	
-	if (parentObject != null)
+	if ($(node).attr("substitutionGroup") != null) {
+		var subGroup = $(node).attr("substitutionGroup");
+		var xsdObj = this.resolveXSD(subGroup);
+		subGroup = this.stripPrefix(subGroup);
+		var targetElement = null;
+		if (subGroup in xsdObj.elements) {
+			targetElement = xsdObj.elements[subGroup];
+		} else {
+			targetElement = xsdObj.buildElement(xsdObj.xsd.children("*[name='" + subGroup + "']")[0]);
+		}
+		this.mergeType(element, targetElement);
+	} else {
+		var type = $(node).attr("type");
+		if (type == null) {
+			this.buildType($(node).children().not("xs|annotation")[0], element);
+		} else {
+			element.type = this.resolveType(type, element);
+			if (element.type == null)
+				this.execute($(node)[0], 'buildType', element);
+		}
+	}
+	
+	if (parentObject != null && $(node).attr("abstract") != "true")
 		parentObject.elements.push(element);
 	
 	return element;
@@ -196,7 +244,7 @@ Xsd2Json.prototype.buildAttribute = function(node, object) {
 	if (type == null) {
 		this.buildType($(node).children().not("xs|annotation")[0], attributeObject);
 	} else {
-		attributeObject.type = this.resolveType(type);
+		attributeObject.type = this.resolveType(type, attributeObject);
 		if (attributeObject.type == null){
 			this.execute($(node)[0], 'buildType', attributeObject);
 		}
@@ -282,7 +330,7 @@ Xsd2Json.prototype.buildSimpleType = function(node, object) {
 
 Xsd2Json.prototype.buildList = function(node, object) {
 	var itemType = $(node).attr('itemType');
-	object.type = this.resolveType(itemType);
+	object.type = this.resolveType(itemType, object);
 	if (object.type == null) {
 		this.execute(node, 'buildType', object);
 	}
@@ -290,7 +338,7 @@ Xsd2Json.prototype.buildList = function(node, object) {
 };
 
 Xsd2Json.prototype.buildUnion = function(node, object) {
-	var memberTypes = $(node).attr('memeberTypes').split(" ");
+	var memberTypes = $(node).attr('memberTypes').split(" ");
 	var thiz = this;
 	$.each(memberTypes, function(){
 		var xsdObj = thiz.resolveXSD(this);
@@ -356,10 +404,14 @@ Xsd2Json.prototype.buildSequence = function(node, object) {
 };
 
 Xsd2Json.prototype.buildAny = function(node, object) {
-	object.any = true;
+	object.any = !($(node).attr("minOccurs") == "0" && $(node).attr("maxOccurs") == "0");
 };
 
 Xsd2Json.prototype.buildComplexContent = function(node, object) {
+	if ($(node).attr("mixed") == "true") {
+		object.type = "mixed";
+	}
+	
 	var child = $(node).children().not("xs|annotation")[0];
 	if (this.xsEq(child, "extension")) {
 		this.buildExtension(child, object);
@@ -380,7 +432,7 @@ Xsd2Json.prototype.buildSimpleContent = function(node, object) {
 Xsd2Json.prototype.buildRestriction = function(node, object) {
 	var base = $(node).attr("base");
 	
-	object.type = this.resolveType(base);
+	object.type = this.resolveType(base, object);
 	if (object.type == null) {
 		this.execute(node, 'buildType', object);
 	}
@@ -388,6 +440,20 @@ Xsd2Json.prototype.buildRestriction = function(node, object) {
 	$(node).children().each(function(){
 		if (thiz.xsEq(this, "enumeration")){
 			object.values.push($(this).attr("value"));
+		} else if (thiz.xsEq(this, "group")) {
+			thiz.execute(this, 'buildGroup', object);
+		} else if (thiz.xsEq(this, "choice")) {
+			thiz.buildChoice(this, object);
+		} else if (thiz.xsEq(this, "attribute")) {
+			thiz.buildAttribute(this, object);
+		} else if (thiz.xsEq(this, "attributeGroup")) {
+			thiz.execute(this, 'buildAttributeGroup', object);
+		} else if (thiz.xsEq(this, "sequence")) {
+			thiz.buildSequence(this, object);
+		} else if (thiz.xsEq(this, "all")) {
+			thiz.buildAll(this, object);
+		} else if (this.xsEq(node, "simpleType")) {
+			this.buildSimpleType(this, object);
 		}
 	});
 };
@@ -395,7 +461,7 @@ Xsd2Json.prototype.buildRestriction = function(node, object) {
 Xsd2Json.prototype.buildExtension = function(node, object) {
 	var base = $(node).attr("base");
 	
-	object.type = this.resolveType(base);
+	object.type = this.resolveType(base, object);
 	if (object.type == null) {
 		this.execute(node, 'buildType', object);
 	}
@@ -436,9 +502,7 @@ Xsd2Json.prototype.execute = function(node, fnName, object) {
 	if (resolveName != null && (this.xsPrefix == "" && resolveName.indexOf(":") != -1) 
 			|| (this.xsPrefix != "" && resolveName.indexOf(this.xsPrefix) == -1)) {
 		xsdObj = this.resolveXSD(resolveName);
-		var index = resolveName.indexOf(":");
-		name = index == -1? resolveName: resolveName.substring(index + 1);
-		targetNode = xsdObj.xsd.children("*[name='" + name + "']")[0];
+		targetNode = xsdObj.xsd.children("*[name='" + this.stripPrefix(name) + "']")[0];
 	} 
 	
 	try {
@@ -449,6 +513,11 @@ Xsd2Json.prototype.execute = function(node, fnName, object) {
 		$("body").append("<br/>" + name + ": " + error + " ");
 		throw error;
 	}
+};
+
+Xsd2Json.prototype.stripPrefix = function(name) {
+	var index = name.indexOf(":");
+	return index == -1? name: name.substring(index + 1);
 };
 
 Xsd2Json.prototype.resolveXSD = function(name) {
@@ -464,7 +533,9 @@ Xsd2Json.prototype.resolveXSD = function(name) {
 	return this;
 };
 
-Xsd2Json.prototype.resolveType = function(type) {
+Xsd2Json.prototype.resolveType = function(type, object) {
+	if (object.type != null)
+		return object.type;
 	if (type.indexOf(":") == -1) {
 		if (this.xsPrefix == "")
 			return type;
@@ -497,12 +568,12 @@ Xsd2Json.prototype.mergeType = function(base, type) {
  * @returns
  */
 Xsd2Json.prototype.stringify = function(pretty) {
-	if (this.rootElement == null)
+	if (this.root == null)
 		throw new Error("Root element was not set, cannot convert to JSON.");
 	if (pretty) {
-		return vkbeautify.json(JSON.stringify(this.rootElement));
+		return vkbeautify.json(JSON.stringify(this.root));
 	}
-	return JSON.stringify(this.rootElement);
+	return JSON.stringify(this.root);
 };
 
 /**
