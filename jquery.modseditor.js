@@ -93,7 +93,8 @@
 			documentTitle : null,
 			nameSpaces: {
 				"mods" : "http://www.loc.gov/mods/v3"
-			}
+			},
+			submitResponseHandler : swordSubmitResponseHandler
 		};
 		
 		options = $.extend({}, defaults, options);
@@ -450,16 +451,12 @@
 				'type' : "POST",
 				'data' : xmlString,
 				success : function(response) {
-					var responseObject = $(response);
-					if (responseObject.length > 0 && responseObject[responseObject.length - 1].localName == "sword:error") {
-						xmlState.syncedChangeEvent();
-						$("#" + options.submissionStatusId).html("Failed to submit<br/>See errors at top").css("background-color", "#ffbbbb").animate({backgroundColor: "#ffffff"}, 1000);
-						addProblem("Failed to submit MODS document", responseObject.find("atom\\:summary").html());
-						return;
-					}
+					var outcome = options.submitResponseHandler(response);
 					
-					xmlState.changesCommittedEvent();
-					clearProblemPanel();
+					if (outcome == 1) {
+						xmlState.changesCommittedEvent();
+						clearProblemPanel();
+					}
 				},
 				error : function(jqXHR, exception) {
 					if (jqXHR.status === 0) {
@@ -479,6 +476,17 @@
 					}
 				}
 			});
+		}
+		
+		function swordSubmitResponseHandler(response) {
+			var responseObject = $(response);
+			if (responseObject.length > 0 && responseObject[responseObject.length - 1].localName == "sword:error") {
+				xmlState.syncedChangeEvent();
+				$("#" + options.submissionStatusId).html("Failed to submit<br/>See errors at top").css("background-color", "#ffbbbb").animate({backgroundColor: "#ffffff"}, 1000);
+				addProblem("Failed to submit MODS document", responseObject.find("atom\\:summary").html());
+				return 0;
+			}
+			return 1;
 		}
 
 		// convert xml DOM to string
