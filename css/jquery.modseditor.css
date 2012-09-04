@@ -129,7 +129,7 @@ textarea:focus,input:focus {
 	max-width: 100%;
 }
 
-.mods_element .element_header, #mods_tab_area > .ui-tabs-nav {
+.mods_element .element_header, .mods_tab_area > .ui-tabs-nav {
 	padding: 4px 1px 1px 7px;
 	line-height: 22px;
 	height: 22px;
@@ -162,7 +162,7 @@ textarea:focus,input:focus {
 	background: -moz-linear-gradient(top,  #F0FFFF,  #f5f5f9);
 }
 
-#mods_tab_area > .ui-tabs-nav  {
+.mods_tab_area > .ui-tabs-nav  {
 	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#eeeeFF', endColorstr='#CDF2E6');
 	background: -webkit-gradient(linear, left top, left bottom, from(#eeeeFF), to(#CDF2E6));
 	background: -moz-linear-gradient(top,  #eeeeFF,  #CDF2E6);
@@ -261,11 +261,11 @@ textarea:focus,input:focus {
 	text-decoration: none;
 }
 
-#mods_content > div.placeholder, .mods_element > div > div.placeholder {
+.mods_content > div.placeholder, .mods_element > div > div.placeholder {
 	display: none;
 }
 
-#mods_content > div:last-child.placeholder, .mods_element > div > div:last-child.placeholder  {
+.mods_content > div:last-child.placeholder, .mods_element > div > div:last-child.placeholder  {
 	display: block;
 	font-style: italic;
 	color: #bbb;
@@ -333,7 +333,7 @@ textarea:focus,input:focus {
 
 /* Menu */
 
-#mods_menu_column {
+.mods_menu_column {
 	width: 160px;
 	padding-left: 15px;
 	height: 100%;
@@ -342,7 +342,7 @@ textarea:focus,input:focus {
 .mods_menu_container {
 }
 
-#mods_submit_status {
+.mods_submit_status {
 	display: block;
 	margin: 5px 0px;
 }
@@ -404,18 +404,18 @@ textarea:focus,input:focus {
 	background-color: #fff;
 }
 
-#mods_content {
+.mods_content {
 	padding: 5px 0px 5px 5px;
 }
 
 /* Head tabs */
 
-#mods_work_area, #mods_tab_area {
+.mods_work_area, .mods_tab_area {
 	background-color: #fff;
 	border: 0;
 }
 
-#mods_work_area > div {
+.mods_work_area > div {
 	/*border-top: 1px solid #e5e5e5;*/
 }
 
@@ -428,39 +428,39 @@ textarea:focus,input:focus {
 	border-bottom: 1px solid #ddd; 	
 }
 
-#mods_tab_area.ui-tabs > .ui-tabs-nav li a {
+.mods_tab_area.ui-tabs > .ui-tabs-nav li a {
 	padding: 0.1em 1em;
 }
 
-#mods_tab_area > .ui-tabs-nav {
+.mods_tab_area > .ui-tabs-nav {
 	height: 24px;	
 }
 
-#mods_tab_area > .ui-tabs-nav > .ui-state-default {
+.mods_tab_area > .ui-tabs-nav > .ui-state-default {
 	background-color: #eeeeee;
 }
 
-#mods_tab_area > .ui-tabs-nav > .ui-tabs-selected {
+.mods_tab_area > .ui-tabs-nav > .ui-tabs-selected {
 	background-color: #fafafa;
 }
 
 
 /* XML editor */
-#mods_tab_area {
+.mods_tab_area {
 	background-color: #ffffff;	
 }
 
-#xml_content {
+.text_content {
 	line-height: 16px;
 	padding: 3px 18px 0 10px;
 }
 
-#xml_content.ui-tabs-panel {
+.text_content.ui-tabs-panel {
 	padding: 0px;	
 }
 
 
-#gui_content { 
+.mods_tab_area .gui_content { 
 	padding: 3px 5px 0 0px;
 	background-color: #fafafa;
 	min-height: 600px;
@@ -472,7 +472,7 @@ textarea:focus,input:focus {
 	box-shadow: 0 0 2px 2px #eeeeee;
 }
 
-#mods_problems_panel {
+.mods_problems_panel {
 	background-color: #ffeeee;
 	padding: 5px;
 	white-space: pre-wrap;
@@ -481,7 +481,7 @@ textarea:focus,input:focus {
 
 /* Menu bar */
 
-#mods_editor_header {
+.mods_editor_header {
 	position: absolute;
 	background-color: #ffffff;
 	z-index: 1000;
@@ -490,7 +490,7 @@ textarea:focus,input:focus {
 	padding-right: 2px;
 }
 
-#mods_editor_header > h2 {
+.mods_editor_header > h2 {
 	text-overflow: ellipsis;
 	overflow: hidden;
 	font-size: 18px;
@@ -498,33 +498,33 @@ textarea:focus,input:focus {
 	margin-bottom: 10px;	
 }
 
-#mods_menu_bar {
+.mods_menu_bar {
 	margin-bottom: 3px;
 	overflow: auto;
 	width: inherit;	
 }
 
-#mods_menu_bar > ul > li {
+.mods_menu_bar > ul > li {
 	display: inline-block;
 	font-size: 14px;
 }
 
-#mods_menu_bar > ul > li > a > span {
+.mods_menu_bar > ul > li > a > span {
 	padding: 6px 8px;
 	display: inline-block;
 	font-size: 15px;
 	cursor: pointer;
 }
 
-#mods_menu_bar > ul > li > a > span:hover {
+.mods_menu_bar > ul > li > a > span:hover {
 	background-color: #eeeeee;	
 }
 
-#mods_menu_bar > ul > li > ul {
+.mods_menu_bar > ul > li > ul {
 	display: none;
 }
 
-#mods_menu_bar.active > ul > li:hover > a > span {
+.mods_menu_bar.active > ul > li:hover > a > span {
 	padding: 5px 7px;
 	border: 1px solid #bbbbcc;
 	border-bottom: 0px;
@@ -533,17 +533,17 @@ textarea:focus,input:focus {
 	position: relative;
 }
 
-#mods_menu_bar.active > ul > li:hover {
+.mods_menu_bar.active > ul > li:hover {
 	box-shadow: 0 2px 4px #555555;
 }
 
-#mods_menu_bar > ul > li .over_shadow {
+.mods_menu_bar > ul > li .over_shadow {
 	padding: 5px;
 	position: relative;
 	background-color: #ffffff;
 }
 
-#mods_menu_bar.active > ul > li:hover > ul {
+.mods_menu_bar.active > ul > li:hover > ul {
 	margin-top: -1px;
 	position: absolute;
 	width: 280px;
@@ -554,33 +554,33 @@ textarea:focus,input:focus {
 	background-color: #fff;
 }
 
-#mods_menu_bar.active > ul > li > ul > li {
+.mods_menu_bar.active > ul > li > ul > li {
 	padding: 5px 7px;
 	cursor: pointer;
 }
 
-#mods_menu_bar.active > ul > li > ul > li.disabled span {
+.mods_menu_bar.active > ul > li > ul > li.disabled span {
 	color: #B4B7BA;
 	cursor: default;
 }
 
-#mods_menu_bar.active > ul > li > ul > li:hover {
+.mods_menu_bar.active > ul > li > ul > li:hover {
 	background-color: #eeeeee;	
 }
  
-#mods_menu_bar.active .binding {
+.mods_menu_bar.active .binding {
 	float: right;
 	font-style: italic;
 }
 
-#mods_menu_bar .header_mode_tab {
+.mods_menu_bar .header_mode_tab {
 	border: 1px solid #BBBBBB;
 	float: right;
 	margin-left: 10px;
 	margin-right: 0px;
 }
 
-#mods_menu_bar .active_mode_tab {	
+.mods_menu_bar .active_mode_tab {	
 	border: 1px solid #FBD850;
 	color: #EB8F00;
 	box-shadow: 0 0 3px #E5E5E5 inset, 0 0 3px #FBD850;
