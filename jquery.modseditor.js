@@ -2005,7 +2005,12 @@
 	    	this.modsTree.build();
 			
 			// Retrieve the local mods content before we start populating the editor.
-			var localXMLContent = this.element.html();
+	    	var localXMLContent = null;
+			if ($(this.options.localXMLContentSelector).is("textarea")) {
+				localXMLContent = $(this.options.localXMLContentSelector).val(); 
+			} else {
+				localXMLContent = this.element.html();
+			}
 			this.element.empty();
 			
 			this.xmlState = null;
