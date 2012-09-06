@@ -82,7 +82,7 @@
 					selected : (startingValue == this)
 				}).appendTo(input);
 			});
-		} else if (this.objectType.element && this.objectType.type == 'string'){
+		} else if ((this.objectType.element && this.objectType.type == 'string') || this.objectType.attribute){
 			input = $('<textarea/>').attr({
 				'id' : inputID,
 				'value' : startingValue
@@ -90,9 +90,10 @@
 				if ($(this).val() == " ") {
 					$(this).val("");
 				}
-			}).expandingTextarea();
-		} else if (this.objectType.type == 'ID' || this.objectType.type == 'date' || this.objectType.type == 'anyURI' 
-				|| this.objectType.attribute){
+			});
+			if (!this.objectType.attribute)
+				input.expandingTextarea();
+		} else if (this.objectType.type == 'ID' || this.objectType.type == 'date' || this.objectType.type == 'anyURI' ){
 			input = $('<input/>').attr({
 				'id' : inputID,
 				'type' : 'text',
@@ -125,7 +126,7 @@
 		this.isTopLevel = (this.xmlNode.parents().length == 1);
 		this.allowChildren = this.objectType.elements.length > 0;
 		this.allowAttributes = this.objectType.attributes.length > 0;
-		this.allowText = this.objectType.type != 'none';
+		this.allowText = this.objectType.type != null;
 		this.guiElementID = null;
 		this.guiElement = null;
 		this.parentElement = null;
@@ -133,6 +134,8 @@
 		this.tabs = {};
 		this.elementHeader = null;
 		this.childContainer = null;
+		this.childCount = 0;
+		this.attributeCount = 0;
 	}
 
 	XMLElement.prototype.constructor = XMLElement;
@@ -174,17 +177,19 @@
 		
 		var self = this;
 		// Activate the tabs
-		this.guiElement.tabs({
+		/**this.guiElement.tabs({
 			select: function(){
 				self.editor.guiEditor.selectElement($(this));
 			},
 			selected: 0
-		});
+		});*/
 		
 		this.guiElement.click(function(event) {
 			self.editor.guiEditor.selectElement(self);
 			event.stopPropagation();
 		});
+		
+		this.updated();
 		
 		return this.guiElement;
 	};
@@ -243,7 +248,7 @@
 			'value' : '\u2193',
 			'id' : this.guiElementID + '_down'
 		}).appendTo(topActionSpan).click(function(){
-			self.editor.moveDownSelected();
+			self.editor.guiEditor.moveSelected();
 		});
 
 		// create move up button and callback for element
@@ -252,7 +257,7 @@
 			'value' : '\u2191',
 			'id' : this.guiElementID + '_up'
 		}).appendTo(topActionSpan).click(function(){
-			self.editor.moveUpSelected();
+			self.editor.guiEditor.moveSelected(true);
 		});
 
 		// create delete button and callback for element
@@ -261,7 +266,7 @@
 			'value' : 'X',
 			'id' : this.guiElementID + '_del'
 		}).appendTo(topActionSpan).click(function(){
-			self.editor.deleteSelected();
+			self.editor.guiEditor.deleteSelected();
 		});
 		
 		return topActionSpan;
@@ -270,7 +275,21 @@
 	XMLElement.prototype.addElementTabs = function (recursive) {
 		var attributesArray = this.objectType.attributes;
 		var elementsArray = this.objectType.elements;
+		
+		if (attributesArray.length > 0){
+			if (elementsArray.length > 0) {
+				$("<div/>").addClass("placeholder").html("Use the menu to add subelements and attributes.").appendTo(this.guiElement);
+			} else {
+				$("<div/>").addClass("placeholder").html("Use the menu to add attributes.").appendTo(this.guiElement);
+			}
+		} else {
+			$("<div/>").addClass("placeholder").html("Use the menu to add subelements.").appendTo(this.guiElement);
+		}
 
+		if (attributesArray.length > 0) {
+			this.addAttributeTab();
+		}
+		
 		if (this.objectType.type != null) {
 			this.addTextTab();
 		}
@@ -278,15 +297,14 @@
 		if (elementsArray.length > 0) {
 			this.addSubelementTab(recursive);
 		}
-
-		if (attributesArray.length > 0) {
-			this.addAttributeTab();
-		}
 	};
 
 	XMLElement.prototype.addTextTab = function () {
 		var tabID = "text";
-		var tabContent = this.addElementTab(tabID, "Text").tabs[tabID].content;
+		//var tabContent = this.addElementTab(tabID, "Text").tabs[tabID].content;
+		var tabContentID = this.guiElementID + "_tab_" + tabID;
+		var tabContent = $("<div/>").attr({'id' : tabContentID, "class": "content_block"});
+		this.guiElement.append(tabContent);
 		var textContainsChildren = this.xmlNode.children().length > 0;
 		
 		var textValue = "";
@@ -309,31 +327,37 @@
 
 	XMLElement.prototype.addSubelementTab = function (recursive) {
 		var tabID = "elements";
-		var tabData = this.addElementTab(tabID, "Subelements").tabs[tabID];
-		var tabContent = tabData.content;
+		//var tabData = this.addElementTab(tabID, "Subelements").tabs[tabID];
+		var tabContentID = this.guiElementID + "_tab_" + tabID;
+		var tabContent = $("<div/>").attr({'id' : tabContentID, "class": "content_block"});
+		this.guiElement.append(tabContent);
+		//var tabContent = tabData.content;
 		tabContent.addClass(childrenContainerClass);
 		this.childContainer = tabContent;
 		
-		$("<div/>").addClass("placeholder").html("Use the menu on the right to add subelements.").appendTo(tabContent);
+		//$("<div/>").addClass("placeholder").html("Use the menu on the right to add subelements.").appendTo(tabContent);
 		
 		// Add all the subchildren
 		if (recursive) {
 			this.renderChildren(true);
 		}
 		
-		this.changeTabCount(tabID, this.xmlNode.children().length);
+		//this.changeTabCount(tabID, this.xmlNode.children().length);
 	};
-
+	
 	XMLElement.prototype.addAttributeTab = function () {
 		var tabID = "attributes";
-		var tabContent = this.addElementTab(tabID, "Attributes").tabs[tabID].content;
+		//var tabContent = this.addElementTab(tabID, "Attributes").tabs[tabID].content;
+		var tabContentID = this.guiElementID + "_tab_" + tabID;
+		var tabContent = $("<div/>").attr({'id' : tabContentID, "class": "content_block"});
+		this.guiElement.append(tabContent);
 		tabContent.addClass(attributesContainerClass);
 		
-		$("<div/>").addClass("placeholder").html("Use the menu on the right to add attributes.").appendTo(tabContent);
+		//$("<div/>").addClass("placeholder").html("Use the menu on the right to add attributes.").appendTo(tabContent);
 		
 		this.renderAttributes();
 		
-		this.changeTabCount(tabID, this.xmlNode[0].attributes.length);
+		//this.changeTabCount(tabID, this.xmlNode[0].attributes.length);
 	};
 
 	XMLElement.prototype.addElementTab = function(tabID, label) {
@@ -367,6 +391,8 @@
 		if (this.guiElement != null)
 			childElement.render(this, true);
 		
+		this.updated();
+		
 		return childElement;
 	};
 
@@ -375,11 +401,13 @@
 	};
 
 	XMLElement.prototype.childRemoved = function(child) {
-		this.changeTabCount("elements", -1, true);
+		//this.changeTabCount("elements", -1, true);
+		this.updated();
 	};
 
 	XMLElement.prototype.attributeRemoved = function(child) {
-		this.changeTabCount("attributes", -1, true);
+		//this.changeTabCount("attributes", -1, true);
+		this.updated();
 	};
 
 	XMLElement.prototype.remove = function() {
@@ -443,7 +471,8 @@
 
 	XMLElement.prototype.removeAttribute = function (objectType) {
 		this.xmlNode[0].removeAttribute(objectType.name);
-		this.changeTabCount("attributes", -1, true);
+		//this.changeTabCount("attributes", -1, true);
+		this.updated();
 	};
 
 	XMLElement.prototype.changeTabTitle = function(tabID) {
@@ -458,6 +487,28 @@
 		data.link.html(tabTitle);
 	};
 
+	XMLElement.prototype.updated = function () {
+		this.childCount = (this.objectType.elements.length == 0)? 0: this.childContainer.children("." + modsElementClass).length;
+		this.attributeCount = (this.objectType.attributes.length == 0)? 0: this.guiElement.children("." + attributesContainerClass).children(".attribute_container").length;
+		
+		if (this.childCount > 0) {
+			this.guiElement.children("." + childrenContainerClass).show();
+		} else {
+			this.guiElement.children("." + childrenContainerClass).hide();
+		}
+		if (this.attributeCount > 0) {
+			this.guiElement.children("." + attributesContainerClass).show();
+		} else {
+			this.guiElement.children("." + attributesContainerClass).hide();
+		}
+		
+		if (!this.allowText && this.childCount == 0 && this.attributeCount == 0) {
+			this.guiElement.children(".placeholder").show();
+		} else {
+			this.guiElement.children(".placeholder").hide();
+		}
+	};
+	
 	XMLElement.prototype.changeTabCount = function(tabID, count, add) {
 		var data = this.tabs[tabID];
 		if (data == null)
@@ -505,12 +556,8 @@
 			'class' : 'attribute_container'
 		}).appendTo(elementNode.children("." + attributesContainerClass));
 		
-		$('<label/>').attr({
-			'for' : this.attributeID
-		}).text(this.objectType.name).appendTo(this.attributeContainer);
-		
 		var self = this;
-		$("<a/>").html("(x)").css("cursor", "pointer").on('click', function() {
+		$("<a/>").html("(x) ").css("cursor", "pointer").on('click', function() {
 			if ($("#" + this.attributeID).length > 0) {
 				if (this.addButton != null){
 					this.addButton.removeClass("disabled");
@@ -518,8 +565,13 @@
 			}
 			self.xmlElement.removeAttribute(self.objectType);
 			self.attributeContainer.remove();
+			self.xmlElement.updated();
 			self.editor.xmlState.documentChangedEvent();
 		}).appendTo(this.attributeContainer);
+		
+		$('<label/>').attr({
+			'for' : this.attributeID
+		}).text(this.objectType.name).appendTo(this.attributeContainer);
 		
 		var attributeValue = this.xmlElement.xmlNode.attr(this.objectType.name);
 		if (attributeValue == '' && this.objectType.defaultValue != null) {
@@ -1373,8 +1425,9 @@
 
 	GUIEditor.prototype.addElementEvent = function(parentElement, newElement) {
 		if (parentElement.guiElementID != this.modsContent.attr("id")) {
-			parentElement.changeTabCount("elements", 1, true);
-			parentElement.guiElement.tabs("select", parentElement.guiElementID + "_tab_elements");
+			parentElement.updated();
+			//parentElement.changeTabCount("elements", 1, true);
+			//parentElement.guiElement.tabs("select", parentElement.guiElementID + "_tab_elements");
 		}
 		this.focusObject(newElement.guiElement);
 		this.selectElement(newElement);
@@ -1385,8 +1438,9 @@
 	GUIEditor.prototype.addAttributeEvent = function(parentElement, objectType, addButton) {
 		var attribute = new XMLAttribute(objectType, parentElement, this.editor);
 		attribute.render();
-		parentElement.changeTabCount('attributes', 1, true);
-		parentElement.guiElement.tabs("select", parentElement.guiElementID + "_tab_attributes");
+		parentElement.updated();
+		//parentElement.changeTabCount('attributes', 1, true);
+		//parentElement.guiElement.tabs("select", parentElement.guiElementID + "_tab_attributes");
 		this.focusObject(attribute.attributeContainer);
 		addButton.addClass("disabled");
 		attribute.addButton = addButton;
