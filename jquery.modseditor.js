@@ -131,7 +131,6 @@
 		this.guiElement = null;
 		this.parentElement = null;
 		this.textInput = null;
-		this.tabs = {};
 		this.elementHeader = null;
 		this.childContainer = null;
 		this.childCount = 0;
@@ -169,20 +168,13 @@
 		// set up element title and entry field if appropriate
 		$('<span/>').text(this.objectType.name).appendTo(elementNameContainer);
 
-		// Tabs go in next
-		this.addElementTabs(recursive);
+		// Add the subsections for the elements content next.
+		this.addContentContainers(recursive);
 
 		// Action buttons
 		this.elementHeader.append(this.addTopActions(this.guiElementID));
 		
 		var self = this;
-		// Activate the tabs
-		/**this.guiElement.tabs({
-			select: function(){
-				self.editor.guiEditor.selectElement($(this));
-			},
-			selected: 0
-		});*/
 		
 		this.guiElement.click(function(event) {
 			self.editor.guiEditor.selectElement(self);
@@ -226,17 +218,6 @@
 	};
 
 	XMLElement.prototype.initializeGUI = function () {
-		var self = this;
-		// Activate the tabs
-		this.guiElement.tabs({
-			select: function(){
-				self.editor.guiEditor.selectElement($(this));
-			}
-		});
-		
-		this.guiElement.find("." + modsElementClass).each(function(){
-			$(this).tabs();
-		});
 	};
 
 	XMLElement.prototype.addTopActions = function () {
@@ -272,7 +253,7 @@
 		return topActionSpan;
 	};
 
-	XMLElement.prototype.addElementTabs = function (recursive) {
+	XMLElement.prototype.addContentContainers = function (recursive) {
 		var attributesArray = this.objectType.attributes;
 		var elementsArray = this.objectType.elements;
 		
@@ -287,24 +268,22 @@
 		}
 
 		if (attributesArray.length > 0) {
-			this.addAttributeTab();
+			this.addAttributeContainer();
 		}
 		
 		if (this.objectType.type != null) {
-			this.addTextTab();
+			this.addTextContainer();
 		}
 
 		if (elementsArray.length > 0) {
-			this.addSubelementTab(recursive);
+			this.addSubelementContainer(recursive);
 		}
 	};
 
-	XMLElement.prototype.addTextTab = function () {
-		var tabID = "text";
-		//var tabContent = this.addElementTab(tabID, "Text").tabs[tabID].content;
-		var tabContentID = this.guiElementID + "_tab_" + tabID;
-		var tabContent = $("<div/>").attr({'id' : tabContentID, "class": "content_block"});
-		this.guiElement.append(tabContent);
+	XMLElement.prototype.addTextContainer = function () {
+		var container = $("<div/>").attr({'id' : this.guiElementID + "_cont_text", 
+			"class": "content_block"});
+		this.guiElement.append(container);
 		var textContainsChildren = this.xmlNode.children().length > 0;
 		
 		var textValue = "";
@@ -315,7 +294,7 @@
 		}
 		
 		this.textInput = this.createElementInput(this.guiElementID + "_text", 
-				textValue, tabContent);
+				textValue, container);
 		if (textContainsChildren)
 			this.textInput.attr("disabled", "disabled");
 		var self = this;
@@ -325,56 +304,24 @@
 		});
 	};
 
-	XMLElement.prototype.addSubelementTab = function (recursive) {
-		var tabID = "elements";
-		//var tabData = this.addElementTab(tabID, "Subelements").tabs[tabID];
-		var tabContentID = this.guiElementID + "_tab_" + tabID;
-		var tabContent = $("<div/>").attr({'id' : tabContentID, "class": "content_block"});
-		this.guiElement.append(tabContent);
-		//var tabContent = tabData.content;
-		tabContent.addClass(childrenContainerClass);
-		this.childContainer = tabContent;
-		
-		//$("<div/>").addClass("placeholder").html("Use the menu on the right to add subelements.").appendTo(tabContent);
+	XMLElement.prototype.addSubelementContainer = function (recursive) {
+		var container = $("<div/>").attr({'id' : this.guiElementID + "_cont_elements", 
+			"class": "content_block " + childrenContainerClass});
+		this.guiElement.append(container);
+		this.childContainer = container;
 		
 		// Add all the subchildren
 		if (recursive) {
 			this.renderChildren(true);
 		}
-		
-		//this.changeTabCount(tabID, this.xmlNode.children().length);
 	};
 	
-	XMLElement.prototype.addAttributeTab = function () {
-		var tabID = "attributes";
-		//var tabContent = this.addElementTab(tabID, "Attributes").tabs[tabID].content;
-		var tabContentID = this.guiElementID + "_tab_" + tabID;
-		var tabContent = $("<div/>").attr({'id' : tabContentID, "class": "content_block"});
-		this.guiElement.append(tabContent);
-		tabContent.addClass(attributesContainerClass);
-		
-		//$("<div/>").addClass("placeholder").html("Use the menu on the right to add attributes.").appendTo(tabContent);
-		
-		this.renderAttributes();
-		
-		//this.changeTabCount(tabID, this.xmlNode[0].attributes.length);
-	};
+	XMLElement.prototype.addAttributeContainer = function () {
+		var container = $("<div/>").attr({'id' : this.guiElementID + "_cont_attributes", 
+			"class": "content_block " + attributesContainerClass});
+		this.guiElement.append(container);
 
-	XMLElement.prototype.addElementTab = function(tabID, label) {
-		var tabContentID = this.guiElementID + "_tab_" + tabID;
-		var tabEntry = $("<li/>");
-		var tabLink = $("<a/>").attr("href", "#" + tabContentID).html(label).appendTo(tabEntry);
-		this.elementHeader.append(tabEntry);
-		var tabContent = $("<div/>").attr('id', tabContentID);
-		this.guiElement.append(tabContent);
-		this.tabs[tabID] = {
-				'entry' : tabEntry,
-				'content' : tabContent,
-				'link' : tabLink,
-				'label' : label,
-				'count' : 0
-			};
-		return this;
+		this.renderAttributes();
 	};
 
 	XMLElement.prototype.addElement = function(objectType) {
@@ -401,12 +348,10 @@
 	};
 
 	XMLElement.prototype.childRemoved = function(child) {
-		//this.changeTabCount("elements", -1, true);
 		this.updated();
 	};
 
 	XMLElement.prototype.attributeRemoved = function(child) {
-		//this.changeTabCount("attributes", -1, true);
 		this.updated();
 	};
 
@@ -471,20 +416,7 @@
 
 	XMLElement.prototype.removeAttribute = function (objectType) {
 		this.xmlNode[0].removeAttribute(objectType.name);
-		//this.changeTabCount("attributes", -1, true);
 		this.updated();
-	};
-
-	XMLElement.prototype.changeTabTitle = function(tabID) {
-		var data = this.tabs[tabID];
-		if (data == null)
-			return;
-		var tabTitle = data.label;
-		
-		if (data.count > 0) {
-			tabTitle += " (" + data.count +")";
-		}
-		data.link.html(tabTitle);
 	};
 
 	XMLElement.prototype.updated = function () {
@@ -507,20 +439,6 @@
 		} else {
 			this.guiElement.children(".placeholder").hide();
 		}
-	};
-	
-	XMLElement.prototype.changeTabCount = function(tabID, count, add) {
-		var data = this.tabs[tabID];
-		if (data == null)
-			return;
-		
-		if (arguments.length == 2 && add) {
-			data.count += count;
-		} else {
-			data.count = count;
-		}
-		
-		this.changeTabTitle(tabID);
 	};
 
 	XMLElement.prototype.select = function() {
@@ -1426,8 +1344,6 @@
 	GUIEditor.prototype.addElementEvent = function(parentElement, newElement) {
 		if (parentElement.guiElementID != this.modsContent.attr("id")) {
 			parentElement.updated();
-			//parentElement.changeTabCount("elements", 1, true);
-			//parentElement.guiElement.tabs("select", parentElement.guiElementID + "_tab_elements");
 		}
 		this.focusObject(newElement.guiElement);
 		this.selectElement(newElement);
@@ -1439,8 +1355,6 @@
 		var attribute = new XMLAttribute(objectType, parentElement, this.editor);
 		attribute.render();
 		parentElement.updated();
-		//parentElement.changeTabCount('attributes', 1, true);
-		//parentElement.guiElement.tabs("select", parentElement.guiElementID + "_tab_attributes");
 		this.focusObject(attribute.attributeContainer);
 		addButton.addClass("disabled");
 		attribute.addButton = addButton;
@@ -2429,12 +2343,14 @@
 				
 				// Enter, focus the first visible input
 				if (e.keyCode == 13 && focused.length == 0) {
+					e.preventDefault();
 					this.guiEditor.focusSelectedFirstInput();
 					return false;
 				}
 				
 				// Tab, select the next input
 				if (e.keyCode == 9) {
+					e.preventDefault();
 					this.guiEditor.focusInput(e.shiftKey);
 					return false;
 				}
@@ -2446,6 +2362,7 @@
 				}
 				
 				if (e.keyCode > 36 && e.keyCode < 41 && focused.length == 0){
+					e.preventDefault();
 					if (e.altKey) {
 						// Alt + up or down move the element up and down in the document
 						this.guiEditor.moveSelected(e.keyCode == 38);
@@ -2460,8 +2377,6 @@
 						// If not holding shift while hitting up or down, go to the next/prev element
 						if (e.keyCode == 40 || e.keyCode == 38){
 							this.guiEditor.selectNext(e.keyCode == 38);
-						} else if (e.keyCode == 39 || e.keyCode == 37) {
-							this.guiEditor.changeSelectedTab(e.keyCode == 37);
 						}
 					}
 					return false;
