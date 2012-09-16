@@ -149,6 +149,7 @@ Xsd2Json.prototype.adjustPrefixes = function(object) {
 		if (prefix != null && prefix != "") {
 			object.name = prefix + ":" + object.name;
 		}
+		object.nameEsc = object.name.replace(':', '-');
 	}
 	// Adjust all the children
 	if (object.element || object.schema) {

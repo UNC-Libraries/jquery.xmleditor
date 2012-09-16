@@ -291,13 +291,18 @@ textarea:focus,input:focus {
 	margin-right: 20px;
 }
 
+.attribute_container.selected {
+	background-color: #DDDDFF;
+	box-shadow: 0 0 6px 1px #DDDDFF;
+}
+
 .attribute_container label {
 	font-weight: bold;
 	line-height: 1.5em;
 	margin-right: 5px;
 	vertical-align: 28%;
 	display: inline-block;
-	min-width: 90px;
+	min-width: 100px;
 }
 
 .attribute_container textarea {

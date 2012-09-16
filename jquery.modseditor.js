@@ -41,6 +41,7 @@
 	var elementPrefix = "mods_element_";
 	var childrenContainerSelector = " > .mods_children";
 	var childrenContainerClass = "mods_children";
+	var attributeContainerClass = "attribute_container";
 	var attributesContainerSelector = " > .mods_attrs";
 	var attributesContainerClass = "mods_attrs";
 	var modsMenuHeaderPrefix = "mods_header_item_";
@@ -134,6 +135,7 @@
 		this.elementHeader = null;
 		this.childContainer = null;
 		this.childCount = 0;
+		this.attributeContainer = null;
 		this.attributeCount = 0;
 	}
 
@@ -151,7 +153,7 @@
 		// Create the element and add it to the container
 		this.guiElement = $('<div/>').attr({
 			'id' : this.guiElementID,
-			'class' : this.objectType.name + 'Instance ' + modsElementClass
+			'class' : this.objectType.nameEsc + 'Instance ' + modsElementClass
 		}).appendTo(this.parentElement.childContainer);
 		if (this.isTopLevel) {
 			this.guiElement.addClass(topLevelContainerClass);
@@ -295,6 +297,7 @@
 		
 		this.textInput = this.createElementInput(this.guiElementID + "_text", 
 				textValue, container);
+		this.textInput.addClass('element_text');
 		if (textContainsChildren)
 			this.textInput.attr("disabled", "disabled");
 		var self = this;
@@ -320,6 +323,7 @@
 		var container = $("<div/>").attr({'id' : this.guiElementID + "_cont_attributes", 
 			"class": "content_block " + attributesContainerClass});
 		this.guiElement.append(container);
+		this.attributeContainer = container;
 
 		this.renderAttributes();
 	};
@@ -329,7 +333,7 @@
 			return null;
 		
 		// Create the new element in the mods namespace with the matching prefix
-		var newElement = this.editor.xmlState.xml[0].createElementNS(this.editor.options.targetNS, this.editor.targetPrefix + objectType.name);
+		var newElement = this.editor.xmlState.xml[0].createElementNS(this.editor.options.targetNS, this.editor.targetPrefix + objectType.nameEsc);
 		$(newElement).text(" ");
 		this.xmlNode.append(newElement);
 		
@@ -418,10 +422,16 @@
 		this.xmlNode[0].removeAttribute(objectType.name);
 		this.updated();
 	};
+	
+	
+	XMLElement.prototype.getSelectedAttribute = function () {
+		return this.attributeContainer.children("." + attributeContainerClass + ".selected");
+	};
+	
 
 	XMLElement.prototype.updated = function () {
 		this.childCount = (this.objectType.elements.length == 0)? 0: this.childContainer.children("." + modsElementClass).length;
-		this.attributeCount = (this.objectType.attributes.length == 0)? 0: this.guiElement.children("." + attributesContainerClass).children(".attribute_container").length;
+		this.attributeCount = (this.objectType.attributes.length == 0)? 0: this.guiElement.children("." + attributesContainerClass).children("." + attributeContainerClass).length;
 		
 		if (this.childCount > 0) {
 			this.guiElement.children("." + childrenContainerClass).show();
@@ -465,31 +475,21 @@
 	};
 
 	XMLAttribute.prototype.render = function (){
-		this.attributeID = this.xmlElement.guiElementID + "_" + this.objectType.name;
+		this.attributeID = this.xmlElement.guiElementID + "_" + this.objectType.nameEsc;
 		
 		var elementNode = this.xmlElement.guiElement;
 		
 		this.attributeContainer = $("<div/>").attr({
 			'id' : this.attributeID + "_cont",
-			'class' : 'attribute_container'
-		}).appendTo(elementNode.children("." + attributesContainerClass));
+			'class' : attributeContainerClass
+		}).data('xmlAttribute', this).appendTo(elementNode.children("." + attributesContainerClass));
 		
 		var self = this;
-		$("<a/>").html("(x) ").css("cursor", "pointer").on('click', function() {
-			if ($("#" + this.attributeID).length > 0) {
-				if (this.addButton != null){
-					this.addButton.removeClass("disabled");
-				}
-			}
-			self.xmlElement.removeAttribute(self.objectType);
-			self.attributeContainer.remove();
-			self.xmlElement.updated();
-			self.editor.xmlState.documentChangedEvent();
-		}).appendTo(this.attributeContainer);
+		/*$("<a/>").html("(x) ").css("cursor", "pointer").on('click', function() {
+			$.proxy(self.remove, self);
+		}).appendTo(this.attributeContainer);*/
 		
-		$('<label/>').attr({
-			'for' : this.attributeID
-		}).text(this.objectType.name).appendTo(this.attributeContainer);
+		$('<label/>').text(this.objectType.name).appendTo(this.attributeContainer);
 		
 		var attributeValue = this.xmlElement.xmlNode.attr(this.objectType.name);
 		if (attributeValue == '' && this.objectType.defaultValue != null) {
@@ -503,12 +503,25 @@
 			self.editor.xmlState.documentChangedEvent();
 		});
 		
+		this.attributeContainer.click(function(event) {
+			self.editor.guiEditor.selectElement(self.xmlElement);
+			event.stopPropagation();
+			$(this).addClass('selected');
+		});
+		
 		return this.attributeInput;
 	};
 
 	XMLAttribute.prototype.remove = function() {
-		this.xmlElement.removeAttribute(objectType);
+		if ($("#" + this.attributeID).length > 0) {
+			if (this.addButton != null){
+				this.addButton.removeClass("disabled");
+			}
+		}
+		this.xmlElement.removeAttribute(this.objectType);
 		this.attributeContainer.remove();
+		this.xmlElement.updated();
+		this.editor.xmlState.documentChangedEvent();
 	};
 
 	XMLAttribute.prototype.syncValue = function() {
@@ -763,7 +776,7 @@
 					enabled : true,
 					binding : "esc",
 					action : function(){
-						self.editor.guiEditor.selectElement(null);
+						self.editor.guiEditor.deselect();
 					}
 				},{
 					label : 'Next Element',
@@ -778,6 +791,20 @@
 					binding : "up",
 					action : function(){
 						self.editor.guiEditor.selectNext(true);
+					}
+				}, {
+					label : 'Next Attribute',
+					enabled : true,
+					binding : "right",
+					action : function(){
+						self.editor.guiEditor.selectAttribute();
+					}
+				}, {
+					label : 'Previous Attribute',
+					enabled : true,
+					binding : "left",
+					action : function(){
+						self.editor.guiEditor.selectAttribute(true);
 					}
 				}, {
 					label : 'Parent',
@@ -813,20 +840,6 @@
 			enabled : true,
 			action : function(event) {self.activateMenu(event);}, 
 			items : [ {
-				label : 'Next Element Tab',
-				enabled : true,
-				binding : "right",
-				action : function(){
-					self.editor.guiEditor.changeSelectedTab();
-				}
-			}, {
-				label : 'Previous Element Tab',
-				enabled : true,
-				binding : "left",
-				action : function(){
-					self.editor.guiEditor.changeSelectedTab(true);
-				}
-			}, {
 				label : 'Switch to MODS View',
 				enabled : true,
 				binding : "alt+shift+m",
@@ -1068,7 +1081,7 @@
 			var targetAttribute = this;
 			$.each(attributesArray, function(){
 				if (this.name == targetAttribute.nodeName) {
-					attributesPresent[this.name] = $("#" + xmlElement.guiElementID + "_" + targetAttribute.nodeName);
+					attributesPresent[this.name] = $("#" + xmlElement.guiElementID + "_" + targetAttribute.nodeName.replace(':', '-'));
 				}
 			});
 		});
@@ -1078,7 +1091,7 @@
 			var attribute = this;
 			var addButton = $("<li/>").attr({
 				title : 'Add ' + attribute.name,
-				'id' : xmlElement.guiElementID + "_" + attribute.name + "_add"
+				'id' : xmlElement.guiElementID + "_" + attribute.nameEsc + "_add"
 			}).html(attribute.name).click(function(){
 				self.owner.editor.addAttributeButtonCallback(this);
 			}).data('mods', {
@@ -1297,7 +1310,7 @@
 
 	GUIEditor.prototype.activate = function() {
 		this.active = true;
-		this.deselectElement();
+		this.deselect();
 		
 		this.editor.textEditor.resetSelectedTagRange();
 		if (this.editor.textEditor.isModified() || (this.editor.textEditor.isInitialized() && this.editor.xmlState.isChanged())) {
@@ -1305,7 +1318,6 @@
 			this.editor.textEditor.setInitialized();
 		}
 		
-		this.editor.modifyMenu.clearContextualMenus();
 		return this;
 	};
 
@@ -1329,7 +1341,7 @@
 	};
 
 	GUIEditor.prototype.refreshDisplay = function() {
-		this.selectElement(null);
+		this.deselect();
 		this.elementIndex = 0;
 		this.rootElement.xmlNode = this.editor.xmlState.xml.children().first();
 		this.refreshElements();
@@ -1362,11 +1374,11 @@
 	};
 
 	GUIEditor.prototype.selectElement = function(selected) {
-		$("." + modsElementClass + ".selected").removeClass("selected");
 		if (!selected || selected.length == 0) {
-			this.deselectElement();
-			this.editor.modifyMenu.clearContextualMenus();
+			this.deselect();
 		} else {
+			$("." + modsElementClass + ".selected").removeClass("selected");
+			$('.' + attributeContainerClass + ".selected").removeClass("selected");
 			if (selected instanceof XMLElement){
 				this.selectedElement = selected;
 			} else {
@@ -1380,26 +1392,45 @@
 		return this;
 	};
 
-	GUIEditor.prototype.deselectElement = function() {
+	GUIEditor.prototype.deselect = function() {
+		var selectedAttributes = $('.' + attributeContainerClass + ".selected");
+		if (selectedAttributes.length > 0) {
+			selectedAttributes.removeClass('selected');
+			return this;
+		}
 		$("." + modsElementClass + ".selected").removeClass("selected");
 		this.selectedElement = null;
+		this.editor.modifyMenu.clearContextualMenus();
 		return this;
 	};
 
 	GUIEditor.prototype.deleteSelected = function() {
 		if (this.selectedElement == null)
 			return this;
-		// After delete, select next sibling, previous sibling, or parent, as available.
-		var afterDeleteSelection = this.selectedElement.guiElement.next("." + modsElementClass);
-		if (afterDeleteSelection.length == 0)
-			afterDeleteSelection = this.selectedElement.guiElement.prev("." + modsElementClass);
-		if (afterDeleteSelection.length == 0)
-			afterDeleteSelection = this.selectedElement.guiElement.parents("." + modsElementClass).first();
+		var selectedAttribute = this.selectedElement.getSelectedAttribute();
+		if (selectedAttribute.length > 0) {
+			this.selectAttribute(true)
+			var newSelection = selectedAttribute.prev('.' + attributeContainerClass);
+			if (newSelection.length == 0)
+				newSelection = selectedAttribute.next('.' + attributeContainerClass);
+			newSelection.addClass("selected");
+			
+			var xmlAttribute = selectedAttribute.data("xmlAttribute");
+			xmlAttribute.remove();
+		} else {
+			// After delete, select next sibling, previous sibling, or parent, as available.
+			var afterDeleteSelection = this.selectedElement.guiElement.next("." + modsElementClass);
+			if (afterDeleteSelection.length == 0)
+				afterDeleteSelection = this.selectedElement.guiElement.prev("." + modsElementClass);
+			if (afterDeleteSelection.length == 0)
+				afterDeleteSelection = this.selectedElement.guiElement.parents("." + modsElementClass).first();
+			
+			this.selectedElement.remove();
+			this.editor.xmlState.documentChangedEvent();
+			
+			this.selectElement(afterDeleteSelection);
+		}
 		
-		this.selectedElement.remove();
-		this.editor.xmlState.documentChangedEvent();
-		
-		this.selectElement(afterDeleteSelection);
 		return this;
 	};
 
@@ -1474,11 +1505,36 @@
 			this.selectElement(newSelection.first()).selectedElement.focus();
 		return this;
 	};
+	
+	GUIEditor.prototype.selectAttribute = function(reverse) {
+		if (this.selectedElement == null) {
+			return this;
+		} else {
+			var selectedAttribute = this.selectedElement.getSelectedAttribute();
+			if (selectedAttribute.length > 0) {
+				var newSelection = selectedAttribute[reverse? 'prev' : 'next']("." + attributeContainerClass);
+				if (newSelection.length > 0) {
+					$("." + attributeContainerClass + ".selected").removeClass("selected");
+					newSelection.addClass("selected");
+				}
+			} else {
+				selectedAttribute = this.selectedElement.attributeContainer.children("." + attributeContainerClass)
+						.first().addClass("selected");
+			}
+		}
+	};
 
-	GUIEditor.prototype.focusSelectedFirstInput = function() {
+	GUIEditor.prototype.focusSelectedText = function() {
 		if (this.selectedElement == null)
 			return this;
-		var focused = this.selectedElement.guiElement.find("input[type=text]:visible, textarea:visible, select:visible").first().focus();
+		var focused = null;
+		if (this.selectedElement.textInput != null) {
+			focused = this.selectedElement.textInput.focus();
+		} else {
+			focused = this.selectedElement.guiElement.find("input[type=text].element_text:visible, textarea.element_text:visible, select.element_text:visible").first().focus();
+		}
+		if (focused == null || focused.length == 0)
+			return this;
 		// If the focused input was in an element other than the selected one, then select it
 		var containerElement = focused.parents("." + modsElementClass);
 		if (containerElement !== this.selectedElement)
@@ -1522,6 +1578,9 @@
 		var containerElement = focused.parents("." + modsElementClass);
 		if (containerElement !== this.selectedElement)
 			this.selectElement(containerElement);
+		var container = focused.parents('.' + attributeContainerClass);
+		if (container.length > 0)
+			container.addClass('selected');
 		return this;
 	};
 
@@ -2344,7 +2403,7 @@
 				// Enter, focus the first visible input
 				if (e.keyCode == 13 && focused.length == 0) {
 					e.preventDefault();
-					this.guiEditor.focusSelectedFirstInput();
+					this.guiEditor.focusSelectedText();
 					return false;
 				}
 				
@@ -2377,6 +2436,8 @@
 						// If not holding shift while hitting up or down, go to the next/prev element
 						if (e.keyCode == 40 || e.keyCode == 38){
 							this.guiEditor.selectNext(e.keyCode == 38);
+						} else if (e.keyCode == 37 || e.keyCode == 39) {
+							this.guiEditor.selectAttribute(e.keyCode == 37)
 						}
 					}
 					return false;
@@ -2435,7 +2496,7 @@
 		
 		refreshMenuSelected: function(self) {
 			var suffixes = ['Deselect', 'Next_Element', 'Previous_Element', 'Parent', 'First_Child', 'Next_Sibling', 
-			                'Previous_Sibling', 'Next_Element_Tab', 'Previous_Element_Tab', 'Delete', 'Move_Element_Up', 
+			                'Previous_Sibling', 'Next_Attribute', 'Previous_Attribute', 'Delete', 'Move_Element_Up', 
 			                'Move_Element_Down'];
 			var hasSelected = self.guiEditor.selectedElement != null && self.guiEditor.active;
 			$.each(suffixes, function(){
