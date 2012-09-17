@@ -146,7 +146,7 @@
 		return this.guiElement;
 	};
 
-	XMLElement.prototype.render = function (parentElement, recursive) {
+	XMLElement.prototype.render = function    abstra (parentElement, recursive) {
 		this.parentElement = parentElement;
 		this.guiElementID = this.guiEditor.nextIndex();
 		
@@ -183,6 +183,7 @@
 			event.stopPropagation();
 		});
 		
+		this.initializeGUI();
 		this.updated();
 		
 		return this.guiElement;
@@ -199,7 +200,6 @@
 				if (self.editor.modsEquals(this, elementsArray[i])) {
 					var childElement = new XMLElement($(this), elementsArray[i], self.editor);
 					childElement.render(self, recursive);
-					childElement.initializeGUI();
 				}
 			}
 		});
@@ -220,6 +220,16 @@
 	};
 
 	XMLElement.prototype.initializeGUI = function () {
+		var self = this;
+		if (this.childContainer != null) {
+			this.childContainer.sortable({
+				distance: 10,
+				items: '> .' + modsElementClass,
+				update: function(event, ui) {
+					self.editor.guiEditor.updateElementPosition($(ui.item));
+				}
+			});
+		}
 	};
 
 	XMLElement.prototype.addTopActions = function () {
@@ -383,9 +393,6 @@
 		if (swapTarget.guiElement != null && this.guiElement != null) {
 			// Swap the gui nodes
 			swapTarget.guiElement.detach().insertAfter(this.guiElement);
-			
-			// Some things, like tabs, need to be reinitialized
-			swapTarget.initializeGUI();
 		}
 	};
 
@@ -1305,6 +1312,7 @@
 		this.rootElement.guiElement = this.modsContent;
 		this.rootElement.guiElement.data("xmlElement", this.rootElement);
 		this.rootElement.childContainer = this.modsContent;
+		this.rootElement.initializeGUI();
 		return this;
 	};
 
@@ -1443,6 +1451,20 @@
 			this.selectedElement.focus();
 		}
 		return this;
+	};
+	
+	GUIEditor.prototype.updateElementPosition = function(moved) {
+		var movedElement = moved.data('xmlElement');
+		
+		var sibling = moved.prev('.' + modsElementClass);
+		if (sibling.length == 0) {
+			sibling = moved.next('.' + modsElementClass);
+			movedElement.xmlNode.detach().insertBefore(sibling.data('xmlElement').xmlNode);
+		} else {
+			movedElement.xmlNode.detach().insertAfter(sibling.data('xmlElement').xmlNode);
+		}
+		this.selectElement(moved);
+		this.editor.xmlState.documentChangedEvent();
 	};
 
 	GUIEditor.prototype.selectSibling = function(reverse) {

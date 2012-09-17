@@ -101,6 +101,7 @@ textarea:focus,input:focus {
 	font-size: 14px;
 	box-shadow: 4px 3px 3px 0 #CCE8F1;
 	margin-bottom: 10px;
+	background-color: #fff;
 	-webkit-border-radius: 6px 6px 6px 6px;
 	-moz-border-radius: 6px 6px 6px 6px;
 }
@@ -326,39 +327,6 @@ textarea:focus,input:focus {
 
 .attribute_container a:hover {
 	color: #44468a;
-}
-
-/* Element tabs */
-.element_header.ui-tabs-nav {
-	border: 0;
-}
-
-.element_header li.ui-state-default a, .element_header li.ui-tabs-selected a {
-	padding: 0px 5px;
-	font-size: 12px;
-}
-
-.element_header li.ui-state-active {
-	border-top: 1px solid #bbb;
-	border-left: 1px solid #bbb;
-	border-right: 1px solid #bbb;
-}
-
-.element_header li.ui-state-active a {
-	color: #177ca4;
-}
-
-.mods_element.ui-tabs {
-	padding: 0px;
-}
-
-.mods_element.ui-widget-content {
-	background-color: #fff;
-	background-image: none;
-}
-
-.mods_element .ui-widget-header {
-	background-color: transparent;
 }
 
 .mods_element .content_block {
