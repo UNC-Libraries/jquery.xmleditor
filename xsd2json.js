@@ -157,9 +157,11 @@ Xsd2Json.prototype.adjustPrefixes = function(object) {
 		$.each(object.elements, function(){
 			thiz.adjustPrefixes(this);
 		});
-		$.each(object.attributes, function(){
-			thiz.adjustPrefixes(this);
-		});
+		if (object.attributes != null) {
+			$.each(object.attributes, function(){
+				thiz.adjustPrefixes(this);
+			});
+		}
 	}
 };
 

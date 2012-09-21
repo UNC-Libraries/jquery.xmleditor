@@ -126,7 +126,7 @@
 		this.xmlNode = $(xmlNode);
 		this.isTopLevel = (this.xmlNode.parents().length == 1);
 		this.allowChildren = this.objectType.elements.length > 0;
-		this.allowAttributes = this.objectType.attributes.length > 0;
+		this.allowAttributes = this.objectType.attributes != null && this.objectType.attributes.length > 0;
 		this.allowText = this.objectType.type != null;
 		this.guiElementID = null;
 		this.guiElement = null;
@@ -197,7 +197,7 @@
 		var self = this;
 		this.xmlNode.children().each(function() {
 			for ( var i = 0; i < elementsArray.length; i++) {
-				if (self.editor.modsEquals(this, elementsArray[i])) {
+				if (self.editor.nsEquals(this, elementsArray[i])) {
 					var childElement = new XMLElement($(this), elementsArray[i], self.editor);
 					childElement.render(self, recursive);
 				}
@@ -437,6 +437,8 @@
 	
 
 	XMLElement.prototype.updated = function () {
+		if (this.guiElement == null)
+			return;
 		this.childCount = (this.objectType.elements.length == 0)? 0: this.childContainer.children("." + modsElementClass).length;
 		this.attributeCount = (this.objectType.attributes.length == 0)? 0: this.guiElement.children("." + attributesContainerClass).children("." + attributeContainerClass).length;
 		
@@ -603,7 +605,8 @@
 
 	DocumentState.prototype.extractNamespacePrefix = function(nsURI) {
 		var prefix = null;
-		var attributes = $("mods|mods", this.xml)[0].attributes;
+		var attributes = this.xml.children()[0].attributes;
+		//var attributes = $("mods|mods", this.xml)[0].attributes;
 		$.each(attributes, function(){
 			key = this.name;
 			value = this.value;
@@ -1845,7 +1848,7 @@
 			var instanceNumber = this.tagOccurrences(preceedingLines, tagTitle);
 			// Get xpath to this object using jquery.
 			var elementNode = $("*", this.editor.xmlState.xml).filter(function() {
-		        return self.editor.modsEquals(this, unprefixedTitle);
+		        return self.editor.nsEquals(this, unprefixedTitle);
 		      })[instanceNumber];
 			if (elementNode == null)
 				return;
@@ -2398,9 +2401,9 @@
 			}
 		},
 
-		modsEquals: function(node, element) {
+		nsEquals: function(node, element) {
 			return (((element.substring && element == node.localName) || (!element.substring && element.name == node.localName)) 
-					&& node.namespaceURI == "http://www.loc.gov/mods/v3");
+					&& node.namespaceURI == this.options.targetNS);
 		},
 		
 		getXPath: function(element) {
