@@ -567,8 +567,9 @@
 	};
 
 	DocumentState.prototype.documentChangedEvent = function() {
-		this.changeState == 2;
+		this.changeState = 2;
 		this.editor.undoHistory.captureSnapshot();
+		this.updateStateMessage();
 	};
 
 	DocumentState.prototype.changesCommittedEvent = function() {
@@ -1948,7 +1949,7 @@
 			nameSpaces: {
 				"mods" : "http://www.loc.gov/mods/v3"
 			},
-			submitResponseHandler : this.swordSubmitResponseHandler,
+			submitResponseHandler : null,
 			targetNS: "http://www.loc.gov/mods/v3",
 			targetPrefix: "mods"
 		},
@@ -1996,6 +1997,9 @@
 	    },
 	 
 	    _init: function() {
+	    	if (this.options.submitResponseHandler == null)
+	    		this.options.submitResponseHandler = this.swordSubmitResponseHandler;
+	    	
 	    	this.modsTree = new SchemaTree(this.schema);
 	    	this.modsTree.build();
 			
@@ -2053,7 +2057,7 @@
 					data : (this.options.ajaxOptions.modsRetrievalParams),
 					dataType : "text",
 					success : function(data) {
-						this.loadDocument(data);
+						self.loadDocument(data);
 					}
 				});
 			} else {
@@ -2125,7 +2129,7 @@
 					true, true).populate(this.guiEditor.rootElement, this.schema);
 			
 			if (this.options.floatingMenu) {
-				$(window).scroll(this.modifyMenu.setMenuPosition);
+				$(window).bind('window', $.proxy(this.modifyMenu.setMenuPosition, this.modifyMenu));
 			}
 			
 			$("." + submitButtonClass).click(function() {
@@ -2290,21 +2294,22 @@
 
 			$("." + submissionStatusClass).html("Submitting...");
 			
+			var self = this;
 			$.ajax({
 				'url' : this.options.ajaxOptions.modsUploadPath,
 				'contentType' : "application/xml",
 				'type' : "POST",
 				'data' : xmlString,
 				success : function(response) {
-					var outcome = this.options.submitResponseHandler(response);
+					var outcome = self.options.submitResponseHandler(response);
 					
 					if (!outcome) {
-						this.xmlState.changesCommittedEvent();
-						this.clearProblemPanel();
+						self.xmlState.changesCommittedEvent();
+						self.clearProblemPanel();
 					} else {
-						this.xmlState.syncedChangeEvent();
+						self.xmlState.syncedChangeEvent();
 						$("." + submissionStatusClass).html("Failed to submit<br/>See errors at top").css("background-color", "#ffbbbb").animate({backgroundColor: "#ffffff"}, 1000);
-						this.addProblem("Failed to submit MODS document", outcome);
+						self.addProblem("Failed to submit MODS document", outcome);
 					}
 				},
 				error : function(jqXHR, exception) {

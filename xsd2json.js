@@ -52,7 +52,7 @@ function Xsd2Json(xsd, options) {
 	this.targetNS = null;
 	this.root = null;
 	
-	if (xsd instanceof File){
+	//if (xsd instanceof File){
 		// Not implemented yet
 		//var thiz = this;
 		/*var reader = new FileReader();
@@ -65,9 +65,9 @@ function Xsd2Json(xsd, options) {
 	      })(xsd);
 		
 		reader.readAsText(xsd);*/
-	} else {
+	//} else {
 		this.importAjax(xsd, false);
-	}
+	//}
 };
 
 Xsd2Json.prototype.importAjax = function(url, originalAttempt) {
@@ -81,10 +81,10 @@ Xsd2Json.prototype.importAjax = function(url, originalAttempt) {
 		dataType: "text",
 		async: false,
 		success: function(data){
-			console.time("xsd2json" + thiz.options.rootElement);
+			//console.time("xsd2json" + thiz.options.rootElement);
 			thiz.xsd = $($($.parseXML(data)).children("xs|schema")[0]);
 			thiz.processSchema();
-			console.timeEnd("xsd2json" + thiz.options.rootElement);
+			//console.timeEnd("xsd2json" + thiz.options.rootElement);
 		}, error: function() {
 			if (!originalAttempt)
 				throw new Error("Unable to import " + url);
