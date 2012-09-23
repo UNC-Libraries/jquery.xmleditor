@@ -83,7 +83,8 @@
 					selected : (startingValue == this)
 				}).appendTo(input);
 			});
-		} else if ((this.objectType.element && this.objectType.type == 'string') || this.objectType.attribute){
+		} else if ((this.objectType.element && (this.objectType.type == 'string' || this.objectType.type == 'mixed')) 
+				|| this.objectType.attribute){
 			input = $('<textarea/>').attr({
 				'id' : inputID,
 				'value' : startingValue
@@ -440,7 +441,7 @@
 		if (this.guiElement == null)
 			return;
 		this.childCount = (this.objectType.elements.length == 0)? 0: this.childContainer.children("." + modsElementClass).length;
-		this.attributeCount = (this.objectType.attributes.length == 0)? 0: this.guiElement.children("." + attributesContainerClass).children("." + attributeContainerClass).length;
+		this.attributeCount = (this.objectType.attributes == null || this.objectType.attributes.length == 0)? 0: this.guiElement.children("." + attributesContainerClass).children("." + attributeContainerClass).length;
 		
 		if (this.childCount > 0) {
 			this.guiElement.children("." + childrenContainerClass).show();
@@ -1288,6 +1289,7 @@
 			this.tree[elementTitle][parentTitle] = elementObject;
 		}
 		var schemaTree = this;
+		debugger;
 		$.each(elementObject.elements, function() {
 			schemaTree.build(this.name, this, elementObject.name);
 		});
@@ -2066,6 +2068,14 @@
 			} else {
 				this.loadDocument(localXMLContent);
 			}
+		},
+		
+		_setOptions: function( options ) {
+			debugger;
+		},
+		
+		_setOption: function( key, value ) {
+			debugger;
 		},
 	    
 	    loadDocument: function(xmlString) {

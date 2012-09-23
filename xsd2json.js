@@ -42,6 +42,7 @@ function Xsd2Json(xsd, options) {
 	this.imports = {};
 	this.elements = {};
 	this.types = {};
+	this.attributes = {};
 	this.namespaces = {
 			"xml": "http://www.w3.org/XML/1998/namespace",
 			"xmlns": "http://www.w3.org/2000/xmlns/",
@@ -54,13 +55,13 @@ function Xsd2Json(xsd, options) {
 	
 	//if (xsd instanceof File){
 		// Not implemented yet
-		//var thiz = this;
+		//var self = this;
 		/*var reader = new FileReader();
 		reader.onload = (function(theFile) {
 	        return function(e) {
-	        	thiz.xsd = $($($.parseXML(e.target.result)).children("xs:schema")[0]);
-	        	var selected = thiz.xsd.children("xs|element[name='" + thiz.topLevelName + "']").first();
-	        	this.root = thiz.buildElement(selected);
+	        	self.xsd = $($($.parseXML(e.target.result)).children("xs:schema")[0]);
+	        	var selected = self.xsd.children("xs|element[name='" + self.topLevelName + "']").first();
+	        	this.root = self.buildElement(selected);
 	        };
 	      })(xsd);
 		
@@ -75,54 +76,54 @@ Xsd2Json.prototype.importAjax = function(url, originalAttempt) {
 	// Prefer a local copy to the remote since likely can't get the remote copy due to cross domain ajax restrictions
 	if (!originalAttempt)
 		url = this.options.schemaURI + url.substring(url.lastIndexOf("/") + 1);
-	var thiz = this;
+	var self = this;
 	$.ajax({
 		url: url,
 		dataType: "text",
 		async: false,
 		success: function(data){
-			//console.time("xsd2json" + thiz.options.rootElement);
-			thiz.xsd = $($($.parseXML(data)).children("xs|schema")[0]);
-			thiz.processSchema();
-			//console.timeEnd("xsd2json" + thiz.options.rootElement);
+			//console.time("xsd2json" + self.options.rootElement);
+			self.xsd = $($($.parseXML(data)).children("xs|schema")[0]);
+			self.processSchema();
+			//console.timeEnd("xsd2json" + self.options.rootElement);
 		}, error: function() {
 			if (!originalAttempt)
 				throw new Error("Unable to import " + url);
-			thiz.importAjax(originalURL, true);
+			self.importAjax(originalURL, true);
 		}
 	});
 };
 
 Xsd2Json.prototype.processSchema = function() {
-	var thiz = this;
+	var self = this;
 	// Extract all the namespaces in use by this schema
 	$.each(this.xsd[0].attributes, function(){
 		var namespaceIndex = this.nodeName.indexOf("xmlns");
 		if (namespaceIndex == 0){
 			namespacePrefix = this.nodeName.substring(5).replace(":", "");
 			// Local namespaces
-			thiz.namespaces[namespacePrefix] = this.nodeValue;
+			self.namespaces[namespacePrefix] = this.nodeValue;
 			if (namespacePrefix == "")
-				thiz.defaultNS = this.nodeValue;
+				self.defaultNS = this.nodeValue;
 			// Store the namespace prefix for the xs namespace
-			if (this.nodeValue == thiz.xsNS){
-				thiz.xsPrefix = namespacePrefix;
-				if (thiz.xsPrefix != "")
-					thiz.xsPrefix = thiz.xsPrefix + ":";
+			if (this.nodeValue == self.xsNS){
+				self.xsPrefix = namespacePrefix;
+				if (self.xsPrefix != "")
+					self.xsPrefix = self.xsPrefix + ":";
 			}
 		}
 	});
 	// Store namespaces so the prefixes can be found by uri
 	$.each(this.namespaces, function(prefix, uri){
-		thiz.namespacePrefixes[uri] = prefix;
+		self.namespacePrefixes[uri] = prefix;
 	});
 	// Store the target namespace of this schema.
 	this.targetNS = this.xsd.attr("targetNamespace");
 	// Load all of the imported schemas
 	this.xsd.children("xs|import").each(function(){
-		var importXSD = new Xsd2Json($(this).attr("schemaLocation"), $.extend({}, thiz.options, {"rootElement": null, "generateRoot": false}));
+		var importXSD = new Xsd2Json($(this).attr("schemaLocation"), $.extend({}, self.options, {"rootElement": null, "generateRoot": false}));
 		var namespace = $(this).attr("namespace");
-		thiz.imports[namespace] = importXSD;
+		self.imports[namespace] = importXSD;
 	});
 	// Begin constructing the element tree, either from a root element or from a generated root
 	if (this.options.rootElement != null || this.options.generateRoot) {
@@ -135,14 +136,21 @@ Xsd2Json.prototype.processSchema = function() {
 				this.root = this.buildElement(selected);
 			else this.root = this.buildSchema(selected);
 			// Add namespace prefixes to match the scoping of this document
-			this.adjustPrefixes(this.root);
+			this.adjustPrefixes(this.root, []);
 		} catch (e) {
 			console.log(e);
 		}
 	}
 }
 
-Xsd2Json.prototype.adjustPrefixes = function(object) {
+Xsd2Json.prototype.adjustPrefixes = function(object, stack) {
+	for (var i = 0; i < stack.length; i++) {
+		if (stack[i] === object){
+			return;
+		}
+			
+	}
+	
 	if (object.name.indexOf(":") == -1){
 		// Replace object name's prefix with the relative
 		var prefix = this.namespacePrefixes[object.namespace];
@@ -150,16 +158,20 @@ Xsd2Json.prototype.adjustPrefixes = function(object) {
 			object.name = prefix + ":" + object.name;
 		}
 		object.nameEsc = object.name.replace(':', '-');
+	} else {
+		return;
 	}
 	// Adjust all the children
 	if (object.element || object.schema) {
-		var thiz = this;
+		var self = this;
+		stack.push(object);
 		$.each(object.elements, function(){
-			thiz.adjustPrefixes(this);
+			self.adjustPrefixes(this, stack);
 		});
+		stack.pop();
 		if (object.attributes != null) {
 			$.each(object.attributes, function(){
-				thiz.adjustPrefixes(this);
+				self.adjustPrefixes(this, stack);
 			});
 		}
 	}
@@ -172,55 +184,62 @@ Xsd2Json.prototype.buildSchema = function(node) {
 		"namespace": this.targetNS,
 		"schema": true
 	};
-	var thiz = this;
+	var self = this;
 	$(node).children().not("xs|annotation").each(function(){
-		if (thiz.xsEq(this, "element")) {
-			thiz.buildElement(this, object);
+		if (self.xsEq(this, "element")) {
+			self.buildElement(this, object);
 		}
 	});
 	return object;
 };
 
 Xsd2Json.prototype.buildElement = function(node, parentObject) {
-	if ($(node).attr("ref") != null){
-		this.execute(node, 'buildElement', parentObject);
-		return;
-	}
-	
-	// Element has a name, means its a new element
-	var element = {
-			"name": $(node).attr("name"),
-			"elements": [],
-			"attributes": [],
-			"values": [],
-			"type": null,
-			"namespace": this.targetNS,
-			"element": true
-	};
-	// Cache global elements for future use
-	if ($(node).parents().length == 1) {
-		this.elements[$(node).attr("name")] = element;
-	}
-	
-	if ($(node).attr("substitutionGroup") != null) {
-		var subGroup = $(node).attr("substitutionGroup");
-		var xsdObj = this.resolveXSD(subGroup);
-		subGroup = this.stripPrefix(subGroup);
-		var targetElement = null;
-		if (subGroup in xsdObj.elements) {
-			targetElement = xsdObj.elements[subGroup];
-		} else {
-			targetElement = xsdObj.buildElement(xsdObj.xsd.children("*[name='" + subGroup + "']")[0]);
-		}
-		this.mergeType(element, targetElement);
+	var element = null;
+	var name = $(node).attr("name");
+	if (name != null && name in this.elements) {
+		element = this.elements[name];
+		console.log("Reusing element " + name);
 	} else {
-		var type = $(node).attr("type");
-		if (type == null) {
-			this.buildType($(node).children().not("xs|annotation")[0], element);
+		if ($(node).attr("ref") != null){
+			this.execute(node, 'buildElement', parentObject);
+			return;
+		}
+		
+		// Element has a name, means its a new element
+		element = {
+				"name": name,
+				"elements": [],
+				"attributes": [],
+				"values": [],
+				"type": null,
+				"namespace": this.targetNS,
+				"element": true
+		};
+		// Cache global elements for future use
+		if ($(node).parents().length == 1) {
+			this.elements[name] = element;
+		}
+		
+		if ($(node).attr("substitutionGroup") != null) {
+			var subGroup = $(node).attr("substitutionGroup");
+			var xsdObj = this.resolveXSD(subGroup);
+			subGroup = this.stripPrefix(subGroup);
+			var targetElement = null;
+			if (subGroup in xsdObj.elements) {
+				targetElement = xsdObj.elements[subGroup];
+			} else {
+				targetElement = xsdObj.buildElement(xsdObj.xsd.children("*[name='" + subGroup + "']")[0]);
+			}
+			this.mergeType(element, targetElement);
 		} else {
-			element.type = this.resolveType(type, element);
-			if (element.type == null)
-				this.execute($(node)[0], 'buildType', element);
+			var type = $(node).attr("type");
+			if (type == null) {
+				this.buildType($(node).children().not("xs|annotation")[0], element);
+			} else {
+				element.type = this.resolveType(type, element);
+				if (element.type == null)
+					this.execute($(node)[0], 'buildType', element);
+			}
 		}
 	}
 	
@@ -242,7 +261,10 @@ Xsd2Json.prototype.buildAttribute = function(node, object) {
 			"namespace": this.targetNS,
 			"attribute": true
 		};
-	
+	// Cache global elements for future use
+	if ($(node).parents().length == 1) {
+		this.attributes[$(node).attr("name")] = attributeObject;
+	}
 	var type = $(node).attr("type");
 	if (type == null) {
 		this.buildType($(node).children().not("xs|annotation")[0], attributeObject);
@@ -298,24 +320,24 @@ Xsd2Json.prototype.buildType = function(node, object) {
 };
 
 Xsd2Json.prototype.buildComplexType = function(node, object) {
-	var thiz = this;
+	var self = this;
 	$(node).children().not("xs|annotation").each(function(){
-		if (thiz.xsEq(this, "group")) {
-			thiz.execute(this, 'buildGroup', object);
-		} else if (thiz.xsEq(this, "simpleContent")) {
-			thiz.buildSimpleContent(this, object);
-		} else if (thiz.xsEq(this, "complexContent")) {
-			thiz.buildComplexContent(this, object);
-		} else if (thiz.xsEq(this, "choice")) {
-			thiz.buildChoice(this, object);
-		} else if (thiz.xsEq(this, "attribute")) {
-			thiz.buildAttribute(this, object);
-		} else if (thiz.xsEq(this, "attributeGroup")) {
-			thiz.execute(this, 'buildAttributeGroup', object);
-		} else if (thiz.xsEq(this, "sequence")) {
-			thiz.buildSequence(this, object);
-		} else if (thiz.xsEq(this, "all")) {
-			thiz.buildAll(this, object);
+		if (self.xsEq(this, "group")) {
+			self.execute(this, 'buildGroup', object);
+		} else if (self.xsEq(this, "simpleContent")) {
+			self.buildSimpleContent(this, object);
+		} else if (self.xsEq(this, "complexContent")) {
+			self.buildComplexContent(this, object);
+		} else if (self.xsEq(this, "choice")) {
+			self.buildChoice(this, object);
+		} else if (self.xsEq(this, "attribute")) {
+			self.buildAttribute(this, object);
+		} else if (self.xsEq(this, "attributeGroup")) {
+			self.execute(this, 'buildAttributeGroup', object);
+		} else if (self.xsEq(this, "sequence")) {
+			self.buildSequence(this, object);
+		} else if (self.xsEq(this, "all")) {
+			self.buildAll(this, object);
 		}
 	});
 };
@@ -342,66 +364,66 @@ Xsd2Json.prototype.buildList = function(node, object) {
 
 Xsd2Json.prototype.buildUnion = function(node, object) {
 	var memberTypes = $(node).attr('memberTypes').split(" ");
-	var thiz = this;
+	var self = this;
 	$.each(memberTypes, function(){
-		var xsdObj = thiz.resolveXSD(this);
+		var xsdObj = self.resolveXSD(this);
 		var targetNode = xsdObj.xsd.children("xs|simpleType[name='" + this + "']")[0];
 		xsdObj.buildType(targetNode, object);
 	});
 };
 
 Xsd2Json.prototype.buildGroup = function(node, object) {
-	var thiz = this;
+	var self = this;
 	$(node).children().each(function(){
-		if (thiz.xsEq(this, "choice")) {
-			thiz.buildChoice(this, object);
-		} else if (thiz.xsEq(this, "all")) {
-			thiz.buildAll(this, object);
-		} else if (thiz.xsEq(this, "sequence")) {
-			thiz.buildSequence(this, object);
+		if (self.xsEq(this, "choice")) {
+			self.buildChoice(this, object);
+		} else if (self.xsEq(this, "all")) {
+			self.buildAll(this, object);
+		} else if (self.xsEq(this, "sequence")) {
+			self.buildSequence(this, object);
 		}
 	});
 };
 
 Xsd2Json.prototype.buildAll = function(node, object) {
-	var thiz = this;
+	var self = this;
 	$(node).children().each(function(){
-		if (thiz.xsEq(this, "element")) {
-			thiz.buildElement(this, object);
+		if (self.xsEq(this, "element")) {
+			self.buildElement(this, object);
 		}
 	});
 };
 
 Xsd2Json.prototype.buildChoice = function(node, object) {
-	var thiz = this;
+	var self = this;
 	$(node).children().each(function(){
-		if (thiz.xsEq(this, "element")) {
-			thiz.buildElement(this, object);
-		} else if (thiz.xsEq(this, "group")) {
-			thiz.execute(this, 'buildGroup', object);
-		} else if (thiz.xsEq(this, "choice")) {
-			thiz.buildChoice(this, object);
-		} else if (thiz.xsEq(this, "sequence")) {
-			thiz.buildSequence(this, object);
-		} else if (thiz.xsEq(this, "any")) {
-			thiz.buildAny(this, object);
+		if (self.xsEq(this, "element")) {
+			self.buildElement(this, object);
+		} else if (self.xsEq(this, "group")) {
+			self.execute(this, 'buildGroup', object);
+		} else if (self.xsEq(this, "choice")) {
+			self.buildChoice(this, object);
+		} else if (self.xsEq(this, "sequence")) {
+			self.buildSequence(this, object);
+		} else if (self.xsEq(this, "any")) {
+			self.buildAny(this, object);
 		}
 	});
 };
 
 Xsd2Json.prototype.buildSequence = function(node, object) {
-	var thiz = this;
+	var self = this;
 	$(node).children().each(function(){
-		if (thiz.xsEq(this, "element")) {
-			thiz.buildElement(this, object);
-		} else if (thiz.xsEq(this, "group")) {
-			thiz.execute(this, 'buildGroup', object);
-		} else if (thiz.xsEq(this, "choice")) {
-			thiz.buildChoice(this, object);
-		} else if (thiz.xsEq(this, "sequence")) {
-			thiz.buildSequence(this, object);
-		} else if (thiz.xsEq(this, "any")) {
-			thiz.buildAny(this, object);
+		if (self.xsEq(this, "element")) {
+			self.buildElement(this, object);
+		} else if (self.xsEq(this, "group")) {
+			self.execute(this, 'buildGroup', object);
+		} else if (self.xsEq(this, "choice")) {
+			self.buildChoice(this, object);
+		} else if (self.xsEq(this, "sequence")) {
+			self.buildSequence(this, object);
+		} else if (self.xsEq(this, "any")) {
+			self.buildAny(this, object);
 		}
 	});
 };
@@ -439,24 +461,24 @@ Xsd2Json.prototype.buildRestriction = function(node, object) {
 	if (object.type == null) {
 		this.execute(node, 'buildType', object);
 	}
-	var thiz = this;
+	var self = this;
 	$(node).children().each(function(){
-		if (thiz.xsEq(this, "enumeration")){
+		if (self.xsEq(this, "enumeration")){
 			object.values.push($(this).attr("value"));
-		} else if (thiz.xsEq(this, "group")) {
-			thiz.execute(this, 'buildGroup', object);
-		} else if (thiz.xsEq(this, "choice")) {
-			thiz.buildChoice(this, object);
-		} else if (thiz.xsEq(this, "attribute")) {
-			thiz.buildAttribute(this, object);
-		} else if (thiz.xsEq(this, "attributeGroup")) {
-			thiz.execute(this, 'buildAttributeGroup', object);
-		} else if (thiz.xsEq(this, "sequence")) {
-			thiz.buildSequence(this, object);
-		} else if (thiz.xsEq(this, "all")) {
-			thiz.buildAll(this, object);
-		} else if (this.xsEq(node, "simpleType")) {
-			this.buildSimpleType(this, object);
+		} else if (self.xsEq(this, "group")) {
+			self.execute(this, 'buildGroup', object);
+		} else if (self.xsEq(this, "choice")) {
+			self.buildChoice(this, object);
+		} else if (self.xsEq(this, "attribute")) {
+			self.buildAttribute(this, object);
+		} else if (self.xsEq(this, "attributeGroup")) {
+			self.execute(this, 'buildAttributeGroup', object);
+		} else if (self.xsEq(this, "sequence")) {
+			self.buildSequence(this, object);
+		} else if (self.xsEq(this, "all")) {
+			self.buildAll(this, object);
+		} else if (self.xsEq(node, "simpleType")) {
+			self.buildSimpleType(this, object);
 		}
 	});
 };
@@ -468,31 +490,31 @@ Xsd2Json.prototype.buildExtension = function(node, object) {
 	if (object.type == null) {
 		this.execute(node, 'buildType', object);
 	}
-	var thiz = this;
+	var self = this;
 	$(node).children().each(function(){
-		if (thiz.xsEq(this, "attribute")){
-			thiz.buildAttribute(this, object);
-		} else if (thiz.xsEq(this, "attributeGroup")){
-			thiz.execute(this, 'buildAttributeGroup', object);
-		} else if (thiz.xsEq(this, "sequence")){
-			thiz.buildSequence(this, object);
-		} else if (thiz.xsEq(this, "all")) {
-			thiz.buildAll(this, object);
-		} else if (thiz.xsEq(this, "choice")) {
-			thiz.buildChoice(this, object);
-		} else if (thiz.xsEq(this, "group")) {
-			thiz.buildGroup(this, object);
+		if (self.xsEq(this, "attribute")){
+			self.buildAttribute(this, object);
+		} else if (self.xsEq(this, "attributeGroup")){
+			self.execute(this, 'buildAttributeGroup', object);
+		} else if (self.xsEq(this, "sequence")){
+			self.buildSequence(this, object);
+		} else if (self.xsEq(this, "all")) {
+			self.buildAll(this, object);
+		} else if (self.xsEq(this, "choice")) {
+			self.buildChoice(this, object);
+		} else if (self.xsEq(this, "group")) {
+			self.buildGroup(this, object);
 		}
 	});
 };
 
 Xsd2Json.prototype.buildAttributeGroup = function(node, object) {
-	var thiz = this;
+	var self = this;
 	$(node).children().each(function(){
-		if (thiz.xsEq(this, "attribute")){
-			thiz.buildAttribute(this, object);
-		} else if (thiz.xsEq(this, "attributeGroup")){
-			thiz.execute(this, 'buildAttributeGroup', object);
+		if (self.xsEq(this, "attribute")){
+			self.buildAttribute(this, object);
+		} else if (self.xsEq(this, "attributeGroup")){
+			self.execute(this, 'buildAttributeGroup', object);
 		}
 	});
 };
@@ -502,6 +524,7 @@ Xsd2Json.prototype.execute = function(node, fnName, object) {
 	var targetNode = node;
 	var xsdObj = this;
 	var name = resolveName;
+	console.log("Execute " + name);
 	if (resolveName != null && (this.xsPrefix == "" && resolveName.indexOf(":") != -1) 
 			|| (this.xsPrefix != "" && resolveName.indexOf(this.xsPrefix) == -1)) {
 		xsdObj = this.resolveXSD(resolveName);
@@ -509,8 +532,6 @@ Xsd2Json.prototype.execute = function(node, fnName, object) {
 	} 
 	
 	try {
-		//if (name == "nameType")
-		//	debugger;
 		xsdObj[fnName](targetNode, object);
 	} catch (error) {
 		$("body").append("<br/>" + name + ": " + error + " ");
