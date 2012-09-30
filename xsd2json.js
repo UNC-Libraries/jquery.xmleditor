@@ -40,6 +40,7 @@ function Xsd2Json(xsd, options) {
 	$.xmlns['xs'] = this.xsNS;
 	this.xsd = null;
 	this.imports = {};
+	this.rootDefinitions = {};
 	this.elements = {};
 	this.types = {};
 	this.attributes = {};
@@ -136,44 +137,42 @@ Xsd2Json.prototype.processSchema = function() {
 				this.root = this.buildElement(selected);
 			else this.root = this.buildSchema(selected);
 			// Add namespace prefixes to match the scoping of this document
-			this.adjustPrefixes(this.root, []);
+			this.adjustPrefixes(this.root);
 		} catch (e) {
 			console.log(e);
 		}
 	}
 }
 
-Xsd2Json.prototype.adjustPrefixes = function(object, stack) {
-	for (var i = 0; i < stack.length; i++) {
-		if (stack[i] === object){
+Xsd2Json.prototype.adjustPrefixes = function(object) {
+	if (object.typeRef == null) {
+		if (object.name.indexOf(":") == -1){
+			// Replace object name's prefix with the relative
+			var prefix = this.namespacePrefixes[object.namespace];
+			if (prefix != null && prefix != "") {
+				object.name = prefix + ":" + object.name;
+			}
+			object.nameEsc = object.name.replace(':', '-');
+		} else {
 			return;
 		}
-			
-	}
-	
-	if (object.name.indexOf(":") == -1){
-		// Replace object name's prefix with the relative
-		var prefix = this.namespacePrefixes[object.namespace];
-		if (prefix != null && prefix != "") {
-			object.name = prefix + ":" + object.name;
-		}
-		object.nameEsc = object.name.replace(':', '-');
-	} else {
-		return;
-	}
-	// Adjust all the children
-	if (object.element || object.schema) {
-		var self = this;
-		stack.push(object);
-		$.each(object.elements, function(){
-			self.adjustPrefixes(this, stack);
-		});
-		stack.pop();
-		if (object.attributes != null) {
-			$.each(object.attributes, function(){
-				self.adjustPrefixes(this, stack);
+		// Adjust all the children
+		if (object.element || object.schema) {
+			var self = this;
+			$.each(object.elements, function(){
+				self.adjustPrefixes(this);
 			});
+			if (object.attributes != null) {
+				$.each(object.attributes, function(){
+					self.adjustPrefixes(this);
+				});
+			}
 		}
+	} else {
+		// If there was a type definition on this object, merge it in and stop
+		var typeDef = object.typeRef;
+		delete object.typeRef;
+		this.mergeType(object, typeDef);
 	}
 };
 
@@ -194,16 +193,69 @@ Xsd2Json.prototype.buildSchema = function(node) {
 };
 
 Xsd2Json.prototype.buildElement = function(node, parentObject) {
+	var definition = null;
+	var name = $(node).attr("name");
+	
+	var hasSubGroup = $(node).attr("substitutionGroup") != null;
+	var hasRef = $(node).attr("ref") != null;
+	if (hasSubGroup || hasRef){
+		definition = this.execute(node, 'buildElement');
+		if (hasSubGroup) {
+			definition = $.extend({}, definition, {'name' : name});
+		}
+	} else {
+		// Element has a name, means its a new element
+		definition = {
+				"name": name,
+				"elements": [],
+				"attributes": [],
+				"values": [],
+				"type": null,
+				"namespace": this.targetNS,
+				"element": true
+		};
+		
+		var type = $(node).attr("type");
+		if (type == null) {
+			this.buildType($(node).children().not("xs|annotation")[0], definition);
+		} else {
+			definition.type = this.resolveType(type, definition);
+			if (definition.type == null) {
+				var typeDef = this.execute($(node)[0], 'buildType', definition);
+				// If there was a previously defined type, then store a reference to it
+				if (typeDef !== undefined) {
+					definition.typeRef = typeDef;
+				}
+			}
+		}
+	}
+	
+	if ($(node).parents().length == 1 && !hasRef) {
+		this.rootDefinitions[name] = definition;
+	}
+	
+	if (parentObject != null && $(node).attr("abstract") != "true")
+		parentObject.elements.push(definition);
+	
+	return definition;
+}
+
+/*
+Xsd2Json.prototype.buildElement = function(node, parentObject) {
 	var element = null;
 	var name = $(node).attr("name");
-	if (name != null && name in this.elements) {
-		element = this.elements[name];
+	if (name == "separatedmaterial")
+		debugger;
+	if (name != null && name in this.rootDefinitions['element']) {
+		element = this.rootDefinitions['element'][name];
 		console.log("Reusing element " + name);
 	} else {
 		if ($(node).attr("ref") != null){
 			this.execute(node, 'buildElement', parentObject);
 			return;
 		}
+		
+		console.log("New element " + name);
 		
 		// Element has a name, means its a new element
 		element = {
@@ -217,7 +269,7 @@ Xsd2Json.prototype.buildElement = function(node, parentObject) {
 		};
 		// Cache global elements for future use
 		if ($(node).parents().length == 1) {
-			this.elements[name] = element;
+			this.addDefinition('element', name, element);
 		}
 		
 		if ($(node).attr("substitutionGroup") != null) {
@@ -247,40 +299,86 @@ Xsd2Json.prototype.buildElement = function(node, parentObject) {
 		parentObject.elements.push(element);
 	
 	return element;
-};
+};*/
 
-Xsd2Json.prototype.buildAttribute = function(node, object) {
+Xsd2Json.prototype.buildAttribute = function(node, parentObject) {
+	
+	var definition = null;
+	var name = $(node).attr("name");
+	
+	var hasRef = $(node).attr("ref") != null;
+	if (hasRef){
+		definition = this.execute(node, 'buildAttribute');
+	} else {
+		definition = {
+				"name": $(node).attr("name"),
+				"values": [],
+				"namespace": this.targetNS,
+				"attribute": true
+			};
+		
+		var type = $(node).attr("type");
+		if (type == null) {
+			this.buildType($(node).children().not("xs|annotation")[0], definition);
+		} else {
+			definition.type = this.resolveType(type, definition);
+			if (definition.type == null) {
+				var typeDef = this.execute($(node)[0], 'buildType', definition);
+				// If there was a previously defined type, then store a reference to it
+				if (typeDef !== undefined) {
+					definition.typeRef = typeDef;
+				}
+			}
+		}
+	}
+	
+	if ($(node).parents().length == 1 && !hasRef) {
+		this.rootDefinitions[name] = definition;
+	}
+	
+	if (parentObject != null)
+		parentObject.attributes.push(definition);
+	
+	return definition;
+	
+	/*
 	if ($(node).attr("ref") != null){
 		this.execute(node, 'buildAttribute', object);
 		return;
 	}
 	
-	var attributeObject = {
-			"name": $(node).attr("name"),
-			"values": [],
-			"namespace": this.targetNS,
-			"attribute": true
-		};
-	// Cache global elements for future use
-	if ($(node).parents().length == 1) {
-		this.attributes[$(node).attr("name")] = attributeObject;
-	}
-	var type = $(node).attr("type");
-	if (type == null) {
-		this.buildType($(node).children().not("xs|annotation")[0], attributeObject);
+	var attributeObject = null;
+	var name = $(node).attr("name");
+	if (name != null && name in this.rootDefinitions['attribute']) {
+		attributeObject = this.rootDefinitions['attribute'][name];
+		console.log("Reusing attribute " + name);
 	} else {
-		attributeObject.type = this.resolveType(type, attributeObject);
-		if (attributeObject.type == null){
-			this.execute($(node)[0], 'buildType', attributeObject);
+		attributeObject = {
+				"name": $(node).attr("name"),
+				"values": [],
+				"namespace": this.targetNS,
+				"attribute": true
+			};
+		// Cache global elements for future use
+		if ($(node).parents().length == 1) {
+			this.addDefinition('attribute', name, element);
+			this.attributes[$(node).attr("name")] = attributeObject;
+		}
+		var type = $(node).attr("type");
+		if (type == null) {
+			this.buildType($(node).children().not("xs|annotation")[0], attributeObject);
+		} else {
+			attributeObject.type = this.resolveType(type, attributeObject);
+			if (attributeObject.type == null){
+				this.execute($(node)[0], 'buildType', attributeObject);
+			}
 		}
 	}
 	
 	if (object != null) {
 		object.attributes.push(attributeObject);
 	}
-		
-	
-	return attributeObject;
+	return attributeObject;*/
 };
 
 Xsd2Json.prototype.buildType = function(node, object) {
@@ -288,10 +386,12 @@ Xsd2Json.prototype.buildType = function(node, object) {
 		return;
 	var needsMerge = false;
 	var extendingObject = object;
-	if ($(node).attr("name") != null){
+	var name = $(node).attr("name");
+	if (name != null){
 		// If this type has already been processed, then apply it
-		if ($(node).attr("name") in this.types) {
-			this.mergeType(object, this.types[$(node).attr("name")]);
+		if (name in this.rootDefinitions) {
+			console.log("Reusing type " + name);
+			this.mergeType(object, this.types[name]);
 			return;
 		}
 		// New type, create base
@@ -301,7 +401,8 @@ Xsd2Json.prototype.buildType = function(node, object) {
 				values: [],
 				namespace: node.namespaceURI
 			};
-		this.types[$(node).attr("name")] = type;
+		this.rootDefinitions[name] = type;
+		//this.types[name] = type;
 		extendingObject = type;
 		needsMerge = true;
 	}
@@ -520,19 +621,32 @@ Xsd2Json.prototype.buildAttributeGroup = function(node, object) {
 };
 
 Xsd2Json.prototype.execute = function(node, fnName, object) {
-	var resolveName = $(node).attr("ref") || $(node).attr("type") || $(node).attr("base");
+	var resolveName = $(node).attr("ref") || $(node).attr("substitutionGroup") 
+			|| $(node).attr("type") || $(node).attr("base");
 	var targetNode = node;
 	var xsdObj = this;
 	var name = resolveName;
-	console.log("Execute " + name);
 	if (resolveName != null && (this.xsPrefix == "" && resolveName.indexOf(":") != -1) 
 			|| (this.xsPrefix != "" && resolveName.indexOf(this.xsPrefix) == -1)) {
 		xsdObj = this.resolveXSD(resolveName);
+		var unprefixedName = this.stripPrefix(name)
+		//Check for cached version of the definition
+		if (unprefixedName in xsdObj.rootDefinitions){
+			var definition = xsdObj.rootDefinitions[unprefixedName];
+			if (definition != null) {
+				/*if ($(node).attr("type") || $(node).attr("base")){
+					this.mergeType(object, definition);
+					return object;
+				}*/
+				return definition;
+			}
+		}
+		
 		targetNode = xsdObj.xsd.children("*[name='" + this.stripPrefix(name) + "']")[0];
 	} 
 	
 	try {
-		xsdObj[fnName](targetNode, object);
+		return xsdObj[fnName](targetNode, object);
 	} catch (error) {
 		$("body").append("<br/>" + name + ": " + error + " ");
 		throw error;
@@ -585,6 +699,11 @@ Xsd2Json.prototype.mergeType = function(base, type) {
 	});
 };
 
+Xsd2Json.prototype.getSchema = function() {
+	var self = this;
+	return function() {return self.root;};
+};
+
 /**
  * Converts the computed schema object into JSON and returns as a string.  If pretty is
  * true, then the json will use pretty formatting.
@@ -622,7 +741,7 @@ Xsd2Json.prototype.exportJSON = function(filename, variableName, pretty) {
 	
 	var jsonString = this.stringify(pretty);
 	if (variableName != null){
-		jsonString = "var " + variableName + " = " + jsonString + ";";
+		jsonString = "var " + variableName + " = function() {return " + jsonString + "};";
 	}
 	var blobBuilder = new BlobBuilder();
 	blobBuilder.append(jsonString);

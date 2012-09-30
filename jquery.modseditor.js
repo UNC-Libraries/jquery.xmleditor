@@ -881,14 +881,16 @@
 			enabled : true, 
 			itemClass : 'header_mode_tab',
 			action : function() {
-				self.editor.modsTabContainer.tabs('select', 0);
+				self.editor.modeChange(0);
+				//self.editor.modsTabContainer.tabs('select', 0);
 			}
 		}, {
 			label : 'XML',
 			enabled : true, 
 			itemClass : 'header_mode_tab',
 			action : function() {
-				self.editor.modsTabContainer.tabs('select', 1);
+				self.editor.modeChange(1);
+				//self.editor.modsTabContainer.tabs('select', 1);
 			}
 		} ];
 	}
@@ -1282,16 +1284,19 @@
 			parentTitle = "";
 		}
 		if (elementTitle in this.tree) {
-			if (!(elementObject in this.tree[elementTitle]))
+			if (parentTitle in this.tree[elementTitle]) {
+				// Avoid infinite loops
+				return;
+			} else {
 				this.tree[elementTitle][parentTitle] = elementObject;
+			}
 		} else {
 			this.tree[elementTitle] = {};
 			this.tree[elementTitle][parentTitle] = elementObject;
 		}
-		var schemaTree = this;
-		debugger;
+		var self = this;
 		$.each(elementObject.elements, function() {
-			schemaTree.build(this.name, this, elementObject.name);
+			self.build(this.name, this, elementObject.name);
 		});
 	};
 
@@ -1312,7 +1317,10 @@
 		$("<div/>").attr("class", "placeholder").html("There are no elements in this document.  Use the menu on the right to add new top level elements.")
 				.appendTo(this.modsContent);
 		
-		parentContainer.append(this.modsContent);
+		this.guiContent = $("<div/>").attr({'id' : guiContentClass + this.editor.instanceNumber, 'class' : guiContentClass}).appendTo(parentContainer);
+		//this.guiContent = parentContainer;
+		
+		this.guiContent.append(this.modsContent);
 		
 		this.rootElement = new XMLElement(this.editor.xmlState.xml.children().first(), this.editor.schema, this.editor);
 		this.rootElement.guiElement = this.modsContent;
@@ -1323,6 +1331,7 @@
 	};
 
 	GUIEditor.prototype.activate = function() {
+		this.guiContent.show();
 		this.active = true;
 		this.deselect();
 		
@@ -1337,6 +1346,7 @@
 
 	GUIEditor.prototype.deactivate = function() {
 		this.active = false;
+		this.guiContent.hide();
 		return this;
 	};
 
@@ -1414,7 +1424,8 @@
 		}
 		$("." + modsElementClass + ".selected").removeClass("selected");
 		this.selectedElement = null;
-		this.editor.modifyMenu.clearContextualMenus();
+		if (this.editor.modifyMenu != null)
+			this.editor.modifyMenu.clearContextualMenus();
 		return this;
 	};
 
@@ -1661,8 +1672,8 @@
 	};
 
 	TextEditor.prototype.initialize = function(parentContainer) {
-		this.xmlContent = parentContainer;
-		this.xmlEditorDiv = $("<div/>").attr('id', 'xml_editor').appendTo(parentContainer);
+		this.xmlContent = $("<div/>").attr({'id' : textContentClass + this.instanceNumber, 'class' : textContentClass}).appendTo(parentContainer);
+		this.xmlEditorDiv = $("<div/>").attr('id', 'xml_editor').appendTo(this.xmlContent);
 		this.aceEditor = ace.edit("xml_editor");
 		this.aceEditor.setTheme("ace/theme/textmate");
 		this.aceEditor.getSession().setMode("ace/mode/xml");
@@ -1688,8 +1699,9 @@
 		this.active = true;
 		
 		if (!this.isInitialized()){
-			this.initialize(this.editor.xmlContent);
+			this.initialize(this.editor.modsTabContainer);
 		}
+		this.xmlContent.show();
 		this.refreshDisplay();
 		
 		this.resize();
@@ -1697,6 +1709,7 @@
 	};
 
 	TextEditor.prototype.deactivate = function() {
+		this.xmlContent.hide();
 		this.active = false;
 		this.editor.modifyMenu.clearContextualMenus();
 		if (this.isInitialized()) {
@@ -1962,7 +1975,12 @@
 		_create: function() {
 			this.instanceNumber = $("xml-modsEditor").length;
 			
-			this.schema = this.options.schemaObject;
+			// If the schema is a function, execute it to get the schema from it.
+			if (jQuery.isFunction(this.options.schemaObject)) {
+				this.schema = this.options.schemaObject.apply();
+			} else {
+				this.schema = this.options.schemaObject;
+			}
 			
 			// Add namespaces into jquery
 			$.each(this.options.nameSpaces, function (prefix, value) {
@@ -1979,10 +1997,6 @@
 			this.modsWorkAreaContainer = null;
 			// Tabbed container for differentiating between specific subeditors
 			this.modsTabContainer = null;
-			// GUI editor container
-			this.guiContent = null;
-			// Text/xml editor container
-			this.xmlContent = null;
 			// Header container for the menu and top level info
 			this.editorHeader = null;
 			// Panel for displaying errors
@@ -2022,8 +2036,6 @@
 			this.modsEditorContainer = $("<div/>").attr('class', modsEditorContainerClass).appendTo(this.element);
 			this.modsWorkAreaContainer = null;
 			this.modsTabContainer = null;
-			this.guiContent = null;
-			this.xmlContent = null;
 			
 			this.editorHeader = null;
 			this.problemsPanel = null;
@@ -2069,14 +2081,6 @@
 				this.loadDocument(localXMLContent);
 			}
 		},
-		
-		_setOptions: function( options ) {
-			debugger;
-		},
-		
-		_setOption: function( key, value ) {
-			debugger;
-		},
 	    
 	    loadDocument: function(xmlString) {
 			this.xmlState = new DocumentState(xmlString, this);
@@ -2102,23 +2106,28 @@
 			this.modsTabContainer = $("<div/>").attr("class", editorTabAreaClass).css("padding-top", this.editorHeader.height() + "px").appendTo(this.modsWorkAreaContainer);
 			this.problemsPanel = $("<pre/>").attr('class', problemsPanelClass).hide().appendTo(this.modsTabContainer);
 			
-			var modeTabs = $("<ul/>").appendTo(this.modsTabContainer);
-			modeTabs.append("<li><a href='#" + guiContentClass + this.instanceNumber + "'>MODS</a></li>");
-			modeTabs.append("<li><a href='#" + textContentClass + this.instanceNumber + "' class='" + xmlTabClass + "'>XML</a></li>");
+			/*var modeTabs = $("<ul/>").appendTo(this.modsTabContainer);
+			modeTabs.append("<li><a href='#" + guiContentClass + this.instanceNumber + "'><span>MODS</span></a></li>");
+			modeTabs.append("<li><a href='#" + textContentClass + this.instanceNumber + "' class='" + xmlTabClass + "'><span>XML</span></a></li>");
+			*/
+			//this.guiContent = $("<div/>").attr({'id' : guiContentClass + this.instanceNumber, 'class' : guiContentClass}).appendTo(this.modsTabContainer);
+			//this.xmlContent = $("<div/>").attr({'id' : textContentClass + this.instanceNumber, 'class' : textContentClass}).appendTo(this.modsTabContainer);
 			
-			this.guiContent = $("<div/>").attr({'id' : guiContentClass + this.instanceNumber, 'class' : guiContentClass}).appendTo(this.modsTabContainer);
-			this.xmlContent = $("<div/>").attr({'id' : textContentClass + this.instanceNumber, 'class' : textContentClass}).appendTo(this.modsTabContainer);
-			
-			this.modsTabContainer.tabs({
-				show: $.proxy(this.modeChange, this),
-				select: $.proxy(this.modeTabSelect, this)
-			});
+			/*this.modsTabContainer.tabs({
+				show: function(){
+					$.proxy(this.modeChange, this);
+				},
+				select: function(){
+					$.proxy(this.modeTabSelect, this);
+				}
+			});*/
 			
 			if (this.options.enableMenuBar) {
-				modeTabs.css("display", "none");
+				//modeTabs.css("display", "none");
 			}
 			
-			this.guiEditor.initialize(this.guiContent);
+			this.guiEditor.initialize(this.modsTabContainer);
+			this.guiEditor.activate();
 			
 			var self = this;
 			$(window).resize(function() {
@@ -2189,8 +2198,8 @@
 			this.activeEditor.addAttributeEvent(data.target, data.objectType, $(instigator));
 		},
 		
-		modeTabSelect: function(event, ui) {
-			if (ui.index == 0) {
+		modeChange: function(mode) {
+			if (mode == 0) {
 				if (this.textEditor.isInitialized() && this.xmlState.isChanged()) {
 					// Try to reconstruct the xml object before changing tabs.  Cancel change if parse error to avoid losing changes.
 					try {
@@ -2202,15 +2211,13 @@
 					this.undoHistory.captureSnapshot();
 				}
 			}
-		},
-		
-		modeChange: function(event, ui) {
+			
 			$(".active_mode_tab").removeClass("active_mode_tab");
 			this.modifyMenu.clearContextualMenus();
 			if (this.activeEditor != null) {
 				this.activeEditor.deactivate();
 			}
-			if (ui.index == 0) {
+			if (mode == 0) {
 				this.activeEditor = this.guiEditor;
 				$("#" + modsMenuHeaderPrefix + "MODS").addClass("active_mode_tab");
 			} else {
