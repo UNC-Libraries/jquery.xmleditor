@@ -679,6 +679,15 @@
 		this.stateCaptureEvent = event;
 		return this;
 	};
+	
+	UndoHistory.prototype.cloneNewDocument = function(originalDoc) {
+		var newDoc = originalDoc.implementation.createDocument(
+			originalDoc.namespaceURI, null, null
+		);
+		var newNode = newDoc.importNode(originalDoc.documentElement, true);
+		newDoc.appendChild(newNode);
+		return $(newDoc);
+	};
 
 	UndoHistory.prototype.changeHead = function(step){
 		if ((step < 0 && this.headIndex + step < 0) 
@@ -687,7 +696,7 @@
 			return;
 		
 		this.headIndex += step;
-		this.editor.xmlState.xml = this.states[this.headIndex].clone();
+		this.editor.xmlState.xml = this.cloneNewDocument(this.states[this.headIndex][0]);
 		
 		this.editor.refreshDisplay();
 		
@@ -708,7 +717,8 @@
 		}
 
 		this.headIndex = this.states.length;
-		this.states.push(this.editor.xmlState.xml.clone());
+
+		this.states.push(this.cloneNewDocument(this.editor.xmlState.xml[0]));
 		
 		if (this.stateCaptureEvent != null)
 			this.stateCaptureEvent(this);
