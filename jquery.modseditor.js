@@ -2161,7 +2161,7 @@
 					true, true).populate(this.guiEditor.rootElement, this.schema);
 			
 			if (this.options.floatingMenu) {
-				$(window).bind('window', $.proxy(this.modifyMenu.setMenuPosition, this.modifyMenu));
+				$(window).bind('scroll', $.proxy(this.modifyMenu.setMenuPosition, this.modifyMenu));
 			}
 			
 			$("." + submitButtonClass).click(function() {
