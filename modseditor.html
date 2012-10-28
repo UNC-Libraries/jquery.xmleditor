@@ -1,0 +1,75 @@
+<!doctype html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="stylesheet" href="stylesheets/reset.css" type="text/css" />
+<link rel="stylesheet" href="stylesheets/demo.css" type="text/css" />
+<link rel="stylesheet" href="stylesheets/jquery.modseditor.css" type="text/css" />
+<script src="javascripts/lib/ace/src-min/ace.js"></script>
+<script src="javascripts/lib/jquery/jquery.min.js"></script>
+<script src="javascripts/lib/jquery/jquery-ui.min.js"></script>
+<script src="javascripts/lib/jquery/jquery.xmlns.js"></script>
+<script src="javascripts/lib/json2.js"></script>
+<script src="javascripts/lib/expanding.js"></script>
+<script src="javascripts/lib/vkbeautify.0.98.01.beta.js"></script>
+<script src="javascripts/xsd2json.js"></script>
+<script src="javascripts/jquery.modseditor.js"></script>
+</head>
+<body>
+	<div class="wrapper">
+		<header>
+			<h1>Jquery.modseditor</h1>
+			<p>jQuery based MODS editor plugin.</p>
+
+			<p class="view">
+				<a href="https://github.com/UNC-Libraries/jquery.modseditor">View
+					the Project on GitHub <small>UNC-Libraries/jquery.modseditor</small>
+				</a>
+			</p>
+			<ul>
+				<li><a
+					href="https://github.com/UNC-Libraries/jquery.modseditor/zipball/master">Download
+						<strong>ZIP File</strong>
+				</a></li>
+				<li><a
+					href="https://github.com/UNC-Libraries/jquery.modseditor/tarball/master">Download
+						<strong>TAR Ball</strong>
+				</a></li>
+				<li><a
+					href="https://github.com/UNC-Libraries/jquery.modseditor">View
+						On <strong>GitHub</strong>
+				</a></li>
+			</ul>
+		</header>
+	</div>
+	<div id="mods_editor">
+		<mods xmlns="http://www.loc.gov/mods/v3"> </mods>
+	</div>
+	<script>
+		$(function() {
+			var extractor = new Xsd2Json("mods-3-4.xsd", {
+				"schemaURI" : "xsd/mods-3-4/",
+				"rootElement" : "mods"
+			});
+
+			$("#mods_editor").modsEditor({
+				schemaObject : function() {
+					return extractor.root;
+				},
+				documentTitle : 'mods document'
+			});
+		});
+	</script>
+	<footer>
+		<p>
+			This project is maintained by <a
+				href="https://github.com/UNC-Libraries">UNC-Libraries</a>
+		</p>
+		<p>
+			<small>Hosted on GitHub Pages &mdash; Theme by <a
+				href="https://github.com/orderedlist">orderedlist</a></small>
+		</p>
+	</footer>
+	<script src="javascripts/scale.fix.js"></script>
+</body>
+</html>
