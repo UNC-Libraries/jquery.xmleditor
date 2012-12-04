@@ -1989,7 +1989,7 @@
 			if (jQuery.isFunction(this.options.schemaObject)) {
 				this.schema = this.options.schemaObject.apply();
 			} else {
-				this.schema = this.options.schemaObject;
+				this.schema = JSON.retrocycle(this.options.schemaObject);
 			}
 			
 			// Add namespaces into jquery
@@ -2137,7 +2137,7 @@
 			}
 			
 			this.guiEditor.initialize(this.modsTabContainer);
-			this.guiEditor.activate();
+			this.modeChange(0);
 			
 			var self = this;
 			$(window).resize(function() {
@@ -2167,7 +2167,8 @@
 			$("." + submitButtonClass).click(function() {
 				self.saveXML();
 			});
-			$(window).resize();
+			//$(window).resize();
+			//this.refreshDisplay();
 		},
 		
 		addChildElementCallback: function (instigator) {

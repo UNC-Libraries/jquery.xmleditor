@@ -142,7 +142,7 @@ Xsd2Json.prototype.processSchema = function() {
 			console.log(e);
 		}
 	}
-}
+};
 
 Xsd2Json.prototype.adjustPrefixes = function(object) {
 	if (object.typeRef == null) {
@@ -560,7 +560,9 @@ Xsd2Json.prototype.buildRestriction = function(node, object) {
 	
 	object.type = this.resolveType(base, object);
 	if (object.type == null) {
-		this.execute(node, 'buildType', object);
+		var typeDef = this.execute(node, 'buildType', object);
+		if (typeDef !== undefined)
+			this.mergeType(object, typeDef);
 	}
 	var self = this;
 	$(node).children().each(function(){
@@ -589,7 +591,9 @@ Xsd2Json.prototype.buildExtension = function(node, object) {
 	
 	object.type = this.resolveType(base, object);
 	if (object.type == null) {
-		this.execute(node, 'buildType', object);
+		var typeDef = this.execute(node, 'buildType', object);
+		if (typeDef !== undefined)
+			this.mergeType(object, typeDef);
 	}
 	var self = this;
 	$(node).children().each(function(){
@@ -629,7 +633,7 @@ Xsd2Json.prototype.execute = function(node, fnName, object) {
 	if (resolveName != null && (this.xsPrefix == "" && resolveName.indexOf(":") != -1) 
 			|| (this.xsPrefix != "" && resolveName.indexOf(this.xsPrefix) == -1)) {
 		xsdObj = this.resolveXSD(resolveName);
-		var unprefixedName = this.stripPrefix(name)
+		var unprefixedName = this.stripPrefix(name);
 		//Check for cached version of the definition
 		if (unprefixedName in xsdObj.rootDefinitions){
 			var definition = xsdObj.rootDefinitions[unprefixedName];
@@ -714,9 +718,9 @@ Xsd2Json.prototype.stringify = function(pretty) {
 	if (this.root == null)
 		throw new Error("Root element was not set, cannot convert to JSON.");
 	if (pretty) {
-		return vkbeautify.json(JSON.stringify(this.root));
+		return vkbeautify.json(JSON.stringify(JSON.decycle(this.root)));
 	}
-	return JSON.stringify(this.root);
+	return JSON.stringify(JSON.decycle(this.root));
 };
 
 /**
@@ -741,7 +745,7 @@ Xsd2Json.prototype.exportJSON = function(filename, variableName, pretty) {
 	
 	var jsonString = this.stringify(pretty);
 	if (variableName != null){
-		jsonString = "var " + variableName + " = function() {return " + jsonString + "};";
+		jsonString = "var " + variableName + " = " + jsonString + ";";
 	}
 	var blobBuilder = new BlobBuilder();
 	blobBuilder.append(jsonString);
