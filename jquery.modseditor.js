@@ -918,7 +918,6 @@
 		this.menuBarContainer.children("ul").children("li").click(function (event) {
 			event.stopPropagation();
 		});
-		var self = this;
 		$('html').one("click" ,function() {
 			self.menuBarContainer.removeClass("active");
 		});
@@ -965,6 +964,25 @@
 			$.each(menuItemData.items, function() {
 				menuBar.generateMenuItem(this, subMenu);
 			});
+		}
+	};
+	
+	MenuBar.prototype.addEntry = function(entry) {
+		var currentTier = this.headerMenuData;
+		if (entry.insertPath) {
+			$.each(entry.insertPath, function() {
+				var pathLabel = this;
+				$.each(currentTier, function() {
+					if (this.label == pathLabel) {
+						currentTier = this.items;
+						return false;
+					}
+				});
+			});
+		}
+		if (currentTier) {
+			delete entry.insertPath;
+			currentTier.push(entry);
 		}
 	};
 
@@ -1444,7 +1462,7 @@
 			return this;
 		var selectedAttribute = this.selectedElement.getSelectedAttribute();
 		if (selectedAttribute.length > 0) {
-			this.selectAttribute(true)
+			this.selectAttribute(true);
 			var newSelection = selectedAttribute.prev('.' + attributeContainerClass);
 			if (newSelection.length == 0)
 				newSelection = selectedAttribute.next('.' + attributeContainerClass);
@@ -1979,7 +1997,8 @@
 			},
 			submitResponseHandler : null,
 			targetNS: "http://www.loc.gov/mods/v3",
-			targetPrefix: "mods"
+			targetPrefix: "mods",
+			menuEntries: undefined
 		},
 		
 		_create: function() {
@@ -2063,6 +2082,11 @@
 			this.menuBar = new MenuBar(this);
 			this.menuBar.updateFunctions.push(this.refreshMenuUndo);
 			this.menuBar.updateFunctions.push(this.refreshMenuSelected);
+			if (this.options.menuEntries) {
+				$.each(this.options.menuEntries, function() {
+					self.menuBar.addEntry(this);
+				});
+			}
 			this.modifyMenu = new ModifyMenuPanel(this);
 			
 			if (this.options.enableGUIKeybindings)
@@ -2495,7 +2519,7 @@
 						if (e.keyCode == 40 || e.keyCode == 38){
 							this.guiEditor.selectNext(e.keyCode == 38);
 						} else if (e.keyCode == 37 || e.keyCode == 39) {
-							this.guiEditor.selectAttribute(e.keyCode == 37)
+							this.guiEditor.selectAttribute(e.keyCode == 37);
 						}
 					}
 					return false;
