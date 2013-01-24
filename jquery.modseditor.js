@@ -1981,7 +1981,6 @@
 			confirmExitWhenUnsubmitted : true,
 			enableGUIKeybindings : true,
 			floatingMenu : true,
-			enableMenuBar : true,
 			
 			ajaxOptions : {
 				modsUploadPath: null,
@@ -2140,32 +2139,11 @@
 			this.modsTabContainer = $("<div/>").attr("class", editorTabAreaClass).css("padding-top", this.editorHeader.height() + "px").appendTo(this.modsWorkAreaContainer);
 			this.problemsPanel = $("<pre/>").attr('class', problemsPanelClass).hide().appendTo(this.modsTabContainer);
 			
-			/*var modeTabs = $("<ul/>").appendTo(this.modsTabContainer);
-			modeTabs.append("<li><a href='#" + guiContentClass + this.instanceNumber + "'><span>MODS</span></a></li>");
-			modeTabs.append("<li><a href='#" + textContentClass + this.instanceNumber + "' class='" + xmlTabClass + "'><span>XML</span></a></li>");
-			*/
-			//this.guiContent = $("<div/>").attr({'id' : guiContentClass + this.instanceNumber, 'class' : guiContentClass}).appendTo(this.modsTabContainer);
-			//this.xmlContent = $("<div/>").attr({'id' : textContentClass + this.instanceNumber, 'class' : textContentClass}).appendTo(this.modsTabContainer);
-			
-			/*this.modsTabContainer.tabs({
-				show: function(){
-					$.proxy(this.modeChange, this);
-				},
-				select: function(){
-					$.proxy(this.modeTabSelect, this);
-				}
-			});*/
-			
-			if (this.options.enableMenuBar) {
-				//modeTabs.css("display", "none");
-			}
-			
 			this.guiEditor.initialize(this.modsTabContainer);
 			this.modeChange(0);
 			
 			var self = this;
 			$(window).resize(function() {
-				self.selected = self.modsTabContainer.tabs('option', 'selected');
 				self.modsTabContainer.width(self.modsEditorContainer.outerWidth() - self.modifyMenu.menuColumn.outerWidth());
 				if (self.activeEditor != null){
 					self.activeEditor.resize();
