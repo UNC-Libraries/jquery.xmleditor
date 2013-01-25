@@ -147,7 +147,7 @@
 		return this.guiElement;
 	};
 
-	XMLElement.prototype.render = function    abstra (parentElement, recursive) {
+	XMLElement.prototype.render = function(parentElement, recursive) {
 		this.parentElement = parentElement;
 		this.guiElementID = this.guiEditor.nextIndex();
 		
