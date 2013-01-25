@@ -4,7 +4,8 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <link rel="stylesheet" href="stylesheets/reset.css" type="text/css" />
 <link rel="stylesheet" href="stylesheets/demo.css" type="text/css" />
-<link rel="stylesheet" href="stylesheets/jquery.modseditor.css" type="text/css" />
+<link rel="stylesheet" href="stylesheets/jquery.modseditor.css"
+	type="text/css" />
 <script src="javascripts/lib/ace/src-min/ace.js"></script>
 <script src="javascripts/lib/jquery/jquery.min.js"></script>
 <script src="javascripts/lib/jquery/jquery-ui.min.js"></script>
@@ -18,28 +19,25 @@
 <body>
 	<div class="wrapper">
 		<header>
-			<h1>Jquery.modseditor</h1>
-			<p>jQuery based MODS editor plugin.</p>
+			<h1>jQuery.modseditor</h1>
+			<a href="https://github.com/UNC-Libraries/jquery.modseditor">View
+				the Project on GitHub <small>UNC-Libraries/jquery.modseditor</small>
+			</a>
 
-			<p class="view">
-				<a href="https://github.com/UNC-Libraries/jquery.modseditor">View
-					the Project on GitHub <small>UNC-Libraries/jquery.modseditor</small>
-				</a>
+			<p>A browser based, schema driven XML editor developed by the
+				University of North Carolina at Chapel Hill Libraries. It was expressly
+				developed for editing MODS documents, but is usable for many other XML
+				schemas as well.</p>
+			<p>
+				This project was developed as a part of the <a
+					href="http://cdr.lib.unc.edu">Carolina Digital Repository's</a>
+				administrative interface, but is a stand alone jQuery UI widget. <a
+					href="https://github.com/UNC-Libraries/Carolina-Digital-Repository">Source
+					code for the CDR</a> also is available via github.
 			</p>
-			<ul>
-				<li><a
-					href="https://github.com/UNC-Libraries/jquery.modseditor/zipball/master">Download
-						<strong>ZIP File</strong>
-				</a></li>
-				<li><a
-					href="https://github.com/UNC-Libraries/jquery.modseditor/tarball/master">Download
-						<strong>TAR Ball</strong>
-				</a></li>
-				<li><a
-					href="https://github.com/UNC-Libraries/jquery.modseditor">View
-						On <strong>GitHub</strong>
-				</a></li>
-			</ul>
+
+			<p>Below is a demo of the default behavior for the plugin,
+				editing an empty MODS version 3.4 document:</p>
 		</header>
 	</div>
 	<div id="mods_editor">
@@ -56,7 +54,7 @@
 				schemaObject : function() {
 					return extractor.root;
 				},
-				documentTitle : 'mods document'
+				documentTitle : 'MODS'
 			});
 		});
 	</script>
@@ -65,11 +63,6 @@
 			This project is maintained by <a
 				href="https://github.com/UNC-Libraries">UNC-Libraries</a>
 		</p>
-		<p>
-			<small>Hosted on GitHub Pages &mdash; Theme by <a
-				href="https://github.com/orderedlist">orderedlist</a></small>
-		</p>
 	</footer>
-	<script src="javascripts/scale.fix.js"></script>
 </body>
 </html>

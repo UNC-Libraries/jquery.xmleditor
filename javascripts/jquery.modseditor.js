@@ -682,14 +682,9 @@
 	
 	UndoHistory.prototype.cloneNewDocument = function(originalDoc) {
 		var newDoc = originalDoc.implementation.createDocument(
-			originalDoc.namespaceURI, //namespace to use
-		    null,                     //name of the root element (or for empty document)
-		    null                      //doctype (null for XML)
+			originalDoc.namespaceURI, null, null
 		);
-		var newNode = newDoc.importNode(
-				originalDoc.documentElement, //node to import
-		    true                         //clone its descendants
-		);
+		var newNode = newDoc.importNode(originalDoc.documentElement, true);
 		newDoc.appendChild(newNode);
 		return $(newDoc);
 	};
@@ -723,8 +718,7 @@
 
 		this.headIndex = this.states.length;
 
-			this.states.push(this.cloneNewDocument(this.editor.xmlState.xml[0]));
-		//this.states.push($(this.editor.xmlState.xml).clone());
+		this.states.push(this.cloneNewDocument(this.editor.xmlState.xml[0]));
 		
 		if (this.stateCaptureEvent != null)
 			this.stateCaptureEvent(this);
@@ -2167,7 +2161,7 @@
 					true, true).populate(this.guiEditor.rootElement, this.schema);
 			
 			if (this.options.floatingMenu) {
-				$(window).bind('window', $.proxy(this.modifyMenu.setMenuPosition, this.modifyMenu));
+				$(window).bind('scroll', $.proxy(this.modifyMenu.setMenuPosition, this.modifyMenu));
 			}
 			
 			$("." + submitButtonClass).click(function() {

@@ -73,4 +73,16 @@ header ul a {
   text-align:center;
   padding-top:6px;
   height:40px;
+  text-decoration: none;
+}
+
+header .view a {
+	color: #39C;
+	text-decoration: none;
+	font-weight: 400px;
+}
+
+body {
+	padding: 20px;
+	
 }
