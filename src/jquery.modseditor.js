@@ -147,7 +147,7 @@
 		return this.guiElement;
 	};
 
-	XMLElement.prototype.render = function    abstra (parentElement, recursive) {
+	XMLElement.prototype.render = function(parentElement, recursive) {
 		this.parentElement = parentElement;
 		this.guiElementID = this.guiEditor.nextIndex();
 		
@@ -866,14 +866,14 @@
 				enabled : true,
 				binding : "alt+shift+m",
 				action : function() {
-					self.editor.modsTabContainer.tabs('select', 0);
+					self.editor.modeChange(0);
 				}
 			}, {
 				label : 'Switch to XML View',
 				enabled : true,
 				binding : "alt+shift+x",
 				action : function() {
-					self.editor.modsTabContainer.tabs('select', 1);
+					self.editor.modeChange(1);
 				}
 			} ]
 		}, {
@@ -892,7 +892,6 @@
 			itemClass : 'header_mode_tab',
 			action : function() {
 				self.editor.modeChange(0);
-				//self.editor.modsTabContainer.tabs('select', 0);
 			}
 		}, {
 			label : 'XML',
@@ -900,7 +899,6 @@
 			itemClass : 'header_mode_tab',
 			action : function() {
 				self.editor.modeChange(1);
-				//self.editor.modsTabContainer.tabs('select', 1);
 			}
 		} ];
 	}
