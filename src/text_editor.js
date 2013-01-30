@@ -1,0 +1,290 @@
+/**
+ * Editor object for doing text editing of the XML document using the cloud9 editor
+ */
+function TextEditor(editor) {
+	this.editor = editor;
+	this.aceEditor = null;
+	this.state = 0;
+	this.xmlEditorDiv = null;
+	this.xmlContent = null;
+	this.selectedTagRange = null;
+	this.resetSelectedTagRange();
+	this.active = false;
+}
+
+TextEditor.prototype.resetSelectedTagRange = function() {
+	this.selectedTagRange = {'row': 0, 'startColumn': 0, 'endColumn': 0};
+	return this;
+};
+
+TextEditor.prototype.initialize = function(parentContainer) {
+	this.xmlContent = $("<div/>").attr({'id' : textContentClass + this.instanceNumber, 'class' : textContentClass}).appendTo(parentContainer);
+	this.xmlEditorDiv = $("<div/>").attr('id', 'xml_editor').appendTo(this.xmlContent);
+	this.aceEditor = ace.edit("xml_editor");
+	this.aceEditor.setTheme("ace/theme/textmate");
+	this.aceEditor.getSession().setMode("ace/mode/xml");
+	this.aceEditor.setShowPrintMargin(false);
+	this.aceEditor.getSession().setUseSoftTabs(true);
+	
+	var self = this;
+	this.aceEditor.getSession().on('change', function(){
+		if (!self.editor.xmlState.changesNotSynced() && self.isPopulated()){
+			self.editor.xmlState.unsyncedChangeEvent();
+			self.setModified();
+		}
+	});
+	this.aceEditor.getSession().selection.on('changeCursor', function(){
+		self.selectTagAtCursor();
+	});
+	
+	this.setInitialized();
+	return this;
+};
+
+TextEditor.prototype.activate = function() {
+	this.active = true;
+	
+	if (!this.isInitialized()){
+		this.initialize(this.editor.modsTabContainer);
+	}
+	this.xmlContent.show();
+	this.refreshDisplay();
+	
+	this.resize();
+	return this;
+};
+
+TextEditor.prototype.deactivate = function() {
+	this.xmlContent.hide();
+	this.active = false;
+	this.editor.modifyMenu.clearContextualMenus();
+	if (this.isInitialized()) {
+		this.setInitialized();
+	}
+	return this;
+};
+
+TextEditor.prototype.isInitialized = function() {
+	return this.state > 0;
+};
+
+TextEditor.prototype.isPopulated = function() {
+	return this.state > 1;
+};
+
+TextEditor.prototype.isModified = function() {
+	return this.state > 2;
+};
+
+TextEditor.prototype.setInitialized = function() {
+	this.state = 1;
+	return this;
+};
+
+TextEditor.prototype.setPopulated = function() {
+	this.state = 2;
+	return this;
+};
+
+TextEditor.prototype.setModified = function() {
+	this.state = 3;
+	return this;
+};
+
+TextEditor.prototype.inSelectedTag = function(row, startColumn, endColumn) {
+	return !this.editor.xmlState.changesNotSynced() && row == this.selectedTagRange.row 
+		&& startColumn == this.selectedTagRange.startColumn 
+		&& endColumn == this.selectedTagRange.endColumn;
+};
+
+
+TextEditor.prototype.reload = function() {
+	this.setInitialized();
+	this.selectedTagRange = {'row': 0, 'startColumn': 0, 'endColumn': 0};
+	var cursorPosition = this.aceEditor.selection.getCursor();
+	this.aceEditor.getSession().setValue(this.editor.xml2Str(this.editor.xmlState.xml));
+	this.setPopulated();
+	this.aceEditor.focus();
+	this.aceEditor.selection.moveCursorToPosition(cursorPosition);
+	return this;
+};
+
+TextEditor.prototype.refreshDisplay = function() {
+	this.editor.guiEditor.rootElement.xmlNode = this.editor.xmlState.xml.children().first();
+	var markers = this.aceEditor.session.getMarkers();
+	var self = this;
+	$.each(markers, function(index) {
+		self.aceEditor.session.removeMarker(index);
+	});
+	
+	this.setInitialized();
+	$("#" + xmlTabClass).html(this.editor.options.xmlTabLabel);
+	var xmlString = this.editor.xml2Str(this.editor.xmlState.xml);
+	try {
+		this.aceEditor.getSession().setValue(xmlString);
+	} catch (e) {
+		alert(e);
+	}
+	
+	this.aceEditor.clearSelection();
+	this.setPopulated();
+	
+	this.selectTagAtCursor();
+	return this;
+};
+
+TextEditor.prototype.resize = function() {
+	var xmlEditorHeight = ($(window).height() - this.xmlEditorDiv.offset().top);
+	this.xmlContent.css({'height': xmlEditorHeight + 'px'});
+	this.xmlEditorDiv.width(this.xmlContent.innerWidth());
+	this.xmlEditorDiv.height(xmlEditorHeight);
+	if (this.editor.modifyMenu.menuContainer != null){
+		this.editor.modifyMenu.menuContainer.css({
+			'max-height': $(this.editor.modsWorkAreaContainer).height() - this.editor.modifyMenu.menuContainer.offset().top
+		});
+	}
+	if (this.aceEditor != null)
+		this.aceEditor.resize();
+	return this;
+};
+
+TextEditor.prototype.tagOccurrences = function(string, tagTitle) {
+	if (string == null || tagTitle == null)
+		return 0;
+	var matches = string.match(new RegExp("<" + tagTitle + "( |>|$)", "g"));
+	return matches ? matches.length : 0;
+};
+
+TextEditor.prototype.selectTagAtCursor = function() {
+	if (!this.isInitialized())
+		return this;
+	var currentLine = this.aceEditor.getSession().getDocument().getLine(this.aceEditor.selection.getCursor().row);
+	var openingIndex = currentLine.lastIndexOf("<", this.aceEditor.selection.getCursor().column);
+	var preceedingClosingIndex = currentLine.lastIndexOf(">", this.aceEditor.selection.getCursor().column);
+	
+	// Not inside a tag
+	if (openingIndex <= preceedingClosingIndex)
+		return this;
+	
+	var currentRow = this.aceEditor.selection.getCursor().row;
+	var closingIndex = currentLine.indexOf(">", this.aceEditor.selection.getCursor().column);
+	if (closingIndex == -1)
+		closingIndex = currentLine.length - 1;
+	
+	var tagRegex = /<((mods:)?[a-zA-Z]+)( |\/|>|$)/;
+	var match = tagRegex.exec(currentLine.substring(openingIndex));
+	
+	// Check to see if the tag being selected is already selected.  If it is and the document hasn't been changed, then quit.
+	if (match != null && !this.inSelectedTag(currentRow, openingIndex, closingIndex)){
+		var tagTitle = match[1];
+		var prefixedTitle = tagTitle;
+		var unprefixedTitle = tagTitle;
+		if (tagTitle.indexOf("mods:") == -1){
+			prefixedTitle = "mods:" + prefixedTitle;
+		} else {
+			unprefixedTitle = tagTitle.substring(tagTitle.indexOf(":") + 1);
+		}
+		
+		// No element type or is the root node, done.
+		if (!(unprefixedTitle in this.editor.modsTree.tree) || unprefixedTitle == "mods")
+			return this;
+		var objectType = this.editor.modsTree.tree[unprefixedTitle];
+		
+		if (this.editor.xmlState.changesNotSynced()) {
+			//Refresh the xml if it has changed
+			try {
+				this.editor.setXMLFromEditor();
+				this.editor.xmlState.syncedChangeEvent();
+			} catch (e) {
+				// XML isn't valid, so can't continue
+				return this;
+			}
+		}
+		
+		var Range = require("ace/range").Range;
+		var range = new Range(0, 0, this.aceEditor.selection.getCursor().row, openingIndex);
+		var preceedingLines = this.aceEditor.getSession().getDocument().getTextRange(range);
+		
+		var self = this;
+		var instanceNumber = this.tagOccurrences(preceedingLines, tagTitle);
+		// Get xpath to this object using jquery.
+		var elementNode = $("*", this.editor.xmlState.xml).filter(function() {
+	        return self.editor.nsEquals(this, unprefixedTitle);
+	      })[instanceNumber];
+		if (elementNode == null)
+			return;
+		
+		// Attempt to disambiguate by selecting by parent tag name.
+		if (elementNode.parentNode == null || elementNode.parentNode.tagName == null)
+			return this;
+		var tagName = elementNode.parentNode.tagName;
+		if (tagName.indexOf(":") != -1){
+			tagName = tagName.substring(tagName.indexOf(":") + 1);
+		}
+		
+		$.each(objectType, function(key, value){
+			if (key == tagName && value.namespace == self.editor.options.targetNS){
+				objectType = this;
+				return false;
+			}
+		});
+			
+		if (objectType == null) {
+			this.editor.modifyMenu.clearContextualMenus();
+			return this;
+		}
+		
+		var dummyTarget = null;
+		try {
+			dummyTarget = new XMLElement(elementNode, objectType, this.editor);
+		} catch(e) {
+			return this;
+		}
+		
+		this.editor.modifyMenu.refreshContextualMenus(dummyTarget).setMenuPosition();
+		
+		this.selectedTagRange.row = currentRow;
+		this.selectedTagRange.startColumn = openingIndex;
+		this.selectedTagRange.endColumn = closingIndex;
+		
+		var Range = require("ace/range").Range;
+		var markers = this.aceEditor.session.getMarkers();
+		
+		$.each(markers, function(index) {
+			self.aceEditor.session.removeMarker(index);
+		});
+		this.aceEditor.session.addMarker(new Range(this.selectedTagRange.row, 
+				this.selectedTagRange.startColumn, this.selectedTagRange.row, 
+				this.selectedTagRange.endColumn + 1), "highlighted", "line", false);
+	}
+		
+	return this;
+};
+
+TextEditor.prototype.addElementEvent = function(parentElement, newElement) {
+	this.reload();
+	// Move cursor to the newly added element
+	var instanceNumber = 0;
+	this.editor.xmlState.xml.find(newElement.xmlNode[0].localName).each(function() {
+		if (this === newElement.xmlNode.get(0)) {
+			return false;
+		}
+		instanceNumber++;
+	});
+	var Range = require("ace/range").Range;
+	var startPosition = new Range(0,0,0,0);
+	var pattern = new RegExp("<(mods:)?" + newElement.xmlNode[0].localName +"(\\s|\\/|>|$)", "g");
+	this.aceEditor.find(pattern, {'regExp': true, 'start': startPosition, 'wrap': false});
+	for (var i = 0; i < instanceNumber; i++) {
+		this.aceEditor.findNext({'needle' : pattern});
+	}
+	this.aceEditor.clearSelection();
+	this.aceEditor.selection.moveCursorBy(0, -1 * newElement.xmlNode[0].localName.length);
+
+	this.editor.xmlState.syncedChangeEvent();
+};
+
+TextEditor.prototype.addAttributeEvent = function() {
+	this.reload();
+	this.editor.xmlState.syncedChangeEvent();
+};
