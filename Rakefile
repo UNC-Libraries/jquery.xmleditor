@@ -13,6 +13,11 @@ task :default => FileList.new("src/*") do
   end
 end
 
+task "mods.js" do
+  FileUtils.cd("xsd")
+  system "phantomjs build.js ../mods.js"
+end
+
 task :clean do
   FileUtils.rm_f("jquery.modseditor.js")
 end
