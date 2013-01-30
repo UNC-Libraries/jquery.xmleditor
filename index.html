@@ -8,14 +8,14 @@
 <link rel="stylesheet" href="css/jquery.modseditor.css"type="text/css" />
 <script src="lib/ace/src-min/ace.js"></script>
 <script src="lib/jquery.min.js"></script>
-<script src="lib/jquery-ui.min.js"></script>
 <script src="lib/jquery.xmlns.js"></script>
+<script src="lib/jquery-ui.min.js"></script>
 <script src="lib/json2.js"></script>
 <script src="lib/cycle.js"></script>
 <script src="lib/expanding.js"></script>
 <script src="lib/vkbeautify.js"></script>
-<script src="src/xsd2json.js"></script>
 <script src="src/jquery.modseditor.js"></script>
+<script src="./mods.js" type="text/javascript" charset="utf-8"></script>
 </head>
 <body>
 	<div class="wrapper">
@@ -46,15 +46,8 @@
 	</div>
 	<script>
 		$(function() {
-			var extractor = new Xsd2Json("mods-3-4.xsd", {
-				"schemaURI" : "xsd/mods-3-4/",
-				"rootElement" : "mods"
-			});
-
 			$("#mods_editor").modsEditor({
-				schemaObject : function() {
-					return extractor.root;
-				},
+				schemaObject : MODS,
 				documentTitle : 'MODS'
 			});
 		});
