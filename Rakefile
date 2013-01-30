@@ -1,7 +1,9 @@
 require "rubygems"
 require "sprockets"
 
-task :default => FileList.new("src/*") do
+task :default => "jquery.modseditor.js"
+
+task "jquery.modseditor.js" => FileList.new("src/*") do
   environment = Sprockets::Environment.new
   environment.append_path "src"
   
