@@ -19,7 +19,7 @@
 
  */
 /*
- * jQuery MODS Editor
+ * jQuery xml Editor
  * 
  * Dependencies:
  *   vkbeautify.0.98.01.beta.js
@@ -33,39 +33,39 @@
  */
 
  
-var menuContainerClass = "mods_menu_container";
+var menuContainerClass = "xml_menu_container";
 var menuHeaderClass = "menu_header";
-var menuColumnClass = "mods_menu_column";
+var menuColumnClass = "xml_menu_column";
 var menuContentClass = 'menu_content';
 var menuExpandDuration = 180;
-var modsElementClass = 'mods_element';
+var xmlElementClass = 'xml_element';
 var topLevelContainerClass = 'top_level_element_group';
 var elementRootPrefix = "root_element_";
-var elementPrefix = "mods_element_";
-var childrenContainerSelector = " > .mods_children";
-var childrenContainerClass = "mods_children";
+var elementPrefix = "xml_element_";
+var childrenContainerSelector = " > .xml_children";
+var childrenContainerClass = "xml_children";
 var attributeContainerClass = "attribute_container";
-var attributesContainerSelector = " > .mods_attrs";
-var attributesContainerClass = "mods_attrs";
-var modsMenuHeaderPrefix = "mods_header_item_";
-var modsEditorContainerClass = "mods_editor_container";
-var modsWorkAreaContainerClass = "mods_work_area";
+var attributesContainerSelector = " > .xml_attrs";
+var attributesContainerClass = "xml_attrs";
+var xmlMenuHeaderPrefix = "xml_header_item_";
+var xmlEditorContainerClass = "xml_editor_container";
+var xmlWorkAreaContainerClass = "xml_work_area";
 var addTopMenuClass = "add_top_menu";
 var addAttrMenuClass = "add_attribute_menu";
 var addElementMenuClass = "add_element_menu";
-var modsMenuBarClass = "mods_menu_bar";
+var xmlMenuBarClass = "xml_menu_bar";
 var submitButtonClass = "send_xml";
-var xmlTabClass = "mods_xml_content_tab";
-var submissionStatusClass = "mods_submit_status";
-var modsContentClass = "mods_content";
+var xmlTabClass = "xml_xml_content_tab";
+var submissionStatusClass = "xml_submit_status";
+var xmlContentClass = "xml_content";
 
-var editorTabAreaClass = "mods_tab_area";
-var problemsPanelClass = "mods_problems_panel";
+var editorTabAreaClass = "xml_tab_area";
+var problemsPanelClass = "xml_problems_panel";
 var guiContentClass = "gui_content";
 var textContentClass = "text_content";
-var editorHeaderClass = "mods_editor_header";
+var editorHeaderClass = "xml_editor_header";
 
-$.widget( "xml.modsEditor", {
+$.widget( "xml.xmlEditor", {
 	options: {
 		addTopMenuHeaderText : 'Add Top Element',
 		addAttrMenuHeaderText : 'Add Attribute',
@@ -77,9 +77,9 @@ $.widget( "xml.modsEditor", {
 		floatingMenu : true,
 		
 		ajaxOptions : {
-			modsUploadPath: null,
-			modsRetrievalPath: null,
-			modsRetrievalParams : null
+			xmlUploadPath: null,
+			xmlRetrievalPath: null,
+			xmlRetrievalParams : null
 		},
 		localXMLContentSelector: this.element,
 		prettyXML : true,
@@ -95,7 +95,7 @@ $.widget( "xml.modsEditor", {
 	},
 	
 	_create: function() {
-		this.instanceNumber = $("xml-modsEditor").length;
+		this.instanceNumber = $("xml-xmlEditor").length;
 		
 		// If the schema is a function, execute it to get the schema from it.
 		if (jQuery.isFunction(this.options.schemaObject)) {
@@ -109,16 +109,16 @@ $.widget( "xml.modsEditor", {
 			$.xmlns[prefix] = value;
 		});
 		
-		// Tree of MODS element types
-		this.modsTree = null;
+		// Tree of xml element types
+		this.xmlTree = null;
 		// State of the XML document
 		this.xmlState = null;
 		// Container for the entire editor
-		this.modsEditorContainer = null;
+		this.xmlEditorContainer = null;
 		// Container for the subeditors
-		this.modsWorkAreaContainer = null;
+		this.xmlWorkAreaContainer = null;
 		// Tabbed container for differentiating between specific subeditors
-		this.modsTabContainer = null;
+		this.xmlTabContainer = null;
 		// Header container for the menu and top level info
 		this.editorHeader = null;
 		// Panel for displaying errors
@@ -141,10 +141,10 @@ $.widget( "xml.modsEditor", {
     	if (this.options.submitResponseHandler == null)
     		this.options.submitResponseHandler = this.swordSubmitResponseHandler;
     	
-    	this.modsTree = new SchemaTree(this.schema);
-    	this.modsTree.build();
+    	this.xmlTree = new SchemaTree(this.schema);
+    	this.xmlTree.build();
 		
-		// Retrieve the local mods content before we start populating the editor.
+		// Retrieve the local xml content before we start populating the editor.
     	var localXMLContent = null;
 		if ($(this.options.localXMLContentSelector).is("textarea")) {
 			localXMLContent = $(this.options.localXMLContentSelector).val(); 
@@ -155,9 +155,9 @@ $.widget( "xml.modsEditor", {
 		
 		this.xmlState = null;
 		
-		this.modsEditorContainer = $("<div/>").attr('class', modsEditorContainerClass).appendTo(this.element);
-		this.modsWorkAreaContainer = null;
-		this.modsTabContainer = null;
+		this.xmlEditorContainer = $("<div/>").attr('class', xmlEditorContainerClass).appendTo(this.element);
+		this.xmlWorkAreaContainer = null;
+		this.xmlTabContainer = null;
 		
 		this.editorHeader = null;
 		this.problemsPanel = null;
@@ -194,11 +194,11 @@ $.widget( "xml.modsEditor", {
 			}, this));
 		}
 		
-		if (this.options.ajaxOptions.modsRetrievalPath != null) {
+		if (this.options.ajaxOptions.xmlRetrievalPath != null) {
 			$.ajax({
 				type : "GET",
-				url : this.options.ajaxOptions.modsRetrievalPath,
-				data : (this.options.ajaxOptions.modsRetrievalParams),
+				url : this.options.ajaxOptions.xmlRetrievalPath,
+				data : (this.options.ajaxOptions.xmlRetrievalParams),
 				dataType : "text",
 				success : function(data) {
 					self.loadDocument(data);
@@ -222,33 +222,33 @@ $.widget( "xml.modsEditor", {
 	
 	constructEditor: function() {
 		// Work Area
-		this.modsWorkAreaContainer = $("<div/>").attr('class', modsWorkAreaContainerClass).appendTo(this.modsEditorContainer);
+		this.xmlWorkAreaContainer = $("<div/>").attr('class', xmlWorkAreaContainerClass).appendTo(this.xmlEditorContainer);
 		
 		// Menu bar
-		this.editorHeader = $("<div/>").attr('class', editorHeaderClass).appendTo(this.modsWorkAreaContainer);
+		this.editorHeader = $("<div/>").attr('class', editorHeaderClass).appendTo(this.xmlWorkAreaContainer);
 		if (this.options.documentTitle != null)
 			$("<h2/>").html("Editing Description: " + this.options.documentTitle).appendTo(this.editorHeader);
 		this.menuBar.render(this.editorHeader);
 		
-		this.modsTabContainer = $("<div/>").attr("class", editorTabAreaClass).css("padding-top", this.editorHeader.height() + "px").appendTo(this.modsWorkAreaContainer);
-		this.problemsPanel = $("<pre/>").attr('class', problemsPanelClass).hide().appendTo(this.modsTabContainer);
+		this.xmlTabContainer = $("<div/>").attr("class", editorTabAreaClass).css("padding-top", this.editorHeader.height() + "px").appendTo(this.xmlWorkAreaContainer);
+		this.problemsPanel = $("<pre/>").attr('class', problemsPanelClass).hide().appendTo(this.xmlTabContainer);
 		
-		this.guiEditor.initialize(this.modsTabContainer);
+		this.guiEditor.initialize(this.xmlTabContainer);
 		this.modeChange(0);
 		
 		var self = this;
 		$(window).resize(function() {
-			self.modsTabContainer.width(self.modsEditorContainer.outerWidth() - self.modifyMenu.menuColumn.outerWidth());
+			self.xmlTabContainer.width(self.xmlEditorContainer.outerWidth() - self.modifyMenu.menuColumn.outerWidth());
 			if (self.activeEditor != null){
 				self.activeEditor.resize();
 			}
-			self.editorHeader.width(self.modsTabContainer.width());
+			self.editorHeader.width(self.xmlTabContainer.width());
 			if (self.options.floatingMenu) {
 				self.modifyMenu.setMenuPosition();
 			}
 		});
 		
-		this.modifyMenu.initialize(this.modsEditorContainer);
+		this.modifyMenu.initialize(this.xmlEditorContainer);
 		this.modifyMenu.addMenu(addElementMenuClass, this.options.addElementMenuHeaderText, 
 				true, false, true);
 		this.modifyMenu.addAttributeMenu(addAttrMenuClass, this.options.addAttrMenuHeaderText, 
@@ -268,8 +268,8 @@ $.widget( "xml.modsEditor", {
 	},
 	
 	addChildElementCallback: function (instigator) {
-		var xmlElement = $(instigator).data("mods").target;
-		var objectType = $(instigator).data("mods").objectType;
+		var xmlElement = $(instigator).data("xml").target;
+		var objectType = $(instigator).data("xml").objectType;
 		
 		if (this.textEditor.active) {
 			// Refresh xml state
@@ -299,7 +299,7 @@ $.widget( "xml.modsEditor", {
 				return;
 			}
 		}
-		var data = $(instigator).data('mods');
+		var data = $(instigator).data('xml');
 		data.target.addAttribute(data.objectType);
 		
 		this.activeEditor.addAttributeEvent(data.target, data.objectType, $(instigator));
@@ -326,10 +326,10 @@ $.widget( "xml.modsEditor", {
 		}
 		if (mode == 0) {
 			this.activeEditor = this.guiEditor;
-			$("#" + modsMenuHeaderPrefix + "MODS").addClass("active_mode_tab");
+			$("#" + xmlMenuHeaderPrefix + "XML").addClass("active_mode_tab");
 		} else {
 			this.activeEditor = this.textEditor;
-			$("#" + modsMenuHeaderPrefix + "XML").addClass("active_mode_tab");
+			$("#" + xmlMenuHeaderPrefix + "Text").addClass("active_mode_tab");
 		}
 		this.activeEditor.activate();
 	},
@@ -342,7 +342,7 @@ $.widget( "xml.modsEditor", {
 		if (this.options.floatingMenu) {
 			this.modifyMenu.setMenuPosition();
 		}
-		this.modsWorkAreaContainer.width(this.modsEditorContainer.outerWidth() - this.modifyMenu.menuColumn.outerWidth());
+		this.xmlWorkAreaContainer.width(this.xmlEditorContainer.outerWidth() - this.modifyMenu.menuColumn.outerWidth());
 	},
 	
 	setXMLFromEditor: function() {
@@ -351,7 +351,7 @@ $.widget( "xml.modsEditor", {
 	},
 	
 	saveXML: function() {
-		if (this.options.ajaxOptions.modsUploadPath != null) {
+		if (this.options.ajaxOptions.xmlUploadPath != null) {
 			this.submitXML();
 		} else {
 			// Implement later when there is more browser support for html5 File API
@@ -368,7 +368,7 @@ $.widget( "xml.modsEditor", {
 		window.BlobBuilder = this.getBlobBuilder();
 		
 		if (window.BlobBuilder === undefined) {
-			this.addProblem("Browser does not support saving files via this editor.  To save, copy and paste the document from the XML view.");
+			this.addProblem("Browser does not support saving files via this editor.  To save, copy and paste the document from the Text view.");
 			return false;
 		}
 		
@@ -390,11 +390,11 @@ $.widget( "xml.modsEditor", {
 		var mimeType = "text/xml";
 		
 		var a = document.createElement('a');
-		a.download = "mods.xml";
+		a.download = "xml.xml";
 		a.href = window.URL.createObjectURL(blobBuilder.getBlob(mimeType));
 		
 		a.dataset.downloadurl = [mimeType, a.download, a.href].join(':');
-		a.target = "exportMODS";
+		a.target = "exportXML";
 		
 		var event = document.createEvent("MouseEvents");
 		event.initMouseEvent(
@@ -423,7 +423,7 @@ $.widget( "xml.modsEditor", {
 		
 		var self = this;
 		$.ajax({
-			'url' : this.options.ajaxOptions.modsUploadPath,
+			'url' : this.options.ajaxOptions.xmlUploadPath,
 			'contentType' : "application/xml",
 			'type' : "POST",
 			'data' : xmlString,
@@ -436,7 +436,7 @@ $.widget( "xml.modsEditor", {
 				} else {
 					self.xmlState.syncedChangeEvent();
 					$("." + submissionStatusClass).html("Failed to submit<br/>See errors at top").css("background-color", "#ffbbbb").animate({backgroundColor: "#ffffff"}, 1000);
-					self.addProblem("Failed to submit MODS document", outcome);
+					self.addProblem("Failed to submit xml document", outcome);
 				}
 			},
 			error : function(jqXHR, exception) {
@@ -535,8 +535,8 @@ $.widget( "xml.modsEditor", {
 	    for ( ; element && element.nodeType == 1; element = element.parentNode ) {
 	        var id = $(element.parentNode).children(element.tagName.replace(":", "\\:")).index(element) + 1;
 	        id = ('[' + id + ']');
-	        if (element.tagName.indexOf("mods:") == -1)
-	        	xpath = '/mods:' + element.tagName + id + xpath;
+	        if (element.tagName.indexOf("xml:") == -1)
+	        	xpath = '/xml:' + element.tagName + id + xpath;
 	        else xpath = '/' + element.tagName + id + xpath;
 	    }
 	    return xpath;
@@ -619,13 +619,13 @@ $.widget( "xml.modsEditor", {
 			return false;
 		}
 		
-		if (e.altKey && e.shiftKey && e.keyCode == 'M'.charCodeAt(0)) {
-			this.modsTabContainer.tabs('select', 0);
+		if (e.altKey && e.shiftKey && e.keyCode == 'X'.charCodeAt(0)) {
+			this.xmlTabContainer.tabs('select', 0);
 			return false;
 		}
 		
-		if (e.altKey && e.shiftKey && e.keyCode == 'X'.charCodeAt(0)) {
-			this.modsTabContainer.tabs('select', 1);
+		if (e.altKey && e.shiftKey && e.keyCode == 'T'.charCodeAt(0)) {
+			this.xmlTabContainer.tabs('select', 1);
 			return false;
 		}
 		
@@ -637,14 +637,14 @@ $.widget( "xml.modsEditor", {
 	 */
 	refreshMenuUndo: function(self) {
 		if (self.undoHistory.headIndex > 0) {
-			$("#" + modsMenuHeaderPrefix + "Undo").removeClass("disabled").data("menuItemData").enabled = true;
+			$("#" + xmlMenuHeaderPrefix + "Undo").removeClass("disabled").data("menuItemData").enabled = true;
 		} else {
-			$("#" + modsMenuHeaderPrefix + "Undo").addClass("disabled").data("menuItemData").enabled = false;
+			$("#" + xmlMenuHeaderPrefix + "Undo").addClass("disabled").data("menuItemData").enabled = false;
 		}
 		if (self.undoHistory.headIndex < self.undoHistory.states.length - 1) {
-			$("#" + modsMenuHeaderPrefix + "Redo").removeClass("disabled").data("menuItemData").enabled = true;
+			$("#" + xmlMenuHeaderPrefix + "Redo").removeClass("disabled").data("menuItemData").enabled = true;
 		} else {
-			$("#" + modsMenuHeaderPrefix + "Redo").addClass("disabled").data("menuItemData").enabled = false;
+			$("#" + xmlMenuHeaderPrefix + "Redo").addClass("disabled").data("menuItemData").enabled = false;
 		}
 	},
 	
@@ -655,8 +655,8 @@ $.widget( "xml.modsEditor", {
 		var hasSelected = self.guiEditor.selectedElement != null && self.guiEditor.active;
 		$.each(suffixes, function(){
 			if (hasSelected)
-				$("#" + modsMenuHeaderPrefix + this.toString()).removeClass("disabled").data("menuItemData").enabled = true;
-			else $("#" + modsMenuHeaderPrefix + this.toString()).addClass("disabled").data("menuItemData").enabled = false;
+				$("#" + xmlMenuHeaderPrefix + this.toString()).removeClass("disabled").data("menuItemData").enabled = true;
+			else $("#" + xmlMenuHeaderPrefix + this.toString()).addClass("disabled").data("menuItemData").enabled = false;
 		});
 	}
 });
@@ -754,7 +754,7 @@ AttributeMenu.prototype.populate = function (xmlElement) {
 			'id' : xmlElement.guiElementID + "_" + attribute.nameEsc + "_add"
 		}).html(attribute.name).click(function(){
 			self.owner.editor.addAttributeButtonCallback(this);
-		}).data('mods', {
+		}).data('xml', {
 				"objectType": attribute,
 				"target": xmlElement
 		}).appendTo(self.menuContent);
@@ -848,7 +848,6 @@ DocumentState.prototype.updateStateMessage = function () {
 DocumentState.prototype.extractNamespacePrefix = function(nsURI) {
 	var prefix = null;
 	var attributes = this.xml.children()[0].attributes;
-	//var attributes = $("mods|mods", this.xml)[0].attributes;
 	$.each(attributes, function(){
 		key = this.name;
 		value = this.value;
@@ -894,15 +893,15 @@ DocumentState.prototype.setXMLFromString = function(xmlString) {
 	this.xml = $(xmlDoc);
 	if (this.editor.guiEditor != null && this.editor.guiEditor.rootElement != null)
 		this.editor.guiEditor.rootElement.xmlNode = this.xml.children().first();
-	if (this.editor.guiEditor.modsContent != null)
-		this.editor.guiEditor.modsContent.data("mods").elementNode = this.xml.children().first();
+	if (this.editor.guiEditor.xmlContent != null)
+		this.editor.guiEditor.xmlContent.data("xml").elementNode = this.xml.children().first();
 	if (this.editor.problemsPanel != null)
 		this.editor.clearProblemPanel();
 };
 function GUIEditor(editor) {
 	this.editor = editor;
 	this.guiContent = null;
-	this.modsContent = null;
+	this.xmlContent = null;
 	this.elementIndex = 0;
 	this.rootElement = null;
 	this.active = false;
@@ -911,20 +910,20 @@ function GUIEditor(editor) {
 }
 
 GUIEditor.prototype.initialize = function(parentContainer) {
-	this.modsContent = $("<div class='" + modsContentClass + "'/>");
-	this.modsContent.data("mods", {});
+	this.xmlContent = $("<div class='" + xmlContentClass + "'/>");
+	this.xmlContent.data("xml", {});
 	$("<div/>").attr("class", "placeholder").html("There are no elements in this document.  Use the menu on the right to add new top level elements.")
-			.appendTo(this.modsContent);
+			.appendTo(this.xmlContent);
 	
 	this.guiContent = $("<div/>").attr({'id' : guiContentClass + this.editor.instanceNumber, 'class' : guiContentClass}).appendTo(parentContainer);
 	//this.guiContent = parentContainer;
 	
-	this.guiContent.append(this.modsContent);
+	this.guiContent.append(this.xmlContent);
 	
 	this.rootElement = new XMLElement(this.editor.xmlState.xml.children().first(), this.editor.schema, this.editor);
-	this.rootElement.guiElement = this.modsContent;
+	this.rootElement.guiElement = this.xmlContent;
 	this.rootElement.guiElement.data("xmlElement", this.rootElement);
-	this.rootElement.childContainer = this.modsContent;
+	this.rootElement.childContainer = this.xmlContent;
 	this.rootElement.initializeGUI();
 	return this;
 };
@@ -950,7 +949,7 @@ GUIEditor.prototype.deactivate = function() {
 };
 
 GUIEditor.prototype.nextIndex = function() {
-	return modsElementClass + (++this.elementIndex);
+	return xmlElementClass + (++this.elementIndex);
 };
 
 GUIEditor.prototype.clearElements = function() {
@@ -959,7 +958,7 @@ GUIEditor.prototype.clearElements = function() {
 };
 
 GUIEditor.prototype.resize = function() {
-	//modsContent.width(guiContent.width() - menuContainer.width() - 30);
+	//xmlContent.width(guiContent.width() - menuContainer.width() - 30);
 	return this;
 };
 
@@ -977,7 +976,7 @@ GUIEditor.prototype.refreshElements = function() {
 };
 
 GUIEditor.prototype.addElementEvent = function(parentElement, newElement) {
-	if (parentElement.guiElementID != this.modsContent.attr("id")) {
+	if (parentElement.guiElementID != this.xmlContent.attr("id")) {
 		parentElement.updated();
 	}
 	this.focusObject(newElement.guiElement);
@@ -1000,7 +999,7 @@ GUIEditor.prototype.selectElement = function(selected) {
 	if (!selected || selected.length == 0) {
 		this.deselect();
 	} else {
-		$("." + modsElementClass + ".selected").removeClass("selected");
+		$("." + xmlElementClass + ".selected").removeClass("selected");
 		$('.' + attributeContainerClass + ".selected").removeClass("selected");
 		if (selected instanceof XMLElement){
 			this.selectedElement = selected;
@@ -1021,7 +1020,7 @@ GUIEditor.prototype.deselect = function() {
 		selectedAttributes.removeClass('selected');
 		return this;
 	}
-	$("." + modsElementClass + ".selected").removeClass("selected");
+	$("." + xmlElementClass + ".selected").removeClass("selected");
 	this.selectedElement = null;
 	if (this.editor.modifyMenu != null)
 		this.editor.modifyMenu.clearContextualMenus();
@@ -1043,11 +1042,11 @@ GUIEditor.prototype.deleteSelected = function() {
 		xmlAttribute.remove();
 	} else {
 		// After delete, select next sibling, previous sibling, or parent, as available.
-		var afterDeleteSelection = this.selectedElement.guiElement.next("." + modsElementClass);
+		var afterDeleteSelection = this.selectedElement.guiElement.next("." + xmlElementClass);
 		if (afterDeleteSelection.length == 0)
-			afterDeleteSelection = this.selectedElement.guiElement.prev("." + modsElementClass);
+			afterDeleteSelection = this.selectedElement.guiElement.prev("." + xmlElementClass);
 		if (afterDeleteSelection.length == 0)
-			afterDeleteSelection = this.selectedElement.guiElement.parents("." + modsElementClass).first();
+			afterDeleteSelection = this.selectedElement.guiElement.parents("." + xmlElementClass).first();
 		
 		this.selectedElement.remove();
 		this.editor.xmlState.documentChangedEvent();
@@ -1072,9 +1071,9 @@ GUIEditor.prototype.moveSelected = function(up) {
 GUIEditor.prototype.updateElementPosition = function(moved) {
 	var movedElement = moved.data('xmlElement');
 	
-	var sibling = moved.prev('.' + modsElementClass);
+	var sibling = moved.prev('.' + xmlElementClass);
 	if (sibling.length == 0) {
-		sibling = moved.next('.' + modsElementClass);
+		sibling = moved.next('.' + xmlElementClass);
 		movedElement.xmlNode.detach().insertBefore(sibling.data('xmlElement').xmlNode);
 	} else {
 		movedElement.xmlNode.detach().insertAfter(sibling.data('xmlElement').xmlNode);
@@ -1086,18 +1085,18 @@ GUIEditor.prototype.updateElementPosition = function(moved) {
 GUIEditor.prototype.selectSibling = function(reverse) {
 	var direction = reverse? 'prev' : 'next';
 	if (this.selectedElement.guiElement.length > 0) {
-		newSelection = this.selectedElement.guiElement[direction]("." + modsElementClass);
+		newSelection = this.selectedElement.guiElement[direction]("." + xmlElementClass);
 		if (newSelection.length == 0 && !this.selectedElement.isTopLevel) {
 			// If there is no next sibling but the parent has one, then go to parents sibling
-			this.selectedElement.guiElement.parents("." + modsElementClass).each(function(){
-				newSelection = $(this)[direction]("." + modsElementClass);
+			this.selectedElement.guiElement.parents("." + xmlElementClass).each(function(){
+				newSelection = $(this)[direction]("." + xmlElementClass);
 				if (newSelection.length > 0 || $(this).data("xmlElement").isTopLevel)
 					return false;
 			});
 		}
 	} else {
 		if (!reverse)
-			newSelection = $("." + modsElementClass).first();
+			newSelection = $("." + xmlElementClass).first();
 	}
 	
 	if (newSelection.length == 0)
@@ -1108,8 +1107,8 @@ GUIEditor.prototype.selectSibling = function(reverse) {
 
 GUIEditor.prototype.selectParent = function(reverse) {
 	if (reverse)
-		newSelection = this.selectedElement.guiElement.find("." + modsElementClass);
-	else newSelection = this.selectedElement.guiElement.parents("." + modsElementClass);
+		newSelection = this.selectedElement.guiElement.find("." + xmlElementClass);
+	else newSelection = this.selectedElement.guiElement.parents("." + xmlElementClass);
 	if (newSelection.length == 0)
 		return this;
 	this.selectElement(newSelection.first()).selectedElement.focus();
@@ -1120,10 +1119,10 @@ GUIEditor.prototype.selectNext = function(reverse) {
 	var newSelection = null;
 	if (this.selectedElement == null) {
 		if (!reverse)
-			newSelection = $("." + modsElementClass).first();
+			newSelection = $("." + xmlElementClass).first();
 	} else {
 		var found = false;
-		var allElements = $("." + modsElementClass + ":visible", this.modsContent);
+		var allElements = $("." + xmlElementClass + ":visible", this.xmlContent);
 		
 		if (reverse)
 			allElements = $(allElements.get().reverse());
@@ -1174,7 +1173,7 @@ GUIEditor.prototype.focusSelectedText = function() {
 	if (focused == null || focused.length == 0)
 		return this;
 	// If the focused input was in an element other than the selected one, then select it
-	var containerElement = focused.parents("." + modsElementClass);
+	var containerElement = focused.parents("." + xmlElementClass);
 	if (containerElement !== this.selectedElement)
 		this.selectElement(containerElement);
 	return this;
@@ -1186,25 +1185,25 @@ GUIEditor.prototype.focusInput = function(reverse) {
 		if (reverse)
 			return this;
 		// Nothing is selected or focused, so grab the first available input
-		focused = this.modsContent.find("input[type=text]:visible, textarea:visible, select:visible").first().focus();
+		focused = this.xmlContent.find("input[type=text]:visible, textarea:visible, select:visible").first().focus();
 	} else {
 		// When an input is already focused, tabbing selects the next input
 		var foundFocus = false;
 		var inputsSelector = "input[type=text]:visible, textarea:visible, select:visible";
 		// If no inputs are focused but an element is selected, seek the next input near this element
 		if (this.selectedElement != null && focused.length == 0) {
-			inputsSelector += ", ." + modsElementClass;
+			inputsSelector += ", ." + xmlElementClass;
 			focused = this.selectedElement.guiElement;
 		}
-		var visibleInputs = this.modsContent.find(inputsSelector);
+		var visibleInputs = this.xmlContent.find(inputsSelector);
 		// If in reverse mode, get the previous input
 		if (reverse) {
 			visibleInputs = $(visibleInputs.get().reverse());
 		}
 		// Seek the next input after the focused one
 		visibleInputs.each(function(){
-			// Can't focus a mods class if they are present.
-			if (foundFocus && !$(this).hasClass(modsElementClass)) {
+			// Can't focus a xml class if they are present.
+			if (foundFocus && !$(this).hasClass(xmlElementClass)) {
 				focused = $(this).focus();
 				return false;
 			} else if (this.id == focused.attr('id')) {
@@ -1213,7 +1212,7 @@ GUIEditor.prototype.focusInput = function(reverse) {
 		});
 	}
 	// If the focused input was in an element other than the selected one, then select it
-	var containerElement = focused.parents("." + modsElementClass);
+	var containerElement = focused.parents("." + xmlElementClass);
 	if (containerElement !== this.selectedElement)
 		this.selectElement(containerElement);
 	var container = focused.parents('.' + attributeContainerClass);
@@ -1267,7 +1266,7 @@ function MenuBar(editor) {
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
 				label : 'Submit to Server',
-				enabled : (self.editor.options.ajaxOptions.modsUploadPath != null),
+				enabled : (self.editor.options.ajaxOptions.xmlUploadPath != null),
 				binding : "alt+shift+s",
 				action : $.proxy(self.editor.submitXML, self.editor)
 			}, {
@@ -1389,16 +1388,16 @@ function MenuBar(editor) {
 		enabled : true,
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
-			label : 'Switch to MODS View',
+			label : 'Switch to XML View',
 			enabled : true,
-			binding : "alt+shift+m",
+			binding : "alt+shift+x",
 			action : function() {
 				self.editor.modeChange(0);
 			}
 		}, {
-			label : 'Switch to XML View',
+			label : 'Switch to Text View',
 			enabled : true,
-			binding : "alt+shift+x",
+			binding : "alt+shift+t",
 			action : function() {
 				self.editor.modeChange(1);
 			}
@@ -1406,22 +1405,22 @@ function MenuBar(editor) {
 	}, {
 		label : 'Help',
 		enabled : true,
-		action : function(event) {self.activateMenu(event);}, 
+		action : function(event) {self.activateMenu(event);}/*, 
 		items : [ {
 			label : 'MODS Outline of Elements',
 			enabled : true,
 			binding : null,
 			action : "http://www.loc.gov/standards/mods/mods-outline.html"
-		} ]
+		} ]*/
 	}, {
-		label : 'MODS',
+		label : 'XML',
 		enabled : true, 
 		itemClass : 'header_mode_tab',
 		action : function() {
 			self.editor.modeChange(0);
 		}
 	}, {
-		label : 'XML',
+		label : 'Text',
 		enabled : true, 
 		itemClass : 'header_mode_tab',
 		action : function() {
@@ -1451,7 +1450,7 @@ MenuBar.prototype.activateMenu = function(event) {
 
 MenuBar.prototype.render = function(parentElement) {
 	this.parentElement = parentElement;
-	this.menuBarContainer = $("<div/>").attr('class', modsMenuBarClass).appendTo(parentElement);
+	this.menuBarContainer = $("<div/>").attr('class', xmlMenuBarClass).appendTo(parentElement);
 	
 	this.headerMenu = $("<ul/>");
 	this.menuBarContainer.append(this.headerMenu);
@@ -1483,7 +1482,7 @@ MenuBar.prototype.generateMenuItem = function(menuItemData, parentMenu) {
 	}
 	
 	var menuBar = this;
-	menuItem.data("menuItemData", menuItemData).attr("id", modsMenuHeaderPrefix + menuItemData.label.replace(/ /g, "_"));
+	menuItem.data("menuItemData", menuItemData).attr("id", xmlMenuHeaderPrefix + menuItemData.label.replace(/ /g, "_"));
 	if (menuItemData.items !== undefined && menuItemData.items.length > 0) {
 		var subMenu = $("<ul/>").addClass('sub_menu').appendTo(menuItem);
 		$.each(menuItemData.items, function() {
@@ -1595,14 +1594,15 @@ ModifyElementMenu.prototype.populate = function(xmlElement) {
 	self = this;
 	
 	$.each(this.target.objectType.elements, function(){
-		var modsElement = this;
+		var xmlElement = this;
 		$("<li/>").attr({
-			title : 'Add ' + modsElement.name
-		}).html(modsElement.name).click(function(){
+			title : 'Add ' + xmlElement.name
+		}).html(xmlElement.name).click(function(){
 			self.owner.editor.addChildElementCallback(this);
-		}).data('mods', {
-				"target": xmlElement,
-				"objectType": modsElement
+		}).data('xml', {
+				//"target": xmlElement,
+				"target": self.target,
+				"objectType": xmlElement
 		}).appendTo(self.menuContent);
 	});
 	if (this.expanded) {
@@ -1644,7 +1644,7 @@ ModifyMenuPanel.prototype.initialize = function (parentContainer) {
 		'name' : 'submit',
 		'value' : 'Submit Changes'
 	}).appendTo(this.menuColumn);
-	if (this.editor.options.ajaxOptions.modsUploadPath == null) {
+	if (this.editor.options.ajaxOptions.xmlUploadPath == null) {
 		if (this.editor.getBlobBuilder()){
 			submitButton.attr("value", "Export");
 		} else {
@@ -1705,13 +1705,13 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 	if (this.menuColumn == null || this.menuColumn.offset() == null)
 		return;
 	
-	var modsWorkAreaContainer = this.editor.modsWorkAreaContainer;
-	var modsEditorContainer = this.editor.modsEditorContainer;
-	var menuTop = modsWorkAreaContainer.offset().top;
+	var xmlWorkAreaContainer = this.editor.xmlWorkAreaContainer;
+	var xmlEditorContainer = this.editor.xmlEditorContainer;
+	var menuTop = xmlWorkAreaContainer.offset().top;
 	if ($(window).scrollTop() >= menuTop) {
 		this.menuColumn.css({
 			position : 'fixed',
-			left : modsEditorContainer.offset().left + modsEditorContainer.outerWidth() - this.menuColumn.outerWidth(),
+			left : xmlEditorContainer.offset().left + xmlEditorContainer.outerWidth() - this.menuColumn.outerWidth(),
 			top : 0
 		});
 		this.editor.editorHeader.css({
@@ -1721,7 +1721,7 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 	} else {
 		this.menuColumn.css({
 			position : 'absolute',
-			left : modsEditorContainer.offset().left + modsEditorContainer.outerWidth() - this.menuColumn.outerWidth(),
+			left : xmlEditorContainer.offset().left + xmlEditorContainer.outerWidth() - this.menuColumn.outerWidth(),
 			top : menuTop
 		});
 		this.editor.editorHeader.css({
@@ -1735,7 +1735,7 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 	// Gap between the top of the column and the beginning of the actual menu
 	var menuOffset = this.menuContainer.offset().top - this.menuColumn.offset().top;
 	// Default height matches the height of the work area
-	var menuHeight = modsWorkAreaContainer.height() - menuOffset;
+	var menuHeight = xmlWorkAreaContainer.height() - menuOffset;
 	
 	var workAreaOffset = this.menuColumn.offset().top - $(window).scrollTop();
 	if (workAreaOffset < 0)
@@ -1746,8 +1746,8 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 	}
 	
 	// Prevent menu from exceeding editor height
-	if (menuHeight + menuOffset > modsWorkAreaContainer.height() + modsWorkAreaContainer.offset().top - $(window).scrollTop()) {
-		menuHeight = modsWorkAreaContainer.height() + modsWorkAreaContainer.offset().top - $(window).scrollTop() - menuOffset;
+	if (menuHeight + menuOffset > xmlWorkAreaContainer.height() + xmlWorkAreaContainer.offset().top - $(window).scrollTop()) {
+		menuHeight = xmlWorkAreaContainer.height() + xmlWorkAreaContainer.offset().top - $(window).scrollTop() - menuOffset;
 	}
 	this.menuContainer.css({'max-height': menuHeight});
 	return this;
@@ -1806,8 +1806,8 @@ TextEditor.prototype.resetSelectedTagRange = function() {
 
 TextEditor.prototype.initialize = function(parentContainer) {
 	this.xmlContent = $("<div/>").attr({'id' : textContentClass + this.instanceNumber, 'class' : textContentClass}).appendTo(parentContainer);
-	this.xmlEditorDiv = $("<div/>").attr('id', 'xml_editor').appendTo(this.xmlContent);
-	this.aceEditor = ace.edit("xml_editor");
+	this.xmlEditorDiv = $("<div/>").attr('id', 'text_editor').appendTo(this.xmlContent);
+	this.aceEditor = ace.edit("text_editor");
 	this.aceEditor.setTheme("ace/theme/textmate");
 	this.aceEditor.getSession().setMode("ace/mode/xml");
 	this.aceEditor.setShowPrintMargin(false);
@@ -1832,7 +1832,7 @@ TextEditor.prototype.activate = function() {
 	this.active = true;
 	
 	if (!this.isInitialized()){
-		this.initialize(this.editor.modsTabContainer);
+		this.initialize(this.editor.xmlTabContainer);
 	}
 	this.xmlContent.show();
 	this.refreshDisplay();
@@ -1927,7 +1927,7 @@ TextEditor.prototype.resize = function() {
 	this.xmlEditorDiv.height(xmlEditorHeight);
 	if (this.editor.modifyMenu.menuContainer != null){
 		this.editor.modifyMenu.menuContainer.css({
-			'max-height': $(this.editor.modsWorkAreaContainer).height() - this.editor.modifyMenu.menuContainer.offset().top
+			'max-height': $(this.editor.xmlWorkAreaContainer).height() - this.editor.modifyMenu.menuContainer.offset().top
 		});
 	}
 	if (this.aceEditor != null)
@@ -1958,24 +1958,25 @@ TextEditor.prototype.selectTagAtCursor = function() {
 	if (closingIndex == -1)
 		closingIndex = currentLine.length - 1;
 	
-	var tagRegex = /<((mods:)?[a-zA-Z]+)( |\/|>|$)/;
+	var tagRegex = /<(([a-zA-Z0-9\-]+:)?([a-zA-Z0-9\-]+))( |\/|>|$)/;
 	var match = tagRegex.exec(currentLine.substring(openingIndex));
 	
 	// Check to see if the tag being selected is already selected.  If it is and the document hasn't been changed, then quit.
 	if (match != null && !this.inSelectedTag(currentRow, openingIndex, closingIndex)){
 		var tagTitle = match[1];
+		var nsPrefix = match[2];
+		var unprefixedTitle = match[3];
 		var prefixedTitle = tagTitle;
-		var unprefixedTitle = tagTitle;
-		if (tagTitle.indexOf("mods:") == -1){
-			prefixedTitle = "mods:" + prefixedTitle;
-		} else {
-			unprefixedTitle = tagTitle.substring(tagTitle.indexOf(":") + 1);
+		if (!nsPrefix){
+			nsPrefix = unprefixedTitle;
+			// Target prefix as the default prefix when looking up the element in the tree
+			prefixedTitle = this.editor.options.targetPrefix + unprefixedTitle;
 		}
 		
 		// No element type or is the root node, done.
-		if (!(unprefixedTitle in this.editor.modsTree.tree) || unprefixedTitle == "mods")
+		if (!(unprefixedTitle in this.editor.xmlTree.tree) || unprefixedTitle == this.editor.xmlTree.rootElement.name)
 			return this;
-		var objectType = this.editor.modsTree.tree[unprefixedTitle];
+		var objectType = this.editor.xmlTree.tree[unprefixedTitle];
 		
 		if (this.editor.xmlState.changesNotSynced()) {
 			//Refresh the xml if it has changed
@@ -2060,7 +2061,7 @@ TextEditor.prototype.addElementEvent = function(parentElement, newElement) {
 	});
 	var Range = require("ace/range").Range;
 	var startPosition = new Range(0,0,0,0);
-	var pattern = new RegExp("<(mods:)?" + newElement.xmlNode[0].localName +"(\\s|\\/|>|$)", "g");
+	var pattern = new RegExp("<(" + this.editor.options.targetPrefix + ":)?" + newElement.xmlNode[0].localName +"(\\s|\\/|>|$)", "g");
 	this.aceEditor.find(pattern, {'regExp': true, 'start': startPosition, 'wrap': false});
 	for (var i = 0; i < instanceNumber; i++) {
 		this.aceEditor.findNext({'needle' : pattern});
@@ -2218,7 +2219,7 @@ XMLAttribute.prototype.changeValue = function(value) {
 	this.xmlElement.xmlNode.attr(this.objectType.name, value);
 };
 /**
- * Stores data related to a single MODS element as it is represented in both the base XML 
+ * Stores data related to a single xml element as it is represented in both the base XML 
  * document and GUI
  */
 
@@ -2254,7 +2255,7 @@ XMLElement.prototype.render = function(parentElement, recursive) {
 	// Create the element and add it to the container
 	this.guiElement = $('<div/>').attr({
 		'id' : this.guiElementID,
-		'class' : this.objectType.nameEsc + 'Instance ' + modsElementClass
+		'class' : this.objectType.nameEsc + 'Instance ' + xmlElementClass
 	}).appendTo(this.parentElement.childContainer);
 	if (this.isTopLevel) {
 		this.guiElement.addClass(topLevelContainerClass);
@@ -2292,7 +2293,7 @@ XMLElement.prototype.render = function(parentElement, recursive) {
 
 XMLElement.prototype.renderChildren = function(recursive) {
 	this.childCount = 0;
-	this.guiElement.children("." + modsElementClass).remove();
+	this.guiElement.children("." + xmlElementClass).remove();
 	
 	var elementsArray = this.objectType.elements;
 	var self = this;
@@ -2325,7 +2326,7 @@ XMLElement.prototype.initializeGUI = function () {
 	if (this.childContainer != null) {
 		this.childContainer.sortable({
 			distance: 10,
-			items: '> .' + modsElementClass,
+			items: '> .' + xmlElementClass,
 			update: function(event, ui) {
 				self.editor.guiEditor.updateElementPosition($(ui.item));
 			}
@@ -2443,7 +2444,7 @@ XMLElement.prototype.addElement = function(objectType) {
 	if (!this.allowChildren)
 		return null;
 	
-	// Create the new element in the mods namespace with the matching prefix
+	// Create the new element in the target namespace with the matching prefix
 	var newElement = this.editor.xmlState.xml[0].createElementNS(this.editor.options.targetNS, this.editor.targetPrefix + objectType.nameEsc);
 	$(newElement).text(" ");
 	this.xmlNode.append(newElement);
@@ -2498,7 +2499,7 @@ XMLElement.prototype.swap = function (swapTarget) {
 };
 
 XMLElement.prototype.moveUp = function() {
-	var previousSibling = this.guiElement.prev("." + modsElementClass);
+	var previousSibling = this.guiElement.prev("." + xmlElementClass);
 	if (previousSibling.length > 0) {
 		this.swap(previousSibling.data("xmlElement"));
 		return true;
@@ -2508,7 +2509,7 @@ XMLElement.prototype.moveUp = function() {
 };
 
 XMLElement.prototype.moveDown = function() {
-	var nextSibling = this.guiElement.next("." + modsElementClass);
+	var nextSibling = this.guiElement.next("." + xmlElementClass);
 	if (nextSibling.length > 0) {
 		nextSibling.data("xmlElement").swap(this);
 		return true;
@@ -2540,7 +2541,7 @@ XMLElement.prototype.getSelectedAttribute = function () {
 XMLElement.prototype.updated = function () {
 	if (this.guiElement == null)
 		return;
-	this.childCount = (this.objectType.elements.length == 0)? 0: this.childContainer.children("." + modsElementClass).length;
+	this.childCount = (this.objectType.elements.length == 0)? 0: this.childContainer.children("." + xmlElementClass).length;
 	this.attributeCount = (this.objectType.attributes == null || this.objectType.attributes.length == 0)? 0: this.guiElement.children("." + attributesContainerClass).children("." + attributeContainerClass).length;
 	
 	if (this.childCount > 0) {

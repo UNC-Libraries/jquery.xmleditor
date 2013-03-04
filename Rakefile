@@ -1,14 +1,14 @@
 require "rubygems"
 require "sprockets"
 
-task :default => "jquery.modseditor.js"
+task :default => "jquery.xmleditor.js"
 
-task "jquery.modseditor.js" => FileList.new("src/*") do
+task "jquery.xmleditor.js" => FileList.new("src/*") do
   environment = Sprockets::Environment.new
   environment.append_path "src"
   
-  File.open("jquery.modseditor.js", "w+") do |f|
-    f << ";(function($){" + environment.find_asset("jquery.modseditor.js").to_s + "})(jQuery);"
+  File.open("jquery.xmleditor.js", "w+") do |f|
+    f << ";(function($){" + environment.find_asset("jquery.xmleditor.js").to_s + "})(jQuery);"
   end
 end
 
@@ -18,5 +18,5 @@ task "mods.js" do
 end
 
 task :clean do
-  FileUtils.rm_f("jquery.modseditor.js")
+  FileUtils.rm_f("jquery.xmleditor.js")
 end

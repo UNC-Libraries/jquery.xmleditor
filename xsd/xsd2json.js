@@ -73,6 +73,7 @@ function Xsd2Json(xsd, options) {
 };
 
 Xsd2Json.prototype.importAjax = function(url, originalAttempt) {
+	console.log("importing" + url);
 	var originalURL = url;
 	// Prefer a local copy to the remote since likely can't get the remote copy due to cross domain ajax restrictions
 	if (!originalAttempt)

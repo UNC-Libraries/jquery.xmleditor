@@ -37,7 +37,7 @@ AttributeMenu.prototype.populate = function (xmlElement) {
 			'id' : xmlElement.guiElementID + "_" + attribute.nameEsc + "_add"
 		}).html(attribute.name).click(function(){
 			self.owner.editor.addAttributeButtonCallback(this);
-		}).data('mods', {
+		}).data('xml', {
 				"objectType": attribute,
 				"target": xmlElement
 		}).appendTo(self.menuContent);

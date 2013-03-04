@@ -14,7 +14,7 @@ function MenuBar(editor) {
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
 				label : 'Submit to Server',
-				enabled : (self.editor.options.ajaxOptions.modsUploadPath != null),
+				enabled : (self.editor.options.ajaxOptions.xmlUploadPath != null),
 				binding : "alt+shift+s",
 				action : $.proxy(self.editor.submitXML, self.editor)
 			}, {
@@ -136,16 +136,16 @@ function MenuBar(editor) {
 		enabled : true,
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
-			label : 'Switch to MODS View',
+			label : 'Switch to XML View',
 			enabled : true,
-			binding : "alt+shift+m",
+			binding : "alt+shift+x",
 			action : function() {
 				self.editor.modeChange(0);
 			}
 		}, {
-			label : 'Switch to XML View',
+			label : 'Switch to Text View',
 			enabled : true,
-			binding : "alt+shift+x",
+			binding : "alt+shift+t",
 			action : function() {
 				self.editor.modeChange(1);
 			}
@@ -153,22 +153,22 @@ function MenuBar(editor) {
 	}, {
 		label : 'Help',
 		enabled : true,
-		action : function(event) {self.activateMenu(event);}, 
+		action : function(event) {self.activateMenu(event);}/*, 
 		items : [ {
 			label : 'MODS Outline of Elements',
 			enabled : true,
 			binding : null,
 			action : "http://www.loc.gov/standards/mods/mods-outline.html"
-		} ]
+		} ]*/
 	}, {
-		label : 'MODS',
+		label : 'XML',
 		enabled : true, 
 		itemClass : 'header_mode_tab',
 		action : function() {
 			self.editor.modeChange(0);
 		}
 	}, {
-		label : 'XML',
+		label : 'Text',
 		enabled : true, 
 		itemClass : 'header_mode_tab',
 		action : function() {
@@ -198,7 +198,7 @@ MenuBar.prototype.activateMenu = function(event) {
 
 MenuBar.prototype.render = function(parentElement) {
 	this.parentElement = parentElement;
-	this.menuBarContainer = $("<div/>").attr('class', modsMenuBarClass).appendTo(parentElement);
+	this.menuBarContainer = $("<div/>").attr('class', xmlMenuBarClass).appendTo(parentElement);
 	
 	this.headerMenu = $("<ul/>");
 	this.menuBarContainer.append(this.headerMenu);
@@ -230,7 +230,7 @@ MenuBar.prototype.generateMenuItem = function(menuItemData, parentMenu) {
 	}
 	
 	var menuBar = this;
-	menuItem.data("menuItemData", menuItemData).attr("id", modsMenuHeaderPrefix + menuItemData.label.replace(/ /g, "_"));
+	menuItem.data("menuItemData", menuItemData).attr("id", xmlMenuHeaderPrefix + menuItemData.label.replace(/ /g, "_"));
 	if (menuItemData.items !== undefined && menuItemData.items.length > 0) {
 		var subMenu = $("<ul/>").addClass('sub_menu').appendTo(menuItem);
 		$.each(menuItemData.items, function() {

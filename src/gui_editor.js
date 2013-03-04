@@ -1,7 +1,7 @@
 function GUIEditor(editor) {
 	this.editor = editor;
 	this.guiContent = null;
-	this.modsContent = null;
+	this.xmlContent = null;
 	this.elementIndex = 0;
 	this.rootElement = null;
 	this.active = false;
@@ -10,20 +10,20 @@ function GUIEditor(editor) {
 }
 
 GUIEditor.prototype.initialize = function(parentContainer) {
-	this.modsContent = $("<div class='" + modsContentClass + "'/>");
-	this.modsContent.data("mods", {});
+	this.xmlContent = $("<div class='" + xmlContentClass + "'/>");
+	this.xmlContent.data("xml", {});
 	$("<div/>").attr("class", "placeholder").html("There are no elements in this document.  Use the menu on the right to add new top level elements.")
-			.appendTo(this.modsContent);
+			.appendTo(this.xmlContent);
 	
 	this.guiContent = $("<div/>").attr({'id' : guiContentClass + this.editor.instanceNumber, 'class' : guiContentClass}).appendTo(parentContainer);
 	//this.guiContent = parentContainer;
 	
-	this.guiContent.append(this.modsContent);
+	this.guiContent.append(this.xmlContent);
 	
 	this.rootElement = new XMLElement(this.editor.xmlState.xml.children().first(), this.editor.schema, this.editor);
-	this.rootElement.guiElement = this.modsContent;
+	this.rootElement.guiElement = this.xmlContent;
 	this.rootElement.guiElement.data("xmlElement", this.rootElement);
-	this.rootElement.childContainer = this.modsContent;
+	this.rootElement.childContainer = this.xmlContent;
 	this.rootElement.initializeGUI();
 	return this;
 };
@@ -49,7 +49,7 @@ GUIEditor.prototype.deactivate = function() {
 };
 
 GUIEditor.prototype.nextIndex = function() {
-	return modsElementClass + (++this.elementIndex);
+	return xmlElementClass + (++this.elementIndex);
 };
 
 GUIEditor.prototype.clearElements = function() {
@@ -58,7 +58,7 @@ GUIEditor.prototype.clearElements = function() {
 };
 
 GUIEditor.prototype.resize = function() {
-	//modsContent.width(guiContent.width() - menuContainer.width() - 30);
+	//xmlContent.width(guiContent.width() - menuContainer.width() - 30);
 	return this;
 };
 
@@ -76,7 +76,7 @@ GUIEditor.prototype.refreshElements = function() {
 };
 
 GUIEditor.prototype.addElementEvent = function(parentElement, newElement) {
-	if (parentElement.guiElementID != this.modsContent.attr("id")) {
+	if (parentElement.guiElementID != this.xmlContent.attr("id")) {
 		parentElement.updated();
 	}
 	this.focusObject(newElement.guiElement);
@@ -99,7 +99,7 @@ GUIEditor.prototype.selectElement = function(selected) {
 	if (!selected || selected.length == 0) {
 		this.deselect();
 	} else {
-		$("." + modsElementClass + ".selected").removeClass("selected");
+		$("." + xmlElementClass + ".selected").removeClass("selected");
 		$('.' + attributeContainerClass + ".selected").removeClass("selected");
 		if (selected instanceof XMLElement){
 			this.selectedElement = selected;
@@ -120,7 +120,7 @@ GUIEditor.prototype.deselect = function() {
 		selectedAttributes.removeClass('selected');
 		return this;
 	}
-	$("." + modsElementClass + ".selected").removeClass("selected");
+	$("." + xmlElementClass + ".selected").removeClass("selected");
 	this.selectedElement = null;
 	if (this.editor.modifyMenu != null)
 		this.editor.modifyMenu.clearContextualMenus();
@@ -142,11 +142,11 @@ GUIEditor.prototype.deleteSelected = function() {
 		xmlAttribute.remove();
 	} else {
 		// After delete, select next sibling, previous sibling, or parent, as available.
-		var afterDeleteSelection = this.selectedElement.guiElement.next("." + modsElementClass);
+		var afterDeleteSelection = this.selectedElement.guiElement.next("." + xmlElementClass);
 		if (afterDeleteSelection.length == 0)
-			afterDeleteSelection = this.selectedElement.guiElement.prev("." + modsElementClass);
+			afterDeleteSelection = this.selectedElement.guiElement.prev("." + xmlElementClass);
 		if (afterDeleteSelection.length == 0)
-			afterDeleteSelection = this.selectedElement.guiElement.parents("." + modsElementClass).first();
+			afterDeleteSelection = this.selectedElement.guiElement.parents("." + xmlElementClass).first();
 		
 		this.selectedElement.remove();
 		this.editor.xmlState.documentChangedEvent();
@@ -171,9 +171,9 @@ GUIEditor.prototype.moveSelected = function(up) {
 GUIEditor.prototype.updateElementPosition = function(moved) {
 	var movedElement = moved.data('xmlElement');
 	
-	var sibling = moved.prev('.' + modsElementClass);
+	var sibling = moved.prev('.' + xmlElementClass);
 	if (sibling.length == 0) {
-		sibling = moved.next('.' + modsElementClass);
+		sibling = moved.next('.' + xmlElementClass);
 		movedElement.xmlNode.detach().insertBefore(sibling.data('xmlElement').xmlNode);
 	} else {
 		movedElement.xmlNode.detach().insertAfter(sibling.data('xmlElement').xmlNode);
@@ -185,18 +185,18 @@ GUIEditor.prototype.updateElementPosition = function(moved) {
 GUIEditor.prototype.selectSibling = function(reverse) {
 	var direction = reverse? 'prev' : 'next';
 	if (this.selectedElement.guiElement.length > 0) {
-		newSelection = this.selectedElement.guiElement[direction]("." + modsElementClass);
+		newSelection = this.selectedElement.guiElement[direction]("." + xmlElementClass);
 		if (newSelection.length == 0 && !this.selectedElement.isTopLevel) {
 			// If there is no next sibling but the parent has one, then go to parents sibling
-			this.selectedElement.guiElement.parents("." + modsElementClass).each(function(){
-				newSelection = $(this)[direction]("." + modsElementClass);
+			this.selectedElement.guiElement.parents("." + xmlElementClass).each(function(){
+				newSelection = $(this)[direction]("." + xmlElementClass);
 				if (newSelection.length > 0 || $(this).data("xmlElement").isTopLevel)
 					return false;
 			});
 		}
 	} else {
 		if (!reverse)
-			newSelection = $("." + modsElementClass).first();
+			newSelection = $("." + xmlElementClass).first();
 	}
 	
 	if (newSelection.length == 0)
@@ -207,8 +207,8 @@ GUIEditor.prototype.selectSibling = function(reverse) {
 
 GUIEditor.prototype.selectParent = function(reverse) {
 	if (reverse)
-		newSelection = this.selectedElement.guiElement.find("." + modsElementClass);
-	else newSelection = this.selectedElement.guiElement.parents("." + modsElementClass);
+		newSelection = this.selectedElement.guiElement.find("." + xmlElementClass);
+	else newSelection = this.selectedElement.guiElement.parents("." + xmlElementClass);
 	if (newSelection.length == 0)
 		return this;
 	this.selectElement(newSelection.first()).selectedElement.focus();
@@ -219,10 +219,10 @@ GUIEditor.prototype.selectNext = function(reverse) {
 	var newSelection = null;
 	if (this.selectedElement == null) {
 		if (!reverse)
-			newSelection = $("." + modsElementClass).first();
+			newSelection = $("." + xmlElementClass).first();
 	} else {
 		var found = false;
-		var allElements = $("." + modsElementClass + ":visible", this.modsContent);
+		var allElements = $("." + xmlElementClass + ":visible", this.xmlContent);
 		
 		if (reverse)
 			allElements = $(allElements.get().reverse());
@@ -273,7 +273,7 @@ GUIEditor.prototype.focusSelectedText = function() {
 	if (focused == null || focused.length == 0)
 		return this;
 	// If the focused input was in an element other than the selected one, then select it
-	var containerElement = focused.parents("." + modsElementClass);
+	var containerElement = focused.parents("." + xmlElementClass);
 	if (containerElement !== this.selectedElement)
 		this.selectElement(containerElement);
 	return this;
@@ -285,25 +285,25 @@ GUIEditor.prototype.focusInput = function(reverse) {
 		if (reverse)
 			return this;
 		// Nothing is selected or focused, so grab the first available input
-		focused = this.modsContent.find("input[type=text]:visible, textarea:visible, select:visible").first().focus();
+		focused = this.xmlContent.find("input[type=text]:visible, textarea:visible, select:visible").first().focus();
 	} else {
 		// When an input is already focused, tabbing selects the next input
 		var foundFocus = false;
 		var inputsSelector = "input[type=text]:visible, textarea:visible, select:visible";
 		// If no inputs are focused but an element is selected, seek the next input near this element
 		if (this.selectedElement != null && focused.length == 0) {
-			inputsSelector += ", ." + modsElementClass;
+			inputsSelector += ", ." + xmlElementClass;
 			focused = this.selectedElement.guiElement;
 		}
-		var visibleInputs = this.modsContent.find(inputsSelector);
+		var visibleInputs = this.xmlContent.find(inputsSelector);
 		// If in reverse mode, get the previous input
 		if (reverse) {
 			visibleInputs = $(visibleInputs.get().reverse());
 		}
 		// Seek the next input after the focused one
 		visibleInputs.each(function(){
-			// Can't focus a mods class if they are present.
-			if (foundFocus && !$(this).hasClass(modsElementClass)) {
+			// Can't focus a xml class if they are present.
+			if (foundFocus && !$(this).hasClass(xmlElementClass)) {
 				focused = $(this).focus();
 				return false;
 			} else if (this.id == focused.attr('id')) {
@@ -312,7 +312,7 @@ GUIEditor.prototype.focusInput = function(reverse) {
 		});
 	}
 	// If the focused input was in an element other than the selected one, then select it
-	var containerElement = focused.parents("." + modsElementClass);
+	var containerElement = focused.parents("." + xmlElementClass);
 	if (containerElement !== this.selectedElement)
 		this.selectElement(containerElement);
 	var container = focused.parents('.' + attributeContainerClass);

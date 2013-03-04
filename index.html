@@ -2,10 +2,10 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<title>jQuery.modseditor</title>
+<title>jQuery.xmleditor</title>
 <link rel="stylesheet" href="stylesheets/reset.css" type="text/css" />
 <link rel="stylesheet" href="stylesheets/demo.css" type="text/css" />
-<link rel="stylesheet" href="css/jquery.modseditor.css"type="text/css" />
+<link rel="stylesheet" href="css/jquery.xmleditor.css" type="text/css" />
 <script src="lib/ace/src-min/ace.js"></script>
 <script src="lib/jquery.min.js"></script>
 <script src="lib/jquery.xmlns.js"></script>
@@ -14,15 +14,15 @@
 <script src="lib/cycle.js"></script>
 <script src="lib/expanding.js"></script>
 <script src="lib/vkbeautify.js"></script>
-<script src="mods.js"></script>
-<script src="jquery.modseditor.js"></script>
+<script src="examples/mods.js"></script>
+<script src="jquery.xmleditor.js"></script>
 </head>
 <body>
 	<div class="wrapper">
 		<header>
-			<h1>jQuery.modseditor</h1>
-			<a href="https://github.com/UNC-Libraries/jquery.modseditor">View
-				the Project on GitHub <small>UNC-Libraries/jquery.modseditor</small>
+			<h1>jQuery.xmleditor</h1>
+			<a href="https://github.com/UNC-Libraries/jquery.xmleditor">View
+				the Project on GitHub <small>UNC-Libraries/jquery.xmleditor</small>
 			</a>
 
 			<p>A browser based, schema driven XML editor developed by the
@@ -41,12 +41,12 @@
 				editing an empty MODS version 3.4 document:</p>
 		</header>
 	</div>
-	<div id="mods_editor">
+	<div id="xml_editor">
 		<mods xmlns="http://www.loc.gov/mods/v3"> </mods>
 	</div>
 	<script>
 		$(function() {
-			$("#mods_editor").modsEditor({
+			$("#xml_editor").xmlEditor({
 				schemaObject : MODS,
 				documentTitle : 'MODS'
 			});

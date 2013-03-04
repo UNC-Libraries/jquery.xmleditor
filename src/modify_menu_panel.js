@@ -20,7 +20,7 @@ ModifyMenuPanel.prototype.initialize = function (parentContainer) {
 		'name' : 'submit',
 		'value' : 'Submit Changes'
 	}).appendTo(this.menuColumn);
-	if (this.editor.options.ajaxOptions.modsUploadPath == null) {
+	if (this.editor.options.ajaxOptions.xmlUploadPath == null) {
 		if (this.editor.getBlobBuilder()){
 			submitButton.attr("value", "Export");
 		} else {
@@ -81,13 +81,13 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 	if (this.menuColumn == null || this.menuColumn.offset() == null)
 		return;
 	
-	var modsWorkAreaContainer = this.editor.modsWorkAreaContainer;
-	var modsEditorContainer = this.editor.modsEditorContainer;
-	var menuTop = modsWorkAreaContainer.offset().top;
+	var xmlWorkAreaContainer = this.editor.xmlWorkAreaContainer;
+	var xmlEditorContainer = this.editor.xmlEditorContainer;
+	var menuTop = xmlWorkAreaContainer.offset().top;
 	if ($(window).scrollTop() >= menuTop) {
 		this.menuColumn.css({
 			position : 'fixed',
-			left : modsEditorContainer.offset().left + modsEditorContainer.outerWidth() - this.menuColumn.outerWidth(),
+			left : xmlEditorContainer.offset().left + xmlEditorContainer.outerWidth() - this.menuColumn.outerWidth(),
 			top : 0
 		});
 		this.editor.editorHeader.css({
@@ -97,7 +97,7 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 	} else {
 		this.menuColumn.css({
 			position : 'absolute',
-			left : modsEditorContainer.offset().left + modsEditorContainer.outerWidth() - this.menuColumn.outerWidth(),
+			left : xmlEditorContainer.offset().left + xmlEditorContainer.outerWidth() - this.menuColumn.outerWidth(),
 			top : menuTop
 		});
 		this.editor.editorHeader.css({
@@ -111,7 +111,7 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 	// Gap between the top of the column and the beginning of the actual menu
 	var menuOffset = this.menuContainer.offset().top - this.menuColumn.offset().top;
 	// Default height matches the height of the work area
-	var menuHeight = modsWorkAreaContainer.height() - menuOffset;
+	var menuHeight = xmlWorkAreaContainer.height() - menuOffset;
 	
 	var workAreaOffset = this.menuColumn.offset().top - $(window).scrollTop();
 	if (workAreaOffset < 0)
@@ -122,8 +122,8 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 	}
 	
 	// Prevent menu from exceeding editor height
-	if (menuHeight + menuOffset > modsWorkAreaContainer.height() + modsWorkAreaContainer.offset().top - $(window).scrollTop()) {
-		menuHeight = modsWorkAreaContainer.height() + modsWorkAreaContainer.offset().top - $(window).scrollTop() - menuOffset;
+	if (menuHeight + menuOffset > xmlWorkAreaContainer.height() + xmlWorkAreaContainer.offset().top - $(window).scrollTop()) {
+		menuHeight = xmlWorkAreaContainer.height() + xmlWorkAreaContainer.offset().top - $(window).scrollTop() - menuOffset;
 	}
 	this.menuContainer.css({'max-height': menuHeight});
 	return this;

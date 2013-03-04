@@ -1,5 +1,5 @@
 /**
- * Stores data related to a single MODS element as it is represented in both the base XML 
+ * Stores data related to a single xml element as it is represented in both the base XML 
  * document and GUI
  */
 function XMLElement(xmlNode, objectType, editor) {
@@ -34,7 +34,7 @@ XMLElement.prototype.render = function(parentElement, recursive) {
 	// Create the element and add it to the container
 	this.guiElement = $('<div/>').attr({
 		'id' : this.guiElementID,
-		'class' : this.objectType.nameEsc + 'Instance ' + modsElementClass
+		'class' : this.objectType.nameEsc + 'Instance ' + xmlElementClass
 	}).appendTo(this.parentElement.childContainer);
 	if (this.isTopLevel) {
 		this.guiElement.addClass(topLevelContainerClass);
@@ -72,7 +72,7 @@ XMLElement.prototype.render = function(parentElement, recursive) {
 
 XMLElement.prototype.renderChildren = function(recursive) {
 	this.childCount = 0;
-	this.guiElement.children("." + modsElementClass).remove();
+	this.guiElement.children("." + xmlElementClass).remove();
 	
 	var elementsArray = this.objectType.elements;
 	var self = this;
@@ -105,7 +105,7 @@ XMLElement.prototype.initializeGUI = function () {
 	if (this.childContainer != null) {
 		this.childContainer.sortable({
 			distance: 10,
-			items: '> .' + modsElementClass,
+			items: '> .' + xmlElementClass,
 			update: function(event, ui) {
 				self.editor.guiEditor.updateElementPosition($(ui.item));
 			}
@@ -223,7 +223,7 @@ XMLElement.prototype.addElement = function(objectType) {
 	if (!this.allowChildren)
 		return null;
 	
-	// Create the new element in the mods namespace with the matching prefix
+	// Create the new element in the target namespace with the matching prefix
 	var newElement = this.editor.xmlState.xml[0].createElementNS(this.editor.options.targetNS, this.editor.targetPrefix + objectType.nameEsc);
 	$(newElement).text(" ");
 	this.xmlNode.append(newElement);
@@ -278,7 +278,7 @@ XMLElement.prototype.swap = function (swapTarget) {
 };
 
 XMLElement.prototype.moveUp = function() {
-	var previousSibling = this.guiElement.prev("." + modsElementClass);
+	var previousSibling = this.guiElement.prev("." + xmlElementClass);
 	if (previousSibling.length > 0) {
 		this.swap(previousSibling.data("xmlElement"));
 		return true;
@@ -288,7 +288,7 @@ XMLElement.prototype.moveUp = function() {
 };
 
 XMLElement.prototype.moveDown = function() {
-	var nextSibling = this.guiElement.next("." + modsElementClass);
+	var nextSibling = this.guiElement.next("." + xmlElementClass);
 	if (nextSibling.length > 0) {
 		nextSibling.data("xmlElement").swap(this);
 		return true;
@@ -320,7 +320,7 @@ XMLElement.prototype.getSelectedAttribute = function () {
 XMLElement.prototype.updated = function () {
 	if (this.guiElement == null)
 		return;
-	this.childCount = (this.objectType.elements.length == 0)? 0: this.childContainer.children("." + modsElementClass).length;
+	this.childCount = (this.objectType.elements.length == 0)? 0: this.childContainer.children("." + xmlElementClass).length;
 	this.attributeCount = (this.objectType.attributes == null || this.objectType.attributes.length == 0)? 0: this.guiElement.children("." + attributesContainerClass).children("." + attributeContainerClass).length;
 	
 	if (this.childCount > 0) {
