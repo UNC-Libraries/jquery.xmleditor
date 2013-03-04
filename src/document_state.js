@@ -63,7 +63,6 @@ DocumentState.prototype.updateStateMessage = function () {
 DocumentState.prototype.extractNamespacePrefix = function(nsURI) {
 	var prefix = null;
 	var attributes = this.xml.children()[0].attributes;
-	//var attributes = $("mods|mods", this.xml)[0].attributes;
 	$.each(attributes, function(){
 		key = this.name;
 		value = this.value;
@@ -109,8 +108,8 @@ DocumentState.prototype.setXMLFromString = function(xmlString) {
 	this.xml = $(xmlDoc);
 	if (this.editor.guiEditor != null && this.editor.guiEditor.rootElement != null)
 		this.editor.guiEditor.rootElement.xmlNode = this.xml.children().first();
-	if (this.editor.guiEditor.modsContent != null)
-		this.editor.guiEditor.modsContent.data("mods").elementNode = this.xml.children().first();
+	if (this.editor.guiEditor.xmlContent != null)
+		this.editor.guiEditor.xmlContent.data("xml").elementNode = this.xml.children().first();
 	if (this.editor.problemsPanel != null)
 		this.editor.clearProblemPanel();
 };

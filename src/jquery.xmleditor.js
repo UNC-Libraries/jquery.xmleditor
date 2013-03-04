@@ -19,7 +19,7 @@
 
  */
 /*
- * jQuery MODS Editor
+ * jQuery xml Editor
  * 
  * Dependencies:
  *   vkbeautify.0.98.01.beta.js
@@ -32,39 +32,39 @@
  * @author Ben Pennell
  */
  
-var menuContainerClass = "mods_menu_container";
+var menuContainerClass = "xml_menu_container";
 var menuHeaderClass = "menu_header";
-var menuColumnClass = "mods_menu_column";
+var menuColumnClass = "xml_menu_column";
 var menuContentClass = 'menu_content';
 var menuExpandDuration = 180;
-var modsElementClass = 'mods_element';
+var xmlElementClass = 'xml_element';
 var topLevelContainerClass = 'top_level_element_group';
 var elementRootPrefix = "root_element_";
-var elementPrefix = "mods_element_";
-var childrenContainerSelector = " > .mods_children";
-var childrenContainerClass = "mods_children";
+var elementPrefix = "xml_element_";
+var childrenContainerSelector = " > .xml_children";
+var childrenContainerClass = "xml_children";
 var attributeContainerClass = "attribute_container";
-var attributesContainerSelector = " > .mods_attrs";
-var attributesContainerClass = "mods_attrs";
-var modsMenuHeaderPrefix = "mods_header_item_";
-var modsEditorContainerClass = "mods_editor_container";
-var modsWorkAreaContainerClass = "mods_work_area";
+var attributesContainerSelector = " > .xml_attrs";
+var attributesContainerClass = "xml_attrs";
+var xmlMenuHeaderPrefix = "xml_header_item_";
+var xmlEditorContainerClass = "xml_editor_container";
+var xmlWorkAreaContainerClass = "xml_work_area";
 var addTopMenuClass = "add_top_menu";
 var addAttrMenuClass = "add_attribute_menu";
 var addElementMenuClass = "add_element_menu";
-var modsMenuBarClass = "mods_menu_bar";
+var xmlMenuBarClass = "xml_menu_bar";
 var submitButtonClass = "send_xml";
-var xmlTabClass = "mods_xml_content_tab";
-var submissionStatusClass = "mods_submit_status";
-var modsContentClass = "mods_content";
+var xmlTabClass = "xml_xml_content_tab";
+var submissionStatusClass = "xml_submit_status";
+var xmlContentClass = "xml_content";
 
-var editorTabAreaClass = "mods_tab_area";
-var problemsPanelClass = "mods_problems_panel";
+var editorTabAreaClass = "xml_tab_area";
+var problemsPanelClass = "xml_problems_panel";
 var guiContentClass = "gui_content";
 var textContentClass = "text_content";
-var editorHeaderClass = "mods_editor_header";
+var editorHeaderClass = "xml_editor_header";
 
-$.widget( "xml.modsEditor", {
+$.widget( "xml.xmlEditor", {
 	options: {
 		addTopMenuHeaderText : 'Add Top Element',
 		addAttrMenuHeaderText : 'Add Attribute',
@@ -76,9 +76,9 @@ $.widget( "xml.modsEditor", {
 		floatingMenu : true,
 		
 		ajaxOptions : {
-			modsUploadPath: null,
-			modsRetrievalPath: null,
-			modsRetrievalParams : null
+			xmlUploadPath: null,
+			xmlRetrievalPath: null,
+			xmlRetrievalParams : null
 		},
 		localXMLContentSelector: this.element,
 		prettyXML : true,
@@ -94,7 +94,7 @@ $.widget( "xml.modsEditor", {
 	},
 	
 	_create: function() {
-		this.instanceNumber = $("xml-modsEditor").length;
+		this.instanceNumber = $("xml-xmlEditor").length;
 		
 		// If the schema is a function, execute it to get the schema from it.
 		if (jQuery.isFunction(this.options.schemaObject)) {
@@ -108,16 +108,16 @@ $.widget( "xml.modsEditor", {
 			$.xmlns[prefix] = value;
 		});
 		
-		// Tree of MODS element types
-		this.modsTree = null;
+		// Tree of xml element types
+		this.xmlTree = null;
 		// State of the XML document
 		this.xmlState = null;
 		// Container for the entire editor
-		this.modsEditorContainer = null;
+		this.xmlEditorContainer = null;
 		// Container for the subeditors
-		this.modsWorkAreaContainer = null;
+		this.xmlWorkAreaContainer = null;
 		// Tabbed container for differentiating between specific subeditors
-		this.modsTabContainer = null;
+		this.xmlTabContainer = null;
 		// Header container for the menu and top level info
 		this.editorHeader = null;
 		// Panel for displaying errors
@@ -140,10 +140,10 @@ $.widget( "xml.modsEditor", {
     	if (this.options.submitResponseHandler == null)
     		this.options.submitResponseHandler = this.swordSubmitResponseHandler;
     	
-    	this.modsTree = new SchemaTree(this.schema);
-    	this.modsTree.build();
+    	this.xmlTree = new SchemaTree(this.schema);
+    	this.xmlTree.build();
 		
-		// Retrieve the local mods content before we start populating the editor.
+		// Retrieve the local xml content before we start populating the editor.
     	var localXMLContent = null;
 		if ($(this.options.localXMLContentSelector).is("textarea")) {
 			localXMLContent = $(this.options.localXMLContentSelector).val(); 
@@ -154,9 +154,9 @@ $.widget( "xml.modsEditor", {
 		
 		this.xmlState = null;
 		
-		this.modsEditorContainer = $("<div/>").attr('class', modsEditorContainerClass).appendTo(this.element);
-		this.modsWorkAreaContainer = null;
-		this.modsTabContainer = null;
+		this.xmlEditorContainer = $("<div/>").attr('class', xmlEditorContainerClass).appendTo(this.element);
+		this.xmlWorkAreaContainer = null;
+		this.xmlTabContainer = null;
 		
 		this.editorHeader = null;
 		this.problemsPanel = null;
@@ -193,11 +193,11 @@ $.widget( "xml.modsEditor", {
 			}, this));
 		}
 		
-		if (this.options.ajaxOptions.modsRetrievalPath != null) {
+		if (this.options.ajaxOptions.xmlRetrievalPath != null) {
 			$.ajax({
 				type : "GET",
-				url : this.options.ajaxOptions.modsRetrievalPath,
-				data : (this.options.ajaxOptions.modsRetrievalParams),
+				url : this.options.ajaxOptions.xmlRetrievalPath,
+				data : (this.options.ajaxOptions.xmlRetrievalParams),
 				dataType : "text",
 				success : function(data) {
 					self.loadDocument(data);
@@ -221,33 +221,33 @@ $.widget( "xml.modsEditor", {
 	
 	constructEditor: function() {
 		// Work Area
-		this.modsWorkAreaContainer = $("<div/>").attr('class', modsWorkAreaContainerClass).appendTo(this.modsEditorContainer);
+		this.xmlWorkAreaContainer = $("<div/>").attr('class', xmlWorkAreaContainerClass).appendTo(this.xmlEditorContainer);
 		
 		// Menu bar
-		this.editorHeader = $("<div/>").attr('class', editorHeaderClass).appendTo(this.modsWorkAreaContainer);
+		this.editorHeader = $("<div/>").attr('class', editorHeaderClass).appendTo(this.xmlWorkAreaContainer);
 		if (this.options.documentTitle != null)
 			$("<h2/>").html("Editing Description: " + this.options.documentTitle).appendTo(this.editorHeader);
 		this.menuBar.render(this.editorHeader);
 		
-		this.modsTabContainer = $("<div/>").attr("class", editorTabAreaClass).css("padding-top", this.editorHeader.height() + "px").appendTo(this.modsWorkAreaContainer);
-		this.problemsPanel = $("<pre/>").attr('class', problemsPanelClass).hide().appendTo(this.modsTabContainer);
+		this.xmlTabContainer = $("<div/>").attr("class", editorTabAreaClass).css("padding-top", this.editorHeader.height() + "px").appendTo(this.xmlWorkAreaContainer);
+		this.problemsPanel = $("<pre/>").attr('class', problemsPanelClass).hide().appendTo(this.xmlTabContainer);
 		
-		this.guiEditor.initialize(this.modsTabContainer);
+		this.guiEditor.initialize(this.xmlTabContainer);
 		this.modeChange(0);
 		
 		var self = this;
 		$(window).resize(function() {
-			self.modsTabContainer.width(self.modsEditorContainer.outerWidth() - self.modifyMenu.menuColumn.outerWidth());
+			self.xmlTabContainer.width(self.xmlEditorContainer.outerWidth() - self.modifyMenu.menuColumn.outerWidth());
 			if (self.activeEditor != null){
 				self.activeEditor.resize();
 			}
-			self.editorHeader.width(self.modsTabContainer.width());
+			self.editorHeader.width(self.xmlTabContainer.width());
 			if (self.options.floatingMenu) {
 				self.modifyMenu.setMenuPosition();
 			}
 		});
 		
-		this.modifyMenu.initialize(this.modsEditorContainer);
+		this.modifyMenu.initialize(this.xmlEditorContainer);
 		this.modifyMenu.addMenu(addElementMenuClass, this.options.addElementMenuHeaderText, 
 				true, false, true);
 		this.modifyMenu.addAttributeMenu(addAttrMenuClass, this.options.addAttrMenuHeaderText, 
@@ -267,8 +267,8 @@ $.widget( "xml.modsEditor", {
 	},
 	
 	addChildElementCallback: function (instigator) {
-		var xmlElement = $(instigator).data("mods").target;
-		var objectType = $(instigator).data("mods").objectType;
+		var xmlElement = $(instigator).data("xml").target;
+		var objectType = $(instigator).data("xml").objectType;
 		
 		if (this.textEditor.active) {
 			// Refresh xml state
@@ -298,7 +298,7 @@ $.widget( "xml.modsEditor", {
 				return;
 			}
 		}
-		var data = $(instigator).data('mods');
+		var data = $(instigator).data('xml');
 		data.target.addAttribute(data.objectType);
 		
 		this.activeEditor.addAttributeEvent(data.target, data.objectType, $(instigator));
@@ -325,10 +325,10 @@ $.widget( "xml.modsEditor", {
 		}
 		if (mode == 0) {
 			this.activeEditor = this.guiEditor;
-			$("#" + modsMenuHeaderPrefix + "MODS").addClass("active_mode_tab");
+			$("#" + xmlMenuHeaderPrefix + "XML").addClass("active_mode_tab");
 		} else {
 			this.activeEditor = this.textEditor;
-			$("#" + modsMenuHeaderPrefix + "XML").addClass("active_mode_tab");
+			$("#" + xmlMenuHeaderPrefix + "Text").addClass("active_mode_tab");
 		}
 		this.activeEditor.activate();
 	},
@@ -341,7 +341,7 @@ $.widget( "xml.modsEditor", {
 		if (this.options.floatingMenu) {
 			this.modifyMenu.setMenuPosition();
 		}
-		this.modsWorkAreaContainer.width(this.modsEditorContainer.outerWidth() - this.modifyMenu.menuColumn.outerWidth());
+		this.xmlWorkAreaContainer.width(this.xmlEditorContainer.outerWidth() - this.modifyMenu.menuColumn.outerWidth());
 	},
 	
 	setXMLFromEditor: function() {
@@ -350,7 +350,7 @@ $.widget( "xml.modsEditor", {
 	},
 	
 	saveXML: function() {
-		if (this.options.ajaxOptions.modsUploadPath != null) {
+		if (this.options.ajaxOptions.xmlUploadPath != null) {
 			this.submitXML();
 		} else {
 			// Implement later when there is more browser support for html5 File API
@@ -367,7 +367,7 @@ $.widget( "xml.modsEditor", {
 		window.BlobBuilder = this.getBlobBuilder();
 		
 		if (window.BlobBuilder === undefined) {
-			this.addProblem("Browser does not support saving files via this editor.  To save, copy and paste the document from the XML view.");
+			this.addProblem("Browser does not support saving files via this editor.  To save, copy and paste the document from the Text view.");
 			return false;
 		}
 		
@@ -389,11 +389,11 @@ $.widget( "xml.modsEditor", {
 		var mimeType = "text/xml";
 		
 		var a = document.createElement('a');
-		a.download = "mods.xml";
+		a.download = "xml.xml";
 		a.href = window.URL.createObjectURL(blobBuilder.getBlob(mimeType));
 		
 		a.dataset.downloadurl = [mimeType, a.download, a.href].join(':');
-		a.target = "exportMODS";
+		a.target = "exportXML";
 		
 		var event = document.createEvent("MouseEvents");
 		event.initMouseEvent(
@@ -422,7 +422,7 @@ $.widget( "xml.modsEditor", {
 		
 		var self = this;
 		$.ajax({
-			'url' : this.options.ajaxOptions.modsUploadPath,
+			'url' : this.options.ajaxOptions.xmlUploadPath,
 			'contentType' : "application/xml",
 			'type' : "POST",
 			'data' : xmlString,
@@ -435,7 +435,7 @@ $.widget( "xml.modsEditor", {
 				} else {
 					self.xmlState.syncedChangeEvent();
 					$("." + submissionStatusClass).html("Failed to submit<br/>See errors at top").css("background-color", "#ffbbbb").animate({backgroundColor: "#ffffff"}, 1000);
-					self.addProblem("Failed to submit MODS document", outcome);
+					self.addProblem("Failed to submit xml document", outcome);
 				}
 			},
 			error : function(jqXHR, exception) {
@@ -534,8 +534,8 @@ $.widget( "xml.modsEditor", {
 	    for ( ; element && element.nodeType == 1; element = element.parentNode ) {
 	        var id = $(element.parentNode).children(element.tagName.replace(":", "\\:")).index(element) + 1;
 	        id = ('[' + id + ']');
-	        if (element.tagName.indexOf("mods:") == -1)
-	        	xpath = '/mods:' + element.tagName + id + xpath;
+	        if (element.tagName.indexOf("xml:") == -1)
+	        	xpath = '/xml:' + element.tagName + id + xpath;
 	        else xpath = '/' + element.tagName + id + xpath;
 	    }
 	    return xpath;
@@ -618,13 +618,13 @@ $.widget( "xml.modsEditor", {
 			return false;
 		}
 		
-		if (e.altKey && e.shiftKey && e.keyCode == 'M'.charCodeAt(0)) {
-			this.modsTabContainer.tabs('select', 0);
+		if (e.altKey && e.shiftKey && e.keyCode == 'X'.charCodeAt(0)) {
+			this.xmlTabContainer.tabs('select', 0);
 			return false;
 		}
 		
-		if (e.altKey && e.shiftKey && e.keyCode == 'X'.charCodeAt(0)) {
-			this.modsTabContainer.tabs('select', 1);
+		if (e.altKey && e.shiftKey && e.keyCode == 'T'.charCodeAt(0)) {
+			this.xmlTabContainer.tabs('select', 1);
 			return false;
 		}
 		
@@ -636,14 +636,14 @@ $.widget( "xml.modsEditor", {
 	 */
 	refreshMenuUndo: function(self) {
 		if (self.undoHistory.headIndex > 0) {
-			$("#" + modsMenuHeaderPrefix + "Undo").removeClass("disabled").data("menuItemData").enabled = true;
+			$("#" + xmlMenuHeaderPrefix + "Undo").removeClass("disabled").data("menuItemData").enabled = true;
 		} else {
-			$("#" + modsMenuHeaderPrefix + "Undo").addClass("disabled").data("menuItemData").enabled = false;
+			$("#" + xmlMenuHeaderPrefix + "Undo").addClass("disabled").data("menuItemData").enabled = false;
 		}
 		if (self.undoHistory.headIndex < self.undoHistory.states.length - 1) {
-			$("#" + modsMenuHeaderPrefix + "Redo").removeClass("disabled").data("menuItemData").enabled = true;
+			$("#" + xmlMenuHeaderPrefix + "Redo").removeClass("disabled").data("menuItemData").enabled = true;
 		} else {
-			$("#" + modsMenuHeaderPrefix + "Redo").addClass("disabled").data("menuItemData").enabled = false;
+			$("#" + xmlMenuHeaderPrefix + "Redo").addClass("disabled").data("menuItemData").enabled = false;
 		}
 	},
 	
@@ -654,8 +654,8 @@ $.widget( "xml.modsEditor", {
 		var hasSelected = self.guiEditor.selectedElement != null && self.guiEditor.active;
 		$.each(suffixes, function(){
 			if (hasSelected)
-				$("#" + modsMenuHeaderPrefix + this.toString()).removeClass("disabled").data("menuItemData").enabled = true;
-			else $("#" + modsMenuHeaderPrefix + this.toString()).addClass("disabled").data("menuItemData").enabled = false;
+				$("#" + xmlMenuHeaderPrefix + this.toString()).removeClass("disabled").data("menuItemData").enabled = true;
+			else $("#" + xmlMenuHeaderPrefix + this.toString()).addClass("disabled").data("menuItemData").enabled = false;
 		});
 	}
 });

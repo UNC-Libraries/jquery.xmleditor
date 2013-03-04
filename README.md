@@ -1,12 +1,14 @@
-jquery.modseditor
+jquery.xmleditor
 =================
 A web browser based XML editor.   It provides a general use graphical tool for creating new or modifying existing XML documents in your web browser.  Information is extracted from an XML schema (XSD file) to provide the user with information about what elements, subelements and attributes are available at different points in the structure, and a GUI based means of adding or removing them from the document.
 
 Additionally, this project includes a tool for generating JSON objects from XML schemas, which can either be directly used in browsers or precompiled (see xsd/xsd2json.js).
 
-Try it out in our [jquery.modseditor demo page]{http://unc-libraries.github.com/jquery.modseditor) using the MODS 3.4 schema.
+Try it out in our [jquery.xmleditor demo page]{http://unc-libraries.github.com/jquery.xmleditor) using the MODS 3.4 schema.
 
-This project was developed as a part of the [Carolina Digital Repository](https://cdr.lib.unc.edu/) for use in our administrative tools, but is fully functional as a standalone client.  Despite the monicker "modseditor", this tool is intended to serve as a general schema driven XML editor that runs in web browsers, although some default behaviors are oriented towards it.  For our own usage, it retrieves and submits documents to a SWORD 2.0 enabled repository.
+This project was developed as a part of the [Carolina Digital Repository](https://cdr.lib.unc.edu/) for use in our administrative tools, but is fully functional as a standalone client. 
+This tool is intended to serve as a general schema driven XML editor that runs in web browsers, although some default behaviors are oriented towards it.  
+For our own usage, it retrieves and submits documents to a SWORD 2.0 enabled repository.
 
 Features
 ------------

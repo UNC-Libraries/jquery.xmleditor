@@ -19,8 +19,8 @@ TextEditor.prototype.resetSelectedTagRange = function() {
 
 TextEditor.prototype.initialize = function(parentContainer) {
 	this.xmlContent = $("<div/>").attr({'id' : textContentClass + this.instanceNumber, 'class' : textContentClass}).appendTo(parentContainer);
-	this.xmlEditorDiv = $("<div/>").attr('id', 'xml_editor').appendTo(this.xmlContent);
-	this.aceEditor = ace.edit("xml_editor");
+	this.xmlEditorDiv = $("<div/>").attr('id', 'text_editor').appendTo(this.xmlContent);
+	this.aceEditor = ace.edit("text_editor");
 	this.aceEditor.setTheme("ace/theme/textmate");
 	this.aceEditor.getSession().setMode("ace/mode/xml");
 	this.aceEditor.setShowPrintMargin(false);
@@ -45,7 +45,7 @@ TextEditor.prototype.activate = function() {
 	this.active = true;
 	
 	if (!this.isInitialized()){
-		this.initialize(this.editor.modsTabContainer);
+		this.initialize(this.editor.xmlTabContainer);
 	}
 	this.xmlContent.show();
 	this.refreshDisplay();
@@ -140,7 +140,7 @@ TextEditor.prototype.resize = function() {
 	this.xmlEditorDiv.height(xmlEditorHeight);
 	if (this.editor.modifyMenu.menuContainer != null){
 		this.editor.modifyMenu.menuContainer.css({
-			'max-height': $(this.editor.modsWorkAreaContainer).height() - this.editor.modifyMenu.menuContainer.offset().top
+			'max-height': $(this.editor.xmlWorkAreaContainer).height() - this.editor.modifyMenu.menuContainer.offset().top
 		});
 	}
 	if (this.aceEditor != null)
@@ -171,24 +171,25 @@ TextEditor.prototype.selectTagAtCursor = function() {
 	if (closingIndex == -1)
 		closingIndex = currentLine.length - 1;
 	
-	var tagRegex = /<((mods:)?[a-zA-Z]+)( |\/|>|$)/;
+	var tagRegex = /<(([a-zA-Z0-9\-]+:)?([a-zA-Z0-9\-]+))( |\/|>|$)/;
 	var match = tagRegex.exec(currentLine.substring(openingIndex));
 	
 	// Check to see if the tag being selected is already selected.  If it is and the document hasn't been changed, then quit.
 	if (match != null && !this.inSelectedTag(currentRow, openingIndex, closingIndex)){
 		var tagTitle = match[1];
+		var nsPrefix = match[2];
+		var unprefixedTitle = match[3];
 		var prefixedTitle = tagTitle;
-		var unprefixedTitle = tagTitle;
-		if (tagTitle.indexOf("mods:") == -1){
-			prefixedTitle = "mods:" + prefixedTitle;
-		} else {
-			unprefixedTitle = tagTitle.substring(tagTitle.indexOf(":") + 1);
+		if (!nsPrefix){
+			nsPrefix = unprefixedTitle;
+			// Target prefix as the default prefix when looking up the element in the tree
+			prefixedTitle = this.editor.options.targetPrefix + unprefixedTitle;
 		}
 		
 		// No element type or is the root node, done.
-		if (!(unprefixedTitle in this.editor.modsTree.tree) || unprefixedTitle == "mods")
+		if (!(unprefixedTitle in this.editor.xmlTree.tree) || unprefixedTitle == this.editor.xmlTree.rootElement.name)
 			return this;
-		var objectType = this.editor.modsTree.tree[unprefixedTitle];
+		var objectType = this.editor.xmlTree.tree[unprefixedTitle];
 		
 		if (this.editor.xmlState.changesNotSynced()) {
 			//Refresh the xml if it has changed
@@ -273,7 +274,7 @@ TextEditor.prototype.addElementEvent = function(parentElement, newElement) {
 	});
 	var Range = require("ace/range").Range;
 	var startPosition = new Range(0,0,0,0);
-	var pattern = new RegExp("<(mods:)?" + newElement.xmlNode[0].localName +"(\\s|\\/|>|$)", "g");
+	var pattern = new RegExp("<(" + this.editor.options.targetPrefix + ":)?" + newElement.xmlNode[0].localName +"(\\s|\\/|>|$)", "g");
 	this.aceEditor.find(pattern, {'regExp': true, 'start': startPosition, 'wrap': false});
 	for (var i = 0; i < instanceNumber; i++) {
 		this.aceEditor.findNext({'needle' : pattern});

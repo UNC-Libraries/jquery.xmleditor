@@ -82,14 +82,15 @@ ModifyElementMenu.prototype.populate = function(xmlElement) {
 	self = this;
 	
 	$.each(this.target.objectType.elements, function(){
-		var modsElement = this;
+		var xmlElement = this;
 		$("<li/>").attr({
-			title : 'Add ' + modsElement.name
-		}).html(modsElement.name).click(function(){
+			title : 'Add ' + xmlElement.name
+		}).html(xmlElement.name).click(function(){
 			self.owner.editor.addChildElementCallback(this);
-		}).data('mods', {
-				"target": xmlElement,
-				"objectType": modsElement
+		}).data('xml', {
+				//"target": xmlElement,
+				"target": self.target,
+				"objectType": xmlElement
 		}).appendTo(self.menuContent);
 	});
 	if (this.expanded) {
