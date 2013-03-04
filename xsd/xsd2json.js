@@ -73,7 +73,7 @@ function Xsd2Json(xsd, options) {
 };
 
 Xsd2Json.prototype.importAjax = function(url, originalAttempt) {
-	console.log("importing" + url);
+	// console.log("importing" + url);
 	var originalURL = url;
 	// Prefer a local copy to the remote since likely can't get the remote copy due to cross domain ajax restrictions
 	if (!originalAttempt)
@@ -84,10 +84,10 @@ Xsd2Json.prototype.importAjax = function(url, originalAttempt) {
 		dataType: "text",
 		async: false,
 		success: function(data){
-			//console.time("xsd2json" + self.options.rootElement);
+			console.time("xsd2json" + self.options.rootElement);
 			self.xsd = $($($.parseXML(data)).children("xs|schema")[0]);
 			self.processSchema();
-			//console.timeEnd("xsd2json" + self.options.rootElement);
+			console.timeEnd("xsd2json" + self.options.rootElement);
 		}, error: function() {
 			if (!originalAttempt)
 				throw new Error("Unable to import " + url);
@@ -241,67 +241,6 @@ Xsd2Json.prototype.buildElement = function(node, parentObject) {
 	return definition;
 }
 
-/*
-Xsd2Json.prototype.buildElement = function(node, parentObject) {
-	var element = null;
-	var name = $(node).attr("name");
-	if (name == "separatedmaterial")
-		debugger;
-	if (name != null && name in this.rootDefinitions['element']) {
-		element = this.rootDefinitions['element'][name];
-		console.log("Reusing element " + name);
-	} else {
-		if ($(node).attr("ref") != null){
-			this.execute(node, 'buildElement', parentObject);
-			return;
-		}
-		
-		console.log("New element " + name);
-		
-		// Element has a name, means its a new element
-		element = {
-				"name": name,
-				"elements": [],
-				"attributes": [],
-				"values": [],
-				"type": null,
-				"namespace": this.targetNS,
-				"element": true
-		};
-		// Cache global elements for future use
-		if ($(node).parents().length == 1) {
-			this.addDefinition('element', name, element);
-		}
-		
-		if ($(node).attr("substitutionGroup") != null) {
-			var subGroup = $(node).attr("substitutionGroup");
-			var xsdObj = this.resolveXSD(subGroup);
-			subGroup = this.stripPrefix(subGroup);
-			var targetElement = null;
-			if (subGroup in xsdObj.elements) {
-				targetElement = xsdObj.elements[subGroup];
-			} else {
-				targetElement = xsdObj.buildElement(xsdObj.xsd.children("*[name='" + subGroup + "']")[0]);
-			}
-			this.mergeType(element, targetElement);
-		} else {
-			var type = $(node).attr("type");
-			if (type == null) {
-				this.buildType($(node).children().not("xs|annotation")[0], element);
-			} else {
-				element.type = this.resolveType(type, element);
-				if (element.type == null)
-					this.execute($(node)[0], 'buildType', element);
-			}
-		}
-	}
-	
-	if (parentObject != null && $(node).attr("abstract") != "true")
-		parentObject.elements.push(element);
-	
-	return element;
-};*/
-
 Xsd2Json.prototype.buildAttribute = function(node, parentObject) {
 	
 	var definition = null;
@@ -341,45 +280,6 @@ Xsd2Json.prototype.buildAttribute = function(node, parentObject) {
 		parentObject.attributes.push(definition);
 	
 	return definition;
-	
-	/*
-	if ($(node).attr("ref") != null){
-		this.execute(node, 'buildAttribute', object);
-		return;
-	}
-	
-	var attributeObject = null;
-	var name = $(node).attr("name");
-	if (name != null && name in this.rootDefinitions['attribute']) {
-		attributeObject = this.rootDefinitions['attribute'][name];
-		console.log("Reusing attribute " + name);
-	} else {
-		attributeObject = {
-				"name": $(node).attr("name"),
-				"values": [],
-				"namespace": this.targetNS,
-				"attribute": true
-			};
-		// Cache global elements for future use
-		if ($(node).parents().length == 1) {
-			this.addDefinition('attribute', name, element);
-			this.attributes[$(node).attr("name")] = attributeObject;
-		}
-		var type = $(node).attr("type");
-		if (type == null) {
-			this.buildType($(node).children().not("xs|annotation")[0], attributeObject);
-		} else {
-			attributeObject.type = this.resolveType(type, attributeObject);
-			if (attributeObject.type == null){
-				this.execute($(node)[0], 'buildType', attributeObject);
-			}
-		}
-	}
-	
-	if (object != null) {
-		object.attributes.push(attributeObject);
-	}
-	return attributeObject;*/
 };
 
 Xsd2Json.prototype.buildType = function(node, object) {
@@ -391,7 +291,7 @@ Xsd2Json.prototype.buildType = function(node, object) {
 	if (name != null){
 		// If this type has already been processed, then apply it
 		if (name in this.rootDefinitions) {
-			console.log("Reusing type " + name);
+			// console.log("Reusing type " + name);
 			this.mergeType(object, this.types[name]);
 			return;
 		}
@@ -654,6 +554,7 @@ Xsd2Json.prototype.execute = function(node, fnName, object) {
 	} 
 	
 	try {
+		// console.log(fnName);
 		return xsdObj[fnName](targetNode, object);
 	} catch (error) {
 		$("body").append("<br/>" + name + ": " + error + " ");

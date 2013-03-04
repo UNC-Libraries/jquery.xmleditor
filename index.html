@@ -3,8 +3,8 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <title>jQuery.xmleditor</title>
-<link rel="stylesheet" href="stylesheets/reset.css" type="text/css" />
-<link rel="stylesheet" href="stylesheets/demo.css" type="text/css" />
+<link rel="stylesheet" href="demo/stylesheets/reset.css" type="text/css" />
+<link rel="stylesheet" href="demo/stylesheets/demo.css" type="text/css" />
 <link rel="stylesheet" href="css/jquery.xmleditor.css" type="text/css" />
 <script src="lib/ace/src-min/ace.js"></script>
 <script src="lib/jquery.min.js"></script>
@@ -20,25 +20,10 @@
 <body>
 	<div class="wrapper">
 		<header>
-			<h1>jQuery.xmleditor</h1>
+			<h1>jQuery.xmleditor MODS Editing Demo</h1>
 			<a href="https://github.com/UNC-Libraries/jquery.xmleditor">View
 				the Project on GitHub <small>UNC-Libraries/jquery.xmleditor</small>
 			</a>
-
-			<p>A browser based, schema driven XML editor developed by the
-				University of North Carolina at Chapel Hill Libraries. It was expressly
-				developed for editing MODS documents, but is usable for many other XML
-				schemas as well.</p>
-			<p>
-				This project was developed as a part of the <a
-					href="http://cdr.lib.unc.edu">Carolina Digital Repository's</a>
-				administrative interface, but is a stand alone jQuery UI widget. <a
-					href="https://github.com/UNC-Libraries/Carolina-Digital-Repository">Source
-					code for the CDR</a> also is available via github.
-			</p>
-
-			<p>Below is a demo of the default behavior for the plugin,
-				editing an empty MODS version 3.4 document:</p>
 		</header>
 	</div>
 	<div id="xml_editor">
@@ -47,8 +32,7 @@
 	<script>
 		$(function() {
 			$("#xml_editor").xmlEditor({
-				schemaObject : MODS,
-				documentTitle : 'MODS'
+				schemaObject : MODS
 			});
 		});
 	</script>

@@ -1,3 +1,7 @@
+header {
+	margin-bottom: 15px;
+}
+
 header h1, header h2, header h3, header h4, header h5, header h6 {
   color:#222;
   margin:0 0 20px;
