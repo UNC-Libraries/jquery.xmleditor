@@ -7,6 +7,7 @@ function DocumentState(baseXML, editor) {
 	this.changeState = 0;
 	this.editor = editor;
 	this.setXMLFromString(this.baseXML);
+	this.namespaces = new NamespaceList(editor.options.nameSpaces);
 }
 
 DocumentState.prototype.isChanged = function() {
@@ -60,22 +61,22 @@ DocumentState.prototype.updateStateMessage = function () {
 	}
 };
 
-DocumentState.prototype.extractNamespacePrefix = function(nsURI) {
+DocumentState.prototype.extractNamespacePrefixes = function(nsURI) {
 	var prefix = null;
 	var attributes = this.xml.children()[0].attributes;
+	var self = this;
 	$.each(attributes, function(){
-		key = this.name;
-		value = this.value;
-		if (value == nsURI && key.indexOf("xmlns") == 0){
+		var key = this.name;
+		var value = this.value;
+		if (key.indexOf("xmlns") == 0){
 			if ((prefixIndex = key.indexOf(":")) > 0){
 				prefix = key.substring(prefixIndex+1)
 			} else {
 				prefix = "";
 			}
-			return false;
+			self.namespaces.addNamespace(value, prefix);
 		}
 	});
-	return prefix;
 };
 
 DocumentState.prototype.setXMLFromString = function(xmlString) {

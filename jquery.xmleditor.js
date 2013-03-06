@@ -55,7 +55,6 @@ var addAttrMenuClass = "add_attribute_menu";
 var addElementMenuClass = "add_element_menu";
 var xmlMenuBarClass = "xml_menu_bar";
 var submitButtonClass = "send_xml";
-var xmlTabClass = "xml_xml_content_tab";
 var submissionStatusClass = "xml_submit_status";
 var xmlContentClass = "xml_content";
 
@@ -70,7 +69,6 @@ $.widget( "xml.xmlEditor", {
 		addTopMenuHeaderText : 'Add Top Element',
 		addAttrMenuHeaderText : 'Add Attribute',
 		addElementMenuHeaderText : 'Add Subelement',
-		xmlTabLabel : "XML",
 		schemaObject: null,
 		confirmExitWhenUnsubmitted : true,
 		enableGUIKeybindings : true,
@@ -85,12 +83,10 @@ $.widget( "xml.xmlEditor", {
 		prettyXML : true,
 		undoHistorySize: 20,
 		documentTitle : null,
-		nameSpaces: {
-			"mods" : "http://www.loc.gov/mods/v3"
-		},
+		namespaces: null,
 		submitResponseHandler : null,
-		targetNS: "http://www.loc.gov/mods/v3",
-		targetPrefix: "mods",
+		targetNS: null,
+		targetPrefix: null,
 		menuEntries: undefined
 	},
 	
@@ -104,10 +100,9 @@ $.widget( "xml.xmlEditor", {
 			this.schema = JSON.retrocycle(this.options.schemaObject);
 		}
 		
-		// Add namespaces into jquery
-		$.each(this.options.nameSpaces, function (prefix, value) {
-			$.xmlns[prefix] = value;
-		});
+		if (!this.options.targetNS) {
+			this.targetNS = this.schema.namespace;
+		}
 		
 		// Tree of xml element types
 		this.xmlTree = null;
@@ -208,10 +203,23 @@ $.widget( "xml.xmlEditor", {
 			this.loadDocument(localXMLContent);
 		}
 	},
+	
+	_addNamespaces: function(namespaces) {
+		if (!namespaces)
+			return;
+		$.each(namespaces, function (prefix, value) {
+			$.xmlns[prefix] = value;
+		});
+	},
     
     loadDocument: function(xmlString) {
 		this.xmlState = new DocumentState(xmlString, this);
-		this.targetPrefix = this.xmlState.extractNamespacePrefix(this.options.targetNS);
+		this.xmlState.extractNamespacePrefixes();
+		// Add namespaces into jquery
+		this.xmlState.namespaces = $.extend({}, this.xmlTree.namespaces, this.xmlState.namespaces);
+		this.xmlState.namespaceToPrefix = $.extend({}, this.xmlTree.namespaceToPrefix, this.xmlState.namespaceToPrefix);
+		this._addNamespaces(this.xmlState.namespaces);
+		this.targetPrefix = this.xmlState.getNamespacePrefix(this.options.targetNS);
 		if (this.targetPrefix != "")
 			this.targetPrefix += ":";
 		this.constructEditor();
@@ -526,8 +534,8 @@ $.widget( "xml.xmlEditor", {
 	},
 
 	nsEquals: function(node, element) {
-		return (((element.substring && element == node.localName) || (!element.substring && element.name == node.localName)) 
-				&& node.namespaceURI == this.options.targetNS);
+		return (((element.substring && element == node.localName) || (!element.substring && element.localName == node.localName)) 
+				&& node.namespaceURI == element.namespace);
 	},
 	
 	getXPath: function(element) {
@@ -792,6 +800,12 @@ function DocumentState(baseXML, editor) {
 	this.changeState = 0;
 	this.editor = editor;
 	this.setXMLFromString(this.baseXML);
+	this.namespaces = $.extend({}, editor.options.nameSpaces);
+	this.namespaceToPrefix = [];
+	var self = this;
+	$.each(this.namespaces, function() {
+		self.namespaceToPrefix[value] = key;
+	});
 }
 
 DocumentState.prototype.isChanged = function() {
@@ -845,23 +859,31 @@ DocumentState.prototype.updateStateMessage = function () {
 	}
 };
 
-DocumentState.prototype.extractNamespacePrefix = function(nsURI) {
+DocumentState.prototype.extractNamespacePrefixes = function(nsURI) {
 	var prefix = null;
 	var attributes = this.xml.children()[0].attributes;
+	var self = this;
 	$.each(attributes, function(){
-		key = this.name;
-		value = this.value;
-		if (value == nsURI && key.indexOf("xmlns") == 0){
+		var key = this.name;
+		var value = this.value;
+		if (key.indexOf("xmlns") == 0){
 			if ((prefixIndex = key.indexOf(":")) > 0){
 				prefix = key.substring(prefixIndex+1)
 			} else {
 				prefix = "";
 			}
-			return false;
+			self.namespaces[prefix] = value;
+			self.namespaceToPrefix[value] = prefix;
 		}
 	});
-	return prefix;
 };
+
+DocumentState.prototype.getNamespacePrefix = function(nsURI) {
+	var prefix = this.namespaceToPrefix[nsURI];
+	if (prefix)
+		prefix += ":";
+	return prefix;
+}
 
 DocumentState.prototype.setXMLFromString = function(xmlString) {
 	// parseXML doesn't return any info on why a document is invalid, so do it the old fashion way.
@@ -1760,14 +1782,27 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 function SchemaTree(rootElement) {
 	this.tree = {};
 	this.rootElement = rootElement;
+	this.namespaces = {};
+	this.namespaceToPrefix = {};
 }
 
 SchemaTree.prototype.build = function(elementTitle, elementObject, parentTitle) {
+	// Default to the root element if no element is given.
 	if (arguments.length == 0) {
 		elementTitle = this.rootElement.name;
 		elementObject = this.rootElement;
 		parentTitle = "";
 	}
+	// Collect the list of namespaces in use in this schema
+	var namespace = elementObject.namespace;
+	if (!(namespace in this.namespaceToPrefix)) {
+		var nameParts = elementObject.name.split(":");
+		var prefix = (nameParts.length == 1)? "" : nameParts[0]; 
+		this.namespaces[prefix] = namespace;
+		this.namespaceToPrefix[namespace] = prefix;
+	}
+	
+	// Establish the link from the parent to this element.
 	if (elementTitle in this.tree) {
 		if (parentTitle in this.tree[elementTitle]) {
 			// Avoid infinite loops
@@ -1779,6 +1814,7 @@ SchemaTree.prototype.build = function(elementTitle, elementObject, parentTitle) 
 		this.tree[elementTitle] = {};
 		this.tree[elementTitle][parentTitle] = elementObject;
 	}
+	// Call build on all the child elements of this element.
 	var self = this;
 	$.each(elementObject.elements, function() {
 		self.build(this.name, this, elementObject.name);
@@ -1797,6 +1833,7 @@ function TextEditor(editor) {
 	this.selectedTagRange = null;
 	this.resetSelectedTagRange();
 	this.active = false;
+	this.tagRegex = /<(([a-zA-Z0-9\-]+:)?([a-zA-Z0-9\-]+))( |\/|>|$)/;
 }
 
 TextEditor.prototype.resetSelectedTagRange = function() {
@@ -1905,7 +1942,6 @@ TextEditor.prototype.refreshDisplay = function() {
 	});
 	
 	this.setInitialized();
-	$("#" + xmlTabClass).html(this.editor.options.xmlTabLabel);
 	var xmlString = this.editor.xml2Str(this.editor.xmlState.xml);
 	try {
 		this.aceEditor.getSession().setValue(xmlString);
@@ -1958,8 +1994,8 @@ TextEditor.prototype.selectTagAtCursor = function() {
 	if (closingIndex == -1)
 		closingIndex = currentLine.length - 1;
 	
-	var tagRegex = /<(([a-zA-Z0-9\-]+:)?([a-zA-Z0-9\-]+))( |\/|>|$)/;
-	var match = tagRegex.exec(currentLine.substring(openingIndex));
+	
+	var match = this.tagRegex.exec(currentLine.substring(openingIndex));
 	
 	// Check to see if the tag being selected is already selected.  If it is and the document hasn't been changed, then quit.
 	if (match != null && !this.inSelectedTag(currentRow, openingIndex, closingIndex)){
@@ -1967,11 +2003,11 @@ TextEditor.prototype.selectTagAtCursor = function() {
 		var nsPrefix = match[2];
 		var unprefixedTitle = match[3];
 		var prefixedTitle = tagTitle;
-		if (!nsPrefix){
-			nsPrefix = unprefixedTitle;
-			// Target prefix as the default prefix when looking up the element in the tree
-			prefixedTitle = this.editor.options.targetPrefix + unprefixedTitle;
-		}
+		if (!nsPrefix)
+			nsPrefix = "";
+		var documentNS = this.editor.xmlState[nsPrefix];
+		var schemaPrefix = this.editor.xmlTree.getNamespacePrefix(documentNS);
+		var prefixedTitle = schemaPrefix + unprefixedTitle; 
 		
 		// No element type or is the root node, done.
 		if (!(unprefixedTitle in this.editor.xmlTree.tree) || unprefixedTitle == this.editor.xmlTree.rootElement.name)
@@ -2444,8 +2480,10 @@ XMLElement.prototype.addElement = function(objectType) {
 	if (!this.allowChildren)
 		return null;
 	
+	var prefix = this.editor.xmlState.getNamespacePrefix(objectType.namespace);
+	
 	// Create the new element in the target namespace with the matching prefix
-	var newElement = this.editor.xmlState.xml[0].createElementNS(this.editor.options.targetNS, this.editor.targetPrefix + objectType.nameEsc);
+	var newElement = this.editor.xmlState.xml[0].createElementNS(objectType.namespace, prefix + objectType.localName);
 	$(newElement).text(" ");
 	this.xmlNode.append(newElement);
 	

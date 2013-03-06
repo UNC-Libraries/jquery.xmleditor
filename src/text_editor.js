@@ -10,6 +10,7 @@ function TextEditor(editor) {
 	this.selectedTagRange = null;
 	this.resetSelectedTagRange();
 	this.active = false;
+	this.tagRegex = /<(([a-zA-Z0-9\-]+:)?([a-zA-Z0-9\-]+))( |\/|>|$)/;
 }
 
 TextEditor.prototype.resetSelectedTagRange = function() {
@@ -118,7 +119,6 @@ TextEditor.prototype.refreshDisplay = function() {
 	});
 	
 	this.setInitialized();
-	$("#" + xmlTabClass).html(this.editor.options.xmlTabLabel);
 	var xmlString = this.editor.xml2Str(this.editor.xmlState.xml);
 	try {
 		this.aceEditor.getSession().setValue(xmlString);
@@ -171,8 +171,8 @@ TextEditor.prototype.selectTagAtCursor = function() {
 	if (closingIndex == -1)
 		closingIndex = currentLine.length - 1;
 	
-	var tagRegex = /<(([a-zA-Z0-9\-]+:)?([a-zA-Z0-9\-]+))( |\/|>|$)/;
-	var match = tagRegex.exec(currentLine.substring(openingIndex));
+	
+	var match = this.tagRegex.exec(currentLine.substring(openingIndex));
 	
 	// Check to see if the tag being selected is already selected.  If it is and the document hasn't been changed, then quit.
 	if (match != null && !this.inSelectedTag(currentRow, openingIndex, closingIndex)){
@@ -180,11 +180,11 @@ TextEditor.prototype.selectTagAtCursor = function() {
 		var nsPrefix = match[2];
 		var unprefixedTitle = match[3];
 		var prefixedTitle = tagTitle;
-		if (!nsPrefix){
-			nsPrefix = unprefixedTitle;
-			// Target prefix as the default prefix when looking up the element in the tree
-			prefixedTitle = this.editor.options.targetPrefix + unprefixedTitle;
-		}
+		if (!nsPrefix)
+			nsPrefix = "";
+		var documentNS = this.editor.xmlState[nsPrefix];
+		var schemaPrefix = this.editor.xmlTree.getNamespacePrefix(documentNS);
+		var prefixedTitle = schemaPrefix + unprefixedTitle; 
 		
 		// No element type or is the root node, done.
 		if (!(unprefixedTitle in this.editor.xmlTree.tree) || unprefixedTitle == this.editor.xmlTree.rootElement.name)

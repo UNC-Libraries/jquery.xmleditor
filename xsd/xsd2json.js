@@ -202,12 +202,13 @@ Xsd2Json.prototype.buildElement = function(node, parentObject) {
 	if (hasSubGroup || hasRef){
 		definition = this.execute(node, 'buildElement');
 		if (hasSubGroup) {
-			definition = $.extend({}, definition, {'name' : name});
+			definition = $.extend({}, definition, {'name' : name, 'localName' : name});
 		}
 	} else {
 		// Element has a name, means its a new element
 		definition = {
 				"name": name,
+				"localName" : name,
 				"elements": [],
 				"attributes": [],
 				"values": [],
@@ -251,7 +252,8 @@ Xsd2Json.prototype.buildAttribute = function(node, parentObject) {
 		definition = this.execute(node, 'buildAttribute');
 	} else {
 		definition = {
-				"name": $(node).attr("name"),
+				"name": name,
+				"localName" : name,
 				"values": [],
 				"namespace": this.targetNS,
 				"attribute": true

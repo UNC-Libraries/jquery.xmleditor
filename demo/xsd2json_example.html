@@ -34,9 +34,7 @@
 			var extractor = new Xsd2Json("dcterms.xsd", {"schemaURI":"examples/dcterms/", "generateRoot": true});
 			
 			$("#xml_editor").xmlEditor({
-				schemaObject: extractor.getSchema(),
-				targetNS: "http://purl.org/dc/terms/",
-				targetPrefix: "dcterms"
+				schemaObject: extractor.getSchema()
 			});
 		});
 	</script>

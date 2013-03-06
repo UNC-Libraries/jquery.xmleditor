@@ -54,7 +54,6 @@ var addAttrMenuClass = "add_attribute_menu";
 var addElementMenuClass = "add_element_menu";
 var xmlMenuBarClass = "xml_menu_bar";
 var submitButtonClass = "send_xml";
-var xmlTabClass = "xml_xml_content_tab";
 var submissionStatusClass = "xml_submit_status";
 var xmlContentClass = "xml_content";
 
@@ -69,7 +68,6 @@ $.widget( "xml.xmlEditor", {
 		addTopMenuHeaderText : 'Add Top Element',
 		addAttrMenuHeaderText : 'Add Attribute',
 		addElementMenuHeaderText : 'Add Subelement',
-		xmlTabLabel : "XML",
 		schemaObject: null,
 		confirmExitWhenUnsubmitted : true,
 		enableGUIKeybindings : true,
@@ -84,12 +82,10 @@ $.widget( "xml.xmlEditor", {
 		prettyXML : true,
 		undoHistorySize: 20,
 		documentTitle : null,
-		nameSpaces: {
-			"mods" : "http://www.loc.gov/mods/v3"
-		},
+		namespaces: null,
 		submitResponseHandler : null,
-		targetNS: "http://www.loc.gov/mods/v3",
-		targetPrefix: "mods",
+		targetNS: null,
+		targetPrefix: null,
 		menuEntries: undefined
 	},
 	
@@ -103,10 +99,9 @@ $.widget( "xml.xmlEditor", {
 			this.schema = JSON.retrocycle(this.options.schemaObject);
 		}
 		
-		// Add namespaces into jquery
-		$.each(this.options.nameSpaces, function (prefix, value) {
-			$.xmlns[prefix] = value;
-		});
+		if (!this.options.targetNS) {
+			this.targetNS = this.schema.namespace;
+		}
 		
 		// Tree of xml element types
 		this.xmlTree = null;
@@ -207,10 +202,23 @@ $.widget( "xml.xmlEditor", {
 			this.loadDocument(localXMLContent);
 		}
 	},
+	
+	_addNamespaces: function(namespaces) {
+		if (!namespaces)
+			return;
+		$.each(namespaces.namespaces, function (prefix, value) {
+			$.xmlns[prefix] = value;
+		});
+	},
     
     loadDocument: function(xmlString) {
 		this.xmlState = new DocumentState(xmlString, this);
-		this.targetPrefix = this.xmlState.extractNamespacePrefix(this.options.targetNS);
+		this.xmlState.extractNamespacePrefixes();
+		// Add namespaces into jquery
+		this.xmlState.namespaces.namespaceURIs = $.extend({}, this.xmlTree.namespaces.namespaceURIs, this.xmlState.namespaces.namespaceURIs);
+		this.xmlState.namespaces.namespaceToPrefix = $.extend({}, this.xmlTree.namespaces.namespaceToPrefix, this.xmlState.namespaces.namespaceToPrefix);
+		this._addNamespaces(this.xmlState.namespaces);
+		this.targetPrefix = this.xmlState.getNamespacePrefix(this.options.targetNS);
 		if (this.targetPrefix != "")
 			this.targetPrefix += ":";
 		this.constructEditor();
@@ -525,8 +533,8 @@ $.widget( "xml.xmlEditor", {
 	},
 
 	nsEquals: function(node, element) {
-		return (((element.substring && element == node.localName) || (!element.substring && element.name == node.localName)) 
-				&& node.namespaceURI == this.options.targetNS);
+		return (((element.substring && element == node.localName) || (!element.substring && element.localName == node.localName)) 
+				&& node.namespaceURI == element.namespace);
 	},
 	
 	getXPath: function(element) {
