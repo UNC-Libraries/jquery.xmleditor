@@ -223,7 +223,7 @@ XMLElement.prototype.addElement = function(objectType) {
 	if (!this.allowChildren)
 		return null;
 	
-	var prefix = this.editor.xmlState.getNamespacePrefix(objectType.namespace);
+	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(objectType.namespace);
 	
 	// Create the new element in the target namespace with the matching prefix
 	var newElement = this.editor.xmlState.xml[0].createElementNS(objectType.namespace, prefix + objectType.localName);

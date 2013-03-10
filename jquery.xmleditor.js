@@ -203,23 +203,15 @@ $.widget( "xml.xmlEditor", {
 			this.loadDocument(localXMLContent);
 		}
 	},
-	
-	_addNamespaces: function(namespaces) {
-		if (!namespaces)
-			return;
-		$.each(namespaces, function (prefix, value) {
-			$.xmlns[prefix] = value;
-		});
-	},
     
     loadDocument: function(xmlString) {
 		this.xmlState = new DocumentState(xmlString, this);
 		this.xmlState.extractNamespacePrefixes();
 		// Add namespaces into jquery
-		this.xmlState.namespaces = $.extend({}, this.xmlTree.namespaces, this.xmlState.namespaces);
-		this.xmlState.namespaceToPrefix = $.extend({}, this.xmlTree.namespaceToPrefix, this.xmlState.namespaceToPrefix);
-		this._addNamespaces(this.xmlState.namespaces);
-		this.targetPrefix = this.xmlState.getNamespacePrefix(this.options.targetNS);
+		this.xmlState.namespaces.namespaceURIs = $.extend({}, this.xmlTree.namespaces.namespaceURIs, this.xmlState.namespaces.namespaceURIs);
+		this.xmlState.namespaces.namespaceToPrefix = $.extend({}, this.xmlTree.namespaces.namespaceToPrefix, this.xmlState.namespaces.namespaceToPrefix);
+		this.xmlState.namespaces.addToJQuery();
+		this.targetPrefix = this.xmlState.namespaces.getNamespacePrefix(this.options.targetNS);
 		if (this.targetPrefix != "")
 			this.targetPrefix += ":";
 		this.constructEditor();
@@ -533,9 +525,10 @@ $.widget( "xml.xmlEditor", {
 		}
 	},
 
-	nsEquals: function(node, element) {
-		return (((element.substring && element == node.localName) || (!element.substring && element.localName == node.localName)) 
-				&& node.namespaceURI == element.namespace);
+	nsEquals: function(node, element, elementNS) {
+		if (element.substring)
+			return element == node.localName && elementNS == node.namespaceURI;
+		return element.localName == node.localName && node.namespaceURI == element.namespace;
 	},
 	
 	getXPath: function(element) {
@@ -800,12 +793,7 @@ function DocumentState(baseXML, editor) {
 	this.changeState = 0;
 	this.editor = editor;
 	this.setXMLFromString(this.baseXML);
-	this.namespaces = $.extend({}, editor.options.nameSpaces);
-	this.namespaceToPrefix = [];
-	var self = this;
-	$.each(this.namespaces, function() {
-		self.namespaceToPrefix[value] = key;
-	});
+	this.namespaces = new NamespaceList(editor.options.nameSpaces);
 }
 
 DocumentState.prototype.isChanged = function() {
@@ -872,18 +860,10 @@ DocumentState.prototype.extractNamespacePrefixes = function(nsURI) {
 			} else {
 				prefix = "";
 			}
-			self.namespaces[prefix] = value;
-			self.namespaceToPrefix[value] = prefix;
+			self.namespaces.addNamespace(value, prefix);
 		}
 	});
 };
-
-DocumentState.prototype.getNamespacePrefix = function(nsURI) {
-	var prefix = this.namespaceToPrefix[nsURI];
-	if (prefix)
-		prefix += ":";
-	return prefix;
-}
 
 DocumentState.prototype.setXMLFromString = function(xmlString) {
 	// parseXML doesn't return any info on why a document is invalid, so do it the old fashion way.
@@ -1774,51 +1754,134 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 	this.menuContainer.css({'max-height': menuHeight});
 	return this;
 };
+function NamespaceList(namespaceList) {
+	this.namespaceURIs = {};
+	this.namespaceToPrefix = {};
+	
+	if (namespaceList) {
+		$.extend({}, namespaceList);
+		var self = this;
+		$.each(this.namespaces, function() {
+			self.namespaceToPrefix[value] = key;
+		});
+	}
+}
+
+NamespaceList.prototype.addToJQuery = function() {
+	$.each(this.namespaceURIs, function (prefix, value) {
+		$.xmlns[prefix] = value;
+	});
+};
+
+NamespaceList.prototype.addNamespace = function(nsURI, nsPrefix) {
+	this.namespaceURIs[nsPrefix] = nsURI;
+	this.namespaceToPrefix[nsURI] = nsPrefix;
+};
+
+NamespaceList.prototype.containsURI = function(nsURI) {
+	return nsURI in this.namespaceToPrefix;
+};
+
+NamespaceList.prototype.containsPrefix = function(namespacePrefix) {
+	return nsPrefix in this.namespaceURIs;
+};
+
+NamespaceList.prototype.getNamespacePrefix = function(nsURI) {
+	var prefix = this.namespaceToPrefix[nsURI];
+	if (prefix)
+		prefix += ":";
+	return prefix;
+};
 /**
  * Stores a traversible tree of element types
  * @param rootElement
  */
 
 function SchemaTree(rootElement) {
-	this.tree = {};
+	this.nameToDef = {};
 	this.rootElement = rootElement;
-	this.namespaces = {};
-	this.namespaceToPrefix = {};
+	this.namespaces = new NamespaceList();
 }
 
-SchemaTree.prototype.build = function(elementTitle, elementObject, parentTitle) {
+SchemaTree.prototype.build = function(elementName, elementDef, parentDef) {
 	// Default to the root element if no element is given.
 	if (arguments.length == 0) {
-		elementTitle = this.rootElement.name;
-		elementObject = this.rootElement;
-		parentTitle = "";
-	}
-	// Collect the list of namespaces in use in this schema
-	var namespace = elementObject.namespace;
-	if (!(namespace in this.namespaceToPrefix)) {
-		var nameParts = elementObject.name.split(":");
-		var prefix = (nameParts.length == 1)? "" : nameParts[0]; 
-		this.namespaces[prefix] = namespace;
-		this.namespaceToPrefix[namespace] = prefix;
+		elementName = this.rootElement.name;
+		elementDef = this.rootElement;
+		parentDef = null;
 	}
 	
-	// Establish the link from the parent to this element.
-	if (elementTitle in this.tree) {
-		if (parentTitle in this.tree[elementTitle]) {
-			// Avoid infinite loops
-			return;
-		} else {
-			this.tree[elementTitle][parentTitle] = elementObject;
-		}
+	if ("parents" in elementDef) {
+		// Definition already has a parent, so this is a circular definition
+		elementDef.parents.push(parentDef);
+		return;
 	} else {
-		this.tree[elementTitle] = {};
-		this.tree[elementTitle][parentTitle] = elementObject;
+		elementDef["parents"] = [parentDef];
 	}
+	
+	// Collect the list of prefix/namespace pairs in use in this schema
+	var namespace = elementDef.namespace;
+	if (!this.namespaces.containsURI(namespace)) {
+		var nameParts = elementDef.name.split(":");
+		var prefix = (nameParts.length == 1)? "" : nameParts[0];
+		this.namespaces.addNamespace(namespace, prefix);
+	}
+	
+	// Add this definition to the list matching its element name, in case of overlapping names
+	var definitionList = this.nameToDef[elementName];
+	if (definitionList == null) {
+		this.nameToDef[elementName] = [elementDef];
+	} else {
+		this.nameToDef[elementName].push(elementDef);
+	}
+	
 	// Call build on all the child elements of this element.
 	var self = this;
-	$.each(elementObject.elements, function() {
-		self.build(this.name, this, elementObject.name);
+	$.each(elementDef.elements, function() {
+		self.build(this.name, this, elementDef);
 	});
+};
+
+
+
+/**
+ * Retrieves the schema definition for the provided element, attempting to 
+ * disambiguate when the name is not unique.
+ */
+SchemaTree.prototype.getElementDefinition = function(elementNode) {
+	var prefixedName = this.namespaces.getNamespacePrefix(elementNode.namespaceURI) + elementNode.localName;
+	var defList = this.nameToDef[prefixedName];
+	if (defList == null)
+		return null;
+	if (defList.length == 1)
+		return defList[0];
+	
+	for (index in defList) {
+		if (this.pathMatches(elementNode, defList[index]))
+			return defList[index];
+	}
+};
+
+SchemaTree.prototype.pathMatches = function(elementNode, definition) {
+	var isRootNode = elementNode.parentNode instanceof Document;
+	var parentNode = elementNode.parentNode;
+	for (index in definition.parents) {
+		var parentDef = definition.parents[index];
+		if (isRootNode) {
+			// If this is a root node and the definition allows it, then we have a match
+			if (definition.parents[index] == null || definition.parents[index].schema)
+				return true;
+		} else {
+			if (parentDef.localName == parentNode.localName && parentDef.namespace == parentNode.namespaceURI) {
+				// Parent definitions matched, so continue the walk
+				var answer = this.pathMatches(parentNode, parentDef);
+				// If this particular parent definition matched all the way, then return true.
+				if (answer)
+					return true;
+			}
+		}
+	}
+	return false;
 };
 /**
  * Editor object for doing text editing of the XML document using the cloud9 editor
@@ -2002,17 +2065,14 @@ TextEditor.prototype.selectTagAtCursor = function() {
 		var tagTitle = match[1];
 		var nsPrefix = match[2];
 		var unprefixedTitle = match[3];
-		var prefixedTitle = tagTitle;
 		if (!nsPrefix)
 			nsPrefix = "";
-		var documentNS = this.editor.xmlState[nsPrefix];
-		var schemaPrefix = this.editor.xmlTree.getNamespacePrefix(documentNS);
+		// Get the schema's namespace prefix for the namespace of the node from the document
+		// Determine what namespace is bound in the document to the prefix on this node
+		var documentNS = this.editor.xmlState.namespaces.namespaceURIs[nsPrefix];
+		// Determine what prefix is used for that namespace in the schema tree
+		var schemaPrefix = this.editor.xmlTree.namespaces.getNamespacePrefix(documentNS);
 		var prefixedTitle = schemaPrefix + unprefixedTitle; 
-		
-		// No element type or is the root node, done.
-		if (!(unprefixedTitle in this.editor.xmlTree.tree) || unprefixedTitle == this.editor.xmlTree.rootElement.name)
-			return this;
-		var objectType = this.editor.xmlTree.tree[unprefixedTitle];
 		
 		if (this.editor.xmlState.changesNotSynced()) {
 			//Refresh the xml if it has changed
@@ -2031,36 +2091,26 @@ TextEditor.prototype.selectTagAtCursor = function() {
 		
 		var self = this;
 		var instanceNumber = this.tagOccurrences(preceedingLines, tagTitle);
-		// Get xpath to this object using jquery.
+		// Find the element that matches this tag by occurrence number and tag name
 		var elementNode = $("*", this.editor.xmlState.xml).filter(function() {
-	        return self.editor.nsEquals(this, unprefixedTitle);
+	        return self.editor.nsEquals(this, unprefixedTitle, documentNS);
 	      })[instanceNumber];
 		if (elementNode == null)
-			return;
-		
-		// Attempt to disambiguate by selecting by parent tag name.
-		if (elementNode.parentNode == null || elementNode.parentNode.tagName == null)
 			return this;
-		var tagName = elementNode.parentNode.tagName;
-		if (tagName.indexOf(":") != -1){
-			tagName = tagName.substring(tagName.indexOf(":") + 1);
-		}
 		
-		$.each(objectType, function(key, value){
-			if (key == tagName && value.namespace == self.editor.options.targetNS){
-				objectType = this;
-				return false;
-			}
-		});
-			
-		if (objectType == null) {
+		// Retrieve the schema definition for the selected node
+		var elementDef = this.editor.xmlTree.getElementDefinition(elementNode);
+		// Clear the menu if there was no definition or it was the root node
+		// TODO root nodes shouldn't be treated specially if they have a definition
+		if (elementDef == null || elementDef === this.editor.xmlTree.rootElement) {
 			this.editor.modifyMenu.clearContextualMenus();
 			return this;
 		}
 		
+		// Create a dummy XMLElement so that the menu has something to point at
 		var dummyTarget = null;
 		try {
-			dummyTarget = new XMLElement(elementNode, objectType, this.editor);
+			dummyTarget = new XMLElement(elementNode, elementDef, this.editor);
 		} catch(e) {
 			return this;
 		}
@@ -2480,7 +2530,7 @@ XMLElement.prototype.addElement = function(objectType) {
 	if (!this.allowChildren)
 		return null;
 	
-	var prefix = this.editor.xmlState.getNamespacePrefix(objectType.namespace);
+	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(objectType.namespace);
 	
 	// Create the new element in the target namespace with the matching prefix
 	var newElement = this.editor.xmlState.xml[0].createElementNS(objectType.namespace, prefix + objectType.localName);

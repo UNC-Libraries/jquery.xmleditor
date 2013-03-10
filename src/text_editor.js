@@ -179,17 +179,14 @@ TextEditor.prototype.selectTagAtCursor = function() {
 		var tagTitle = match[1];
 		var nsPrefix = match[2];
 		var unprefixedTitle = match[3];
-		var prefixedTitle = tagTitle;
 		if (!nsPrefix)
 			nsPrefix = "";
-		var documentNS = this.editor.xmlState[nsPrefix];
-		var schemaPrefix = this.editor.xmlTree.getNamespacePrefix(documentNS);
+		// Get the schema's namespace prefix for the namespace of the node from the document
+		// Determine what namespace is bound in the document to the prefix on this node
+		var documentNS = this.editor.xmlState.namespaces.namespaceURIs[nsPrefix];
+		// Determine what prefix is used for that namespace in the schema tree
+		var schemaPrefix = this.editor.xmlTree.namespaces.getNamespacePrefix(documentNS);
 		var prefixedTitle = schemaPrefix + unprefixedTitle; 
-		
-		// No element type or is the root node, done.
-		if (!(unprefixedTitle in this.editor.xmlTree.tree) || unprefixedTitle == this.editor.xmlTree.rootElement.name)
-			return this;
-		var objectType = this.editor.xmlTree.tree[unprefixedTitle];
 		
 		if (this.editor.xmlState.changesNotSynced()) {
 			//Refresh the xml if it has changed
@@ -208,36 +205,26 @@ TextEditor.prototype.selectTagAtCursor = function() {
 		
 		var self = this;
 		var instanceNumber = this.tagOccurrences(preceedingLines, tagTitle);
-		// Get xpath to this object using jquery.
+		// Find the element that matches this tag by occurrence number and tag name
 		var elementNode = $("*", this.editor.xmlState.xml).filter(function() {
-	        return self.editor.nsEquals(this, unprefixedTitle);
+	        return self.editor.nsEquals(this, unprefixedTitle, documentNS);
 	      })[instanceNumber];
 		if (elementNode == null)
-			return;
-		
-		// Attempt to disambiguate by selecting by parent tag name.
-		if (elementNode.parentNode == null || elementNode.parentNode.tagName == null)
 			return this;
-		var tagName = elementNode.parentNode.tagName;
-		if (tagName.indexOf(":") != -1){
-			tagName = tagName.substring(tagName.indexOf(":") + 1);
-		}
 		
-		$.each(objectType, function(key, value){
-			if (key == tagName && value.namespace == self.editor.options.targetNS){
-				objectType = this;
-				return false;
-			}
-		});
-			
-		if (objectType == null) {
+		// Retrieve the schema definition for the selected node
+		var elementDef = this.editor.xmlTree.getElementDefinition(elementNode);
+		// Clear the menu if there was no definition or it was the root node
+		// TODO root nodes shouldn't be treated specially if they have a definition
+		if (elementDef == null || elementDef === this.editor.xmlTree.rootElement) {
 			this.editor.modifyMenu.clearContextualMenus();
 			return this;
 		}
 		
+		// Create a dummy XMLElement so that the menu has something to point at
 		var dummyTarget = null;
 		try {
-			dummyTarget = new XMLElement(elementNode, objectType, this.editor);
+			dummyTarget = new XMLElement(elementNode, elementDef, this.editor);
 		} catch(e) {
 			return this;
 		}

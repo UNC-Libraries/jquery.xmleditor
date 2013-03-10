@@ -202,14 +202,6 @@ $.widget( "xml.xmlEditor", {
 			this.loadDocument(localXMLContent);
 		}
 	},
-	
-	_addNamespaces: function(namespaces) {
-		if (!namespaces)
-			return;
-		$.each(namespaces.namespaces, function (prefix, value) {
-			$.xmlns[prefix] = value;
-		});
-	},
     
     loadDocument: function(xmlString) {
 		this.xmlState = new DocumentState(xmlString, this);
@@ -217,8 +209,8 @@ $.widget( "xml.xmlEditor", {
 		// Add namespaces into jquery
 		this.xmlState.namespaces.namespaceURIs = $.extend({}, this.xmlTree.namespaces.namespaceURIs, this.xmlState.namespaces.namespaceURIs);
 		this.xmlState.namespaces.namespaceToPrefix = $.extend({}, this.xmlTree.namespaces.namespaceToPrefix, this.xmlState.namespaces.namespaceToPrefix);
-		this._addNamespaces(this.xmlState.namespaces);
-		this.targetPrefix = this.xmlState.getNamespacePrefix(this.options.targetNS);
+		this.xmlState.namespaces.addToJQuery();
+		this.targetPrefix = this.xmlState.namespaces.getNamespacePrefix(this.options.targetNS);
 		if (this.targetPrefix != "")
 			this.targetPrefix += ":";
 		this.constructEditor();
@@ -532,9 +524,10 @@ $.widget( "xml.xmlEditor", {
 		}
 	},
 
-	nsEquals: function(node, element) {
-		return (((element.substring && element == node.localName) || (!element.substring && element.localName == node.localName)) 
-				&& node.namespaceURI == element.namespace);
+	nsEquals: function(node, element, elementNS) {
+		if (element.substring)
+			return element == node.localName && elementNS == node.namespaceURI;
+		return element.localName == node.localName && node.namespaceURI == element.namespace;
 	},
 	
 	getXPath: function(element) {
