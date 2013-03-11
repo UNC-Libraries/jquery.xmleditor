@@ -38,7 +38,7 @@ It'll also save your users some loading time.
 ```
 
 ### Generate and use the schema object at run time instead of precompiling
-See the [runtime schema generation demo](http://unc-libraries.github.com/demo/xsd2json_example.html)
+See the [runtime schema generation demo](http://unc-libraries.github.com/jquery.xmleditor/demo/xsd2json_example.html)
 ```
 <script>
   $(function() {
