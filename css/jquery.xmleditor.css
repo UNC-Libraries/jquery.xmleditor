@@ -74,6 +74,7 @@ textarea, .textareaClone {
 	width: 99%;
 	resize: vertical;
 	font-size: 13px;
+	padding: 4px 0 0 5px;
 }
 
 input.button {

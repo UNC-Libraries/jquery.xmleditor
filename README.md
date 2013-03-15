@@ -5,6 +5,8 @@ Additionally, this project includes a tool for generating JSON objects from XML 
 
 Try it out in our [jquery.xmleditor demo page](http://unc-libraries.github.com/jquery.xmleditor) using the MODS 3.4 schema.
 
+And here's a [demo starting from an existing xml file](http://unc-libraries.github.com/jquery.xmleditor/demo/mods.html)
+
 This project was developed as a part of the [Carolina Digital Repository](https://cdr.lib.unc.edu/) for use in our administrative tools, but is fully functional as a standalone client. 
 This tool is intended to serve as a general schema driven XML editor that runs in web browsers, although some default behaviors are oriented towards it.  
 For our own usage, it retrieves and submits documents to a SWORD 2.0 enabled repository.

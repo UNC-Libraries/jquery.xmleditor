@@ -1,0 +1,95 @@
+
+<mods:mods xmlns:epdcx="http://purl.org/eprint/epdcx/2006-11-16/" xmlns:mods="http://www.loc.gov/mods/v3" xmlns:rights="http://www.cdlib.org/inside/diglib/copyrightMD" xmlns:xlink2="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <mods:titleInfo>
+    <mods:title>A Spoonful of Math Helps The Medicine Go Down:
+An Illustration of How Healthcare Can Benefit From Mathematical Modeling and Analysis</mods:title>
+  </mods:titleInfo>
+  <mods:abstract>Abstract
+
+
+
+Objectives
+
+A recent joint report from the Institute of Medicine and the National Academy of Engineering, highlights the benefits of--indeed, the need for--mathematical analysis of healthcare delivery. Tools for such analysis have been developed over decades by researchers in Operations Research (OR). An OR perspective typically frames a complex problem in terms of its essential mathematical structure. This article illustrates the use and value of the tools of operations research in healthcare. It reviews one OR tool, queueing theory, and provides an illustration involving a hypothetical drug treatment facility.
+
+
+
+Method
+
+Queueing Theory (QT) is the study of waiting lines. The theory is useful in that it provides solutions to problems of waiting and its relationship to key characteristics of healthcare systems. More generally, it illustrates the strengths of modeling in healthcare and service delivery.
+Queueing theory offers insights that initially may be hidden. For example, a queueing model allows one to incorporate randomness, which is inherent in the actual system, into the mathematical analysis. As a result of this randomness, these systems often perform much worse than one might have guessed based on deterministic conditions. Poor performance is reflected in longer lines, longer waits, and lower levels of server utilization.
+As an illustration, we specify a queueing model of a representative drug treatment facility. The analysis of this model provides mathematical expressions for some of the key performance measures, such as average waiting time for admission.
+
+
+
+Results
+
+We calculate average occupancy in the facility and its relationship to system characteristics. For example, when the facility has 28 beds, the average wait for admission is 4 days. We also explore the relationship between arrival rate at the facility, the capacity of the facility, and waiting times.
+
+
+
+Conclusions
+
+One key aspect of the healthcare system is its complexity, and policy makers want to design and reform the system in a way that affects competing goals. OR methodologies, particularly queueing theory, can be very useful in gaining deeper understanding of this complexity and exploring the potential effects of proposed changes on the system without making any actual changes.</mods:abstract>
+  <mods:language>
+    <mods:languageTerm authority="iso639-2b" type="code">eng</mods:languageTerm>
+  </mods:language>
+  <mods:typeOfResource>text</mods:typeOfResource>
+  <mods:genre authorityURI="http://purl.org/eprint/type/" type="work type" valueURI="http://purl.org/eprint/type/JournalArticle">Journal Article</mods:genre>
+  <mods:originInfo>
+    <mods:publisher>BioMed Central Ltd</mods:publisher>
+    <mods:dateIssued>2010-06-23</mods:dateIssued>
+  </mods:originInfo>
+  <mods:genre authority="local">Peer Reviewed</mods:genre>
+  <mods:accessCondition>
+    <rights:copyright copyright.status="copyrighted" publication.status="published">
+      <rights:rights.holder>
+        <rights:name>E Michael Foster et al.; licensee BioMed Central Ltd.</rights:name>
+      </rights:rights.holder>
+    </rights:copyright>
+  </mods:accessCondition>
+  <mods:accessCondition type="use and reproduction" xlink2:href="http://creativecommons.org/licenses/by/2.0"></mods:accessCondition>
+  <mods:accessCondition type="restriction on access">Open Access</mods:accessCondition>
+  <mods:note type="citation/reference">BMC Medical Research Methodology. 2010 Jun 23;10(1):60</mods:note>
+  <mods:location>
+    <mods:url>http://dx.doi.org/10.1186/1471-2288-10-60</mods:url>
+  </mods:location>
+  <mods:identifier type="doi">10.1186/1471-2288-10-60</mods:identifier>
+  <mods:identifier displayLabel="PMID" type="pmpid">20573235</mods:identifier>
+  <mods:name>
+    <mods:namePart>Foster, E Michael</mods:namePart>
+    <mods:affiliation>Department of Maternal and Child Health, UNC Gillings School of Global Public Health, University of North Carolina at Chapel Hill</mods:affiliation>
+  </mods:name>
+  <mods:name>
+    <mods:namePart>Hosking, Michael R</mods:namePart>
+    <mods:affiliation>Department of Statistics and Operations Research, UNC College of Arts &amp; Sciences, University of North Carolina at Chapel Hill</mods:affiliation>
+  </mods:name>
+  <mods:name>
+    <mods:namePart>Ziya, Serhan</mods:namePart>
+    <mods:affiliation>Department of Statistics and Operations Research, UNC College of Arts &amp; Sciences, University of North Carolina at Chapel Hill</mods:affiliation>
+  </mods:name>
+  <mods:relatedItem displayLabel="Source" type="otherFormat">
+    <mods:titleInfo>
+      <mods:title>BMC Medical Research Methodology</mods:title>
+    </mods:titleInfo>
+    <mods:identifier type="issn">1471-2288</mods:identifier>
+    <mods:originInfo>
+      <mods:dateIssued>2010</mods:dateIssued>
+    </mods:originInfo>
+    <mods:part>
+      <mods:detail type="volume">
+        <mods:number>10</mods:number>
+        <mods:caption>vol.</mods:caption>
+      </mods:detail>
+      <mods:detail type="issue">
+        <mods:number>1</mods:number>
+        <mods:caption>issue</mods:caption>
+      </mods:detail>
+    </mods:part>
+    <mods:part>
+      <mods:extent unit="page">
+        <mods:start>60</mods:start>
+      </mods:extent>
+    </mods:part>
+  </mods:relatedItem>
+</mods:mods>
