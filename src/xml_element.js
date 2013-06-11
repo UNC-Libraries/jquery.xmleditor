@@ -122,7 +122,7 @@ XMLElement.prototype.addTopActions = function () {
 		'value' : '\u2193',
 		'id' : this.guiElementID + '_down'
 	}).appendTo(topActionSpan).click(function(){
-		self.editor.guiEditor.moveSelected();
+		self.editor.guiEditor.moveElement(self);
 	});
 
 	// create move up button and callback for element
@@ -131,7 +131,7 @@ XMLElement.prototype.addTopActions = function () {
 		'value' : '\u2191',
 		'id' : this.guiElementID + '_up'
 	}).appendTo(topActionSpan).click(function(){
-		self.editor.guiEditor.moveSelected(true);
+		self.editor.guiEditor.moveElement(self, true);
 	});
 
 	// create delete button and callback for element
@@ -140,7 +140,7 @@ XMLElement.prototype.addTopActions = function () {
 		'value' : 'X',
 		'id' : this.guiElementID + '_del'
 	}).appendTo(topActionSpan).click(function(){
-		self.editor.guiEditor.deleteSelected();
+		self.editor.guiEditor.deleteElement(self);
 	});
 	
 	return topActionSpan;
@@ -345,4 +345,8 @@ XMLElement.prototype.updated = function () {
 
 XMLElement.prototype.select = function() {
 	this.guiElement.addClass("selected");
+};
+
+XMLElement.prototype.isSelected = function() {
+	return this.guiElement.hasClass("selected");
 };
