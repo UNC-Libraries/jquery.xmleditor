@@ -1,9 +1,9 @@
-.xml_editor_container ul li {
+ul li {
 	text-indent: 0;
 	margin: 0;
 }
 
-.xml_editor_container p, ul {
+p, ul {
 	margin: 0;
 }
 
@@ -117,36 +117,25 @@ textarea:focus,input:focus {
 	border-radius: 6px;
 }
 
-.xml_element .xml_element:last-child {
-	margin-bottom: 0px;	
-}
-
-.xml_element .xml_element {
+.xml_children > .xml_element {
 	margin-bottom: 20px;
 }
 
-.xml_element .xml_element:last-child {
-	margin-bottom: 0px;
+.xml_children > .xml_element:last-child {
+	margin-bottom: 0px;	
 }
 
 .top_level_element_group.xml_element {
 	margin-left: 0px;
 }
 
-.xml_element div { 
-	max-width: 100%;
-}
-
-.xml_element div div { 
-	max-width: 100%;
-}
-
-.xml_element .element_header, .xml_tab_area > .ui-tabs-nav {
+.element_header, .xml_tab_area > .ui-tabs-nav {
 	padding: 4px 1px 1px 7px;
 	line-height: 22px;
 	height: 22px;
 	-webkit-border-radius: 6px 6px 0px 0px;
 	-moz-border-radius: 6px 6px 0px 0px;
+	border-radius: 6px 6px 0px 0px;
 	border-bottom: 1px solid #bbbbbb;
 	margin-bottom: 12px;
 }
@@ -158,19 +147,19 @@ textarea:focus,input:focus {
 	background: -moz-linear-gradient(top,  #FFFFFF,  #dddddd);
 }
 
-.top_level_element_group > * > * > .element_header {
+.top_level_element_group > .xml_children > .xml_element > .element_header {
 	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#FAFFFF', endColorstr='#e9e9eb');
 	background: -webkit-gradient(linear, left top, left bottom, from(#FAFFFF), to(#e9e9eb));
 	background: -moz-linear-gradient(top,  #FAFFFF,  #e9e9eb);
 }
 
-.top_level_element_group > * > * > * > * > .element_header {
+.top_level_element_group > .xml_children > .xml_element > .xml_children > .xml_element > .element_header {
 	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#F5FFFF', endColorstr='#f1f1f3');
 	background: -webkit-gradient(linear, left top, left bottom, from(#F5FFFF), to(#f1f1f3));
 	background: -moz-linear-gradient(top,  #F5FFFF,  #f1f1f3);
 }
 
-.top_level_element_group > * > * > * > * > * > * > .element_header {
+.top_level_element_group > .xml_children > .xml_element > .xml_children > .xml_element > .xml_children > .xml_element > .element_header {
 	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#F0FFFF', endColorstr='#f5f5f9');
 	background: -webkit-gradient(linear, left top, left bottom, from(#F0FFFF), to(#f5f5f9));
 	background: -moz-linear-gradient(top,  #F0FFFF,  #f5f5f9);
@@ -188,39 +177,38 @@ textarea:focus,input:focus {
 }
 
 .xml_element.selected > .element_header {
-	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#C4DFE7', endColorstr='#A4CABB');
-	background: -webkit-gradient(linear, left top, left bottom, from(#C4E9EE), color-stop(0.5, #5ECFE6), to(#76B6E1));
-	background: -moz-linear-gradient(top,  #C4E9EE, #5ECFE6, #76B6E1);
-}
-
-.xml_element.selected li span {
-	color: #442222;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#C4DFE7', endColorstr='#A4CABB') !important;
+	background: -webkit-gradient(linear, left top, left bottom, from(#C4E9EE), color-stop(0.5, #5ECFE6), to(#76B6E1)) !important;
+	background: -moz-linear-gradient(top,  #C4E9EE, #5ECFE6, #76B6E1) !important;
 }
 
 .top_level_element_group.xml_element > .element_header > .element_name {
 	font-size: 16px;
 }
 
-.xml_element .element_name {
+.element_header {
+	font-weight: bold;
+	color: #445;
+}
+
+.element_name {
 	min-width: 100px;
 	font-size: 14px;
 	float: left;
 }
 
-.xml_element li {
-	font-weight: bold;
-	color: #445;
+.selected > .element_header > .element_name {
+	color: #442222;
 }
 
-.xml_element li.top_actions {
+.element_header > .top_actions {
 	float: right;
 }
 
-.xml_element li.top_actions input {
+.element_header > .top_actions > input {
 	padding: 0px 2px;
 	border: 1px solid #aaaabb;
 	font-size: 11px;
-	font-weight: bold;
 	margin: 0px 2px;
 	background-color: #eee;
 	font-family: Trebuchet MS, Tahoma, Verdana, Arial, sans-serif;
@@ -228,52 +216,8 @@ textarea:focus,input:focus {
 	cursor: pointer;
 }
 
-.xml_element li.top_actions input:hover {
+.element_header > .top_actions > input:hover {
 	background-color: #ddf;
-}
-
-.xml_element .add_components {
-	font-size: 13px;
-	line-height: 17px;
-	padding: 0px 0 10px;
-	margin-top: -5px;
-}
-
-.add_components span {
-	border-bottom: 1px dotted #ccddd5;
-	padding: 1px 3px;
-	/*background-image: url("../images/gradiant-border-down.png");*/
-	color: #177CA4;
-	/*background-position: 0px -8px;*/
-	margin-right: 8px;
-	display: inline-block;
-	line-height: 14px;
-	cursor: pointer;
-}
-
-.add_components span:hover {
-	text-decoration: underline;
-}
-
-.add_components span.disabled {
-	color: #B4B7BA;
-	border: 0;
-}
-
-.add_components span.disabled:hover {
-	text-decoration: none;
-}
-
-.add_components span:first-child {
-	border: 0px;
-	background-image: none;
-	color: #445;
-	padding-left: 0px;
-	cursor: text;
-}
-
-.add_components span:first-child:hover {
-	text-decoration: none;
 }
 
 .placeholder {
@@ -284,11 +228,11 @@ textarea:focus,input:focus {
 	padding: 0px 10px 10px 10px;
 }
 
-.xml_content > div.placeholder, .xml_element > div > div.placeholder {
+.xml_content > .placeholder, .xml_element > .xml_children > div.placeholder {
 	display: none;
 }
 
-.xml_content > div:last-child.placeholder, .xml_element > div > div:last-child.placeholder  {
+.xml_content > div:last-child.placeholder, .xml_element > .xml_children > div:last-child.placeholder  {
 	display: block;
 	font-style: italic;
 	color: #bbb;

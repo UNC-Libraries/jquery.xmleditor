@@ -29,6 +29,7 @@ UndoHistory.prototype.cloneNewDocument = function(originalDoc) {
 };
 
 UndoHistory.prototype.changeHead = function(step){
+	console.profile();
 	if ((step < 0 && this.headIndex + step < 0) 
 			|| (step > 0 && this.headIndex + step >= this.states.length
 			||  this.headIndex + step >= this.editor.options.undoHistorySize))
@@ -41,6 +42,7 @@ UndoHistory.prototype.changeHead = function(step){
 	
 	if (this.stateChangeEvent != null)
 		this.stateChangeEvent(this);
+	console.profileEnd();
 };
 
 UndoHistory.prototype.captureSnapshot = function () {

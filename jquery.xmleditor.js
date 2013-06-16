@@ -723,6 +723,11 @@ function AttributeMenu(menuID, label, expanded, enabled, owner) {
 AttributeMenu.prototype.constructor = AttributeMenu;
 AttributeMenu.prototype = Object.create( ModifyElementMenu.prototype );
 
+AttributeMenu.prototype.initEventHandlers = function() {
+	this.menuContent.on('click', 'li', function(event){
+		self.owner.editor.addAttributeButtonCallback(this);
+	});
+};
 
 AttributeMenu.prototype.populate = function (xmlElement) {
 	if (xmlElement == null || (this.target != null && xmlElement.guiElement != null 
@@ -927,7 +932,38 @@ GUIEditor.prototype.initialize = function(parentContainer) {
 	this.rootElement.guiElement.data("xmlElement", this.rootElement);
 	this.rootElement.childContainer = this.xmlContent;
 	this.rootElement.initializeGUI();
+	
+	this._initEventBindings();
 	return this;
+};
+
+GUIEditor.prototype._initEventBindings = function() {
+	var self = this;
+	// Attributes
+	this.xmlContent.on('click', '.' + attributeContainerClass, function(event){
+		$(this).data('xmlAttribute').select();
+		event.stopPropagation();
+	}).on('click', '.' + attributeContainerClass + " > a", function(event){
+		$(this).parents('.' + attributeContainerClass).eq(0).data('xmlAttribute').remove();
+		event.stopPropagation();
+	}).on('change', '.' + attributeContainerClass + ' > input,.' + attributeContainerClass + ' > textarea', function(event){
+		$(this).parents('.' + attributeContainerClass).eq(0).data('xmlAttribute').syncValue();
+		self.editor.xmlState.documentChangedEvent();
+	});
+	// Element
+	this.xmlContent.on('click', '.' + xmlElementClass, function(event){
+		self.selectElement(this);
+		event.stopPropagation();
+	}).on('click', '.move_up', function(event){
+		self.moveElement($(this).parents('.' + xmlElementClass).eq(0).data('xmlElement'), true);
+		event.stopPropagation();
+	}).on('click', '.move_down', function(event){
+		self.moveElement($(this).parents('.' + xmlElementClass).eq(0).data('xmlElement'));
+		event.stopPropagation();
+	}).on('click', '.top_actions .delete', function(event){
+		self.deleteElement($(this).parents('.' + xmlElementClass).eq(0).data('xmlElement'));
+		event.stopPropagation();
+	});
 };
 
 GUIEditor.prototype.activate = function() {
@@ -1580,6 +1616,12 @@ ModifyElementMenu.prototype.render = function(parentContainer) {
 	return this;
 };
 
+ModifyElementMenu.prototype.initEventHandlers = function() {
+	this.menuContent.on('click', 'li', function(event){
+		self.owner.editor.addChildElementCallback(this);
+	});
+};
+
 ModifyElementMenu.prototype.clear = function() {
 	var startingHeight = this.menuContent.height();
 	this.menuContent.empty();
@@ -1607,9 +1649,8 @@ ModifyElementMenu.prototype.populate = function(xmlElement) {
 		var xmlElement = this;
 		$("<li/>").attr({
 			title : 'Add ' + xmlElement.name
-		}).html(xmlElement.name).click(function(){
-			self.owner.editor.addChildElementCallback(this);
-		}).data('xml', {
+		}).html(xmlElement.name)
+		.data('xml', {
 				//"target": xmlElement,
 				"target": self.target,
 				"objectType": xmlElement
@@ -1676,6 +1717,7 @@ ModifyMenuPanel.prototype.addMenu = function(menuID, label, expanded, enabled, c
 			"contextual": contextual
 		};
 	menu.render(this.menuContainer);
+	menu.initEventHandlers();
 	return menu;
 };
 
@@ -1688,6 +1730,7 @@ ModifyMenuPanel.prototype.addAttributeMenu = function(menuID, label, expanded, e
 			"contextual": contextual
 		};
 	menu.render(this.menuContainer);
+	menu.initEventHandlers();
 	return menu;
 };
 
@@ -2202,6 +2245,7 @@ UndoHistory.prototype.cloneNewDocument = function(originalDoc) {
 };
 
 UndoHistory.prototype.changeHead = function(step){
+	console.profile();
 	if ((step < 0 && this.headIndex + step < 0) 
 			|| (step > 0 && this.headIndex + step >= this.states.length
 			||  this.headIndex + step >= this.editor.options.undoHistorySize))
@@ -2214,6 +2258,7 @@ UndoHistory.prototype.changeHead = function(step){
 	
 	if (this.stateChangeEvent != null)
 		this.stateChangeEvent(this);
+	console.profileEnd();
 };
 
 UndoHistory.prototype.captureSnapshot = function () {
@@ -2266,10 +2311,7 @@ XMLAttribute.prototype.render = function (){
 	}).data('xmlAttribute', this).appendTo(elementNode.children("." + attributesContainerClass));
 	
 	var self = this;
-	$("<a/>").html("(x) ").css("cursor", "pointer").on('click', function(event) {
-		self.remove();
-		event.stopPropagation();
-	}).appendTo(this.attributeContainer);
+	$("<a/>").html("(x) ").css("cursor", "pointer").appendTo(this.attributeContainer);
 	
 	$('<label/>').text(this.objectType.name).appendTo(this.attributeContainer);
 	
@@ -2279,17 +2321,7 @@ XMLAttribute.prototype.render = function (){
 	}
 	
 	this.attributeInput = this.createElementInput(this.attributeID.replace(":", "-"), attributeValue, this.attributeContainer);
-	
-	this.attributeInput.data('xmlAttribute', this).change(function(){
-		self.syncValue();
-		self.editor.xmlState.documentChangedEvent();
-	});
-	
-	this.attributeContainer.click(function(event) {
-		self.editor.guiEditor.selectElement(self.xmlElement);
-		event.stopPropagation();
-		$(this).addClass('selected');
-	});
+	this.attributeInput.data('xmlAttribute', this);
 	
 	return this.attributeInput;
 };
@@ -2312,6 +2344,15 @@ XMLAttribute.prototype.syncValue = function() {
 
 XMLAttribute.prototype.changeValue = function(value) {
 	this.xmlElement.xmlNode.attr(this.objectType.name, value);
+};
+
+XMLAttribute.prototype.select = function() {
+	this.editor.guiEditor.selectElement(self.xmlElement);
+	this.attributeContainer.addClass('selected');
+};
+
+XMLAttribute.prototype.deselect = function() {
+	this.attributeContainer.removeClass('selected');
 };
 /**
  * Stores data related to a single xml element as it is represented in both the base XML 
@@ -2375,11 +2416,6 @@ XMLElement.prototype.render = function(parentElement, recursive) {
 	
 	var self = this;
 	
-	this.guiElement.click(function(event) {
-		self.editor.guiEditor.selectElement(self);
-		event.stopPropagation();
-	});
-	
 	this.initializeGUI();
 	this.updated();
 	
@@ -2436,28 +2472,25 @@ XMLElement.prototype.addTopActions = function () {
 	$('<input>').attr({
 		'type' : 'button',
 		'value' : '\u2193',
-		'id' : this.guiElementID + '_down'
-	}).appendTo(topActionSpan).click(function(){
-		self.editor.guiEditor.moveElement(self);
-	});
+		'id' : this.guiElementID + '_down',
+		'class' : 'move_down'
+	}).appendTo(topActionSpan);
 
 	// create move up button and callback for element
 	$('<input>').attr({
 		'type' : 'button',
 		'value' : '\u2191',
-		'id' : this.guiElementID + '_up'
-	}).appendTo(topActionSpan).click(function(){
-		self.editor.guiEditor.moveElement(self, true);
-	});
+		'id' : this.guiElementID + '_up',
+		'class' : 'move_up'
+	}).appendTo(topActionSpan);
 
 	// create delete button and callback for element
 	$('<input>').attr({
 		'type' : 'button',
 		'value' : 'X',
-		'id' : this.guiElementID + '_del'
-	}).appendTo(topActionSpan).click(function(){
-		self.editor.guiEditor.deleteElement(self);
-	});
+		'id' : this.guiElementID + '_del',
+		'class' : 'delete'
+	}).appendTo(topActionSpan);
 	
 	return topActionSpan;
 };

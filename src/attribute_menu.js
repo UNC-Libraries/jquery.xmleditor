@@ -5,6 +5,11 @@ function AttributeMenu(menuID, label, expanded, enabled, owner) {
 AttributeMenu.prototype.constructor = AttributeMenu;
 AttributeMenu.prototype = Object.create( ModifyElementMenu.prototype );
 
+AttributeMenu.prototype.initEventHandlers = function() {
+	this.menuContent.on('click', 'li', function(event){
+		self.owner.editor.addAttributeButtonCallback(this);
+	});
+};
 
 AttributeMenu.prototype.populate = function (xmlElement) {
 	if (xmlElement == null || (this.target != null && xmlElement.guiElement != null 

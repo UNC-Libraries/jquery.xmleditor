@@ -28,10 +28,7 @@ XMLAttribute.prototype.render = function (){
 	}).data('xmlAttribute', this).appendTo(elementNode.children("." + attributesContainerClass));
 	
 	var self = this;
-	$("<a/>").html("(x) ").css("cursor", "pointer").on('click', function(event) {
-		self.remove();
-		event.stopPropagation();
-	}).appendTo(this.attributeContainer);
+	$("<a/>").html("(x) ").css("cursor", "pointer").appendTo(this.attributeContainer);
 	
 	$('<label/>').text(this.objectType.name).appendTo(this.attributeContainer);
 	
@@ -41,17 +38,7 @@ XMLAttribute.prototype.render = function (){
 	}
 	
 	this.attributeInput = this.createElementInput(this.attributeID.replace(":", "-"), attributeValue, this.attributeContainer);
-	
-	this.attributeInput.data('xmlAttribute', this).change(function(){
-		self.syncValue();
-		self.editor.xmlState.documentChangedEvent();
-	});
-	
-	this.attributeContainer.click(function(event) {
-		self.editor.guiEditor.selectElement(self.xmlElement);
-		event.stopPropagation();
-		$(this).addClass('selected');
-	});
+	this.attributeInput.data('xmlAttribute', this);
 	
 	return this.attributeInput;
 };
@@ -74,4 +61,13 @@ XMLAttribute.prototype.syncValue = function() {
 
 XMLAttribute.prototype.changeValue = function(value) {
 	this.xmlElement.xmlNode.attr(this.objectType.name, value);
+};
+
+XMLAttribute.prototype.select = function() {
+	this.editor.guiEditor.selectElement(self.xmlElement);
+	this.attributeContainer.addClass('selected');
+};
+
+XMLAttribute.prototype.deselect = function() {
+	this.attributeContainer.removeClass('selected');
 };

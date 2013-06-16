@@ -42,6 +42,7 @@ ModifyMenuPanel.prototype.addMenu = function(menuID, label, expanded, enabled, c
 			"contextual": contextual
 		};
 	menu.render(this.menuContainer);
+	menu.initEventHandlers();
 	return menu;
 };
 
@@ -54,6 +55,7 @@ ModifyMenuPanel.prototype.addAttributeMenu = function(menuID, label, expanded, e
 			"contextual": contextual
 		};
 	menu.render(this.menuContainer);
+	menu.initEventHandlers();
 	return menu;
 };
 

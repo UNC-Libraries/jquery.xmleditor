@@ -58,6 +58,12 @@ ModifyElementMenu.prototype.render = function(parentContainer) {
 	return this;
 };
 
+ModifyElementMenu.prototype.initEventHandlers = function() {
+	this.menuContent.on('click', 'li', function(event){
+		self.owner.editor.addChildElementCallback(this);
+	});
+};
+
 ModifyElementMenu.prototype.clear = function() {
 	var startingHeight = this.menuContent.height();
 	this.menuContent.empty();
@@ -85,9 +91,8 @@ ModifyElementMenu.prototype.populate = function(xmlElement) {
 		var xmlElement = this;
 		$("<li/>").attr({
 			title : 'Add ' + xmlElement.name
-		}).html(xmlElement.name).click(function(){
-			self.owner.editor.addChildElementCallback(this);
-		}).data('xml', {
+		}).html(xmlElement.name)
+		.data('xml', {
 				//"target": xmlElement,
 				"target": self.target,
 				"objectType": xmlElement

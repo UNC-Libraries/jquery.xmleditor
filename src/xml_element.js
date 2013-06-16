@@ -59,11 +59,6 @@ XMLElement.prototype.render = function(parentElement, recursive) {
 	
 	var self = this;
 	
-	this.guiElement.click(function(event) {
-		self.editor.guiEditor.selectElement(self);
-		event.stopPropagation();
-	});
-	
 	this.initializeGUI();
 	this.updated();
 	
@@ -120,28 +115,25 @@ XMLElement.prototype.addTopActions = function () {
 	$('<input>').attr({
 		'type' : 'button',
 		'value' : '\u2193',
-		'id' : this.guiElementID + '_down'
-	}).appendTo(topActionSpan).click(function(){
-		self.editor.guiEditor.moveElement(self);
-	});
+		'id' : this.guiElementID + '_down',
+		'class' : 'move_down'
+	}).appendTo(topActionSpan);
 
 	// create move up button and callback for element
 	$('<input>').attr({
 		'type' : 'button',
 		'value' : '\u2191',
-		'id' : this.guiElementID + '_up'
-	}).appendTo(topActionSpan).click(function(){
-		self.editor.guiEditor.moveElement(self, true);
-	});
+		'id' : this.guiElementID + '_up',
+		'class' : 'move_up'
+	}).appendTo(topActionSpan);
 
 	// create delete button and callback for element
 	$('<input>').attr({
 		'type' : 'button',
 		'value' : 'X',
-		'id' : this.guiElementID + '_del'
-	}).appendTo(topActionSpan).click(function(){
-		self.editor.guiEditor.deleteElement(self);
-	});
+		'id' : this.guiElementID + '_del',
+		'class' : 'delete'
+	}).appendTo(topActionSpan);
 	
 	return topActionSpan;
 };

@@ -25,7 +25,38 @@ GUIEditor.prototype.initialize = function(parentContainer) {
 	this.rootElement.guiElement.data("xmlElement", this.rootElement);
 	this.rootElement.childContainer = this.xmlContent;
 	this.rootElement.initializeGUI();
+	
+	this._initEventBindings();
 	return this;
+};
+
+GUIEditor.prototype._initEventBindings = function() {
+	var self = this;
+	// Attributes
+	this.xmlContent.on('click', '.' + attributeContainerClass, function(event){
+		$(this).data('xmlAttribute').select();
+		event.stopPropagation();
+	}).on('click', '.' + attributeContainerClass + " > a", function(event){
+		$(this).parents('.' + attributeContainerClass).eq(0).data('xmlAttribute').remove();
+		event.stopPropagation();
+	}).on('change', '.' + attributeContainerClass + ' > input,.' + attributeContainerClass + ' > textarea', function(event){
+		$(this).parents('.' + attributeContainerClass).eq(0).data('xmlAttribute').syncValue();
+		self.editor.xmlState.documentChangedEvent();
+	});
+	// Element
+	this.xmlContent.on('click', '.' + xmlElementClass, function(event){
+		self.selectElement(this);
+		event.stopPropagation();
+	}).on('click', '.move_up', function(event){
+		self.moveElement($(this).parents('.' + xmlElementClass).eq(0).data('xmlElement'), true);
+		event.stopPropagation();
+	}).on('click', '.move_down', function(event){
+		self.moveElement($(this).parents('.' + xmlElementClass).eq(0).data('xmlElement'));
+		event.stopPropagation();
+	}).on('click', '.top_actions .delete', function(event){
+		self.deleteElement($(this).parents('.' + xmlElementClass).eq(0).data('xmlElement'));
+		event.stopPropagation();
+	});
 };
 
 GUIEditor.prototype.activate = function() {
