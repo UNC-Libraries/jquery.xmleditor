@@ -1043,29 +1043,37 @@ GUIEditor.prototype.deleteSelected = function() {
 		var xmlAttribute = selectedAttribute.data("xmlAttribute");
 		xmlAttribute.remove();
 	} else {
-		// After delete, select next sibling, previous sibling, or parent, as available.
-		var afterDeleteSelection = this.selectedElement.guiElement.next("." + xmlElementClass);
+		this.deleteElement(this.selectedElement);
+	}
+	return this;
+};
+
+GUIEditor.prototype.deleteElement = function(xmlElement) {
+	var isSelected = xmlElement.isSelected();
+	if (isSelected) {
+		var afterDeleteSelection = xmlElement.guiElement.next("." + xmlElementClass);
 		if (afterDeleteSelection.length == 0)
-			afterDeleteSelection = this.selectedElement.guiElement.prev("." + xmlElementClass);
+			afterDeleteSelection = xmlElement.guiElement.prev("." + xmlElementClass);
 		if (afterDeleteSelection.length == 0)
-			afterDeleteSelection = this.selectedElement.guiElement.parents("." + xmlElementClass).first();
-		
-		this.selectedElement.remove();
-		this.editor.xmlState.documentChangedEvent();
-		
+			afterDeleteSelection = xmlElement.guiElement.parents("." + xmlElementClass).first();
 		this.selectElement(afterDeleteSelection);
 	}
-	
+	xmlElement.remove();
+	this.editor.xmlState.documentChangedEvent();
 	return this;
 };
 
 GUIEditor.prototype.moveSelected = function(up) {
-	if (this.selectedElement == null)
+	return this.moveElement(this.selectedElement, up);
+};
+
+GUIEditor.prototype.moveElement = function(xmlElement, up) {
+	if (xmlElement == null)
 		return this;
-	var result = up? this.selectedElement.moveUp() : this.selectedElement.moveDown();
+	var result = up? xmlElement.moveUp() : xmlElement.moveDown();
 	if (result) {
 		this.editor.xmlState.documentChangedEvent();
-		this.selectedElement.focus();
+		xmlElement.focus();
 	}
 	return this;
 };
@@ -2430,7 +2438,7 @@ XMLElement.prototype.addTopActions = function () {
 		'value' : '\u2193',
 		'id' : this.guiElementID + '_down'
 	}).appendTo(topActionSpan).click(function(){
-		self.editor.guiEditor.moveSelected();
+		self.editor.guiEditor.moveElement(self);
 	});
 
 	// create move up button and callback for element
@@ -2439,7 +2447,7 @@ XMLElement.prototype.addTopActions = function () {
 		'value' : '\u2191',
 		'id' : this.guiElementID + '_up'
 	}).appendTo(topActionSpan).click(function(){
-		self.editor.guiEditor.moveSelected(true);
+		self.editor.guiEditor.moveElement(self, true);
 	});
 
 	// create delete button and callback for element
@@ -2448,7 +2456,7 @@ XMLElement.prototype.addTopActions = function () {
 		'value' : 'X',
 		'id' : this.guiElementID + '_del'
 	}).appendTo(topActionSpan).click(function(){
-		self.editor.guiEditor.deleteSelected();
+		self.editor.guiEditor.deleteElement(self);
 	});
 	
 	return topActionSpan;
@@ -2653,5 +2661,9 @@ XMLElement.prototype.updated = function () {
 
 XMLElement.prototype.select = function() {
 	this.guiElement.addClass("selected");
+};
+
+XMLElement.prototype.isSelected = function() {
+	return this.guiElement.hasClass("selected");
 };
 })(jQuery);
