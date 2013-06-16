@@ -2258,9 +2258,10 @@ XMLAttribute.prototype.render = function (){
 	}).data('xmlAttribute', this).appendTo(elementNode.children("." + attributesContainerClass));
 	
 	var self = this;
-	/*$("<a/>").html("(x) ").css("cursor", "pointer").on('click', function() {
-		$.proxy(self.remove, self);
-	}).appendTo(this.attributeContainer);*/
+	$("<a/>").html("(x) ").css("cursor", "pointer").on('click', function(event) {
+		self.remove();
+		event.stopPropagation();
+	}).appendTo(this.attributeContainer);
 	
 	$('<label/>').text(this.objectType.name).appendTo(this.attributeContainer);
 	

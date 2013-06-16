@@ -112,8 +112,9 @@ textarea:focus,input:focus {
 	box-shadow: 4px 3px 3px 0 #CCE8F1;
 	margin-bottom: 10px;
 	background-color: #fff;
-	-webkit-border-radius: 6px 6px 6px 6px;
-	-moz-border-radius: 6px 6px 6px 6px;
+	-webkit-border-radius: 6px;
+	-moz-border-radius: 6px;
+	border-radius: 6px;
 }
 
 .xml_element .xml_element:last-child {
@@ -300,11 +301,13 @@ textarea:focus,input:focus {
 .attribute_container {
 	display: inline-block;
 	margin-right: 20px;
+	padding: 2px;
 }
 
 .attribute_container.selected {
 	background-color: #DDDDFF;
 	box-shadow: 0 0 6px 1px #DDDDFF;
+	border-radius: 6px;
 }
 
 .attribute_container label {
@@ -313,7 +316,7 @@ textarea:focus,input:focus {
 	margin-right: 5px;
 	vertical-align: 28%;
 	display: inline-block;
-	min-width: 100px;
+	min-width: 90px;
 }
 
 .attribute_container textarea {
