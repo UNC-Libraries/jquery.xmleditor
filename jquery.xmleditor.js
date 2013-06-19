@@ -621,12 +621,12 @@ $.widget( "xml.xmlEditor", {
 		}
 		
 		if (e.altKey && e.shiftKey && e.keyCode == 'X'.charCodeAt(0)) {
-			this.xmlTabContainer.tabs('select', 0);
+			this.modeChange(0);
 			return false;
 		}
 		
 		if (e.altKey && e.shiftKey && e.keyCode == 'T'.charCodeAt(0)) {
-			this.xmlTabContainer.tabs('select', 1);
+			this.modeChange(1);
 			return false;
 		}
 		
@@ -672,7 +672,8 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 	if (this.objectType.values.length > 0){
 		var selectionValues = this.objectType.values;
 		input = $('<select />').attr({
-			'id' : inputID
+			'id' : inputID,
+			'class' : 'xml_select'
 		}).appendTo(appendTarget);
 
 		$.each(selectionValues, function() {
@@ -686,7 +687,8 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 			|| this.objectType.attribute){
 		input = $('<textarea/>').attr({
 			'id' : inputID,
-			'value' : startingValue
+			'value' : startingValue,
+			'class' : 'xml_textarea'
 		}).appendTo(appendTarget).one('focus', function() {
 			if ($(this).val() == " ") {
 				$(this).val("");
@@ -698,7 +700,8 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 		input = $('<input/>').attr({
 			'id' : inputID,
 			'type' : 'text',
-			'value' : startingValue
+			'value' : startingValue,
+			'class' : 'xml_input'
 		}).appendTo(appendTarget).one('focus', function() {
 			if ($(this).val() == " ") {
 				$(this).val("");
@@ -1284,16 +1287,6 @@ GUIEditor.prototype.focusObject = function(focusTarget) {
 		scrollHeight -= this.editor.editorHeader.height();
 		$("html, body").stop().animate({ scrollTop: scrollHeight }, 500);
 	}
-};
-
-GUIEditor.prototype.changeSelectedTab = function(reverse) {
-	if (this.selectedElement == null)
-		return this;
-	var currentTab = this.selectedElement.guiElement.tabs('option', 'selected') + (reverse? -1: 1);
-	if (currentTab < this.selectedElement.guiElement.tabs('length') && currentTab >= 0) {
-		this.selectedElement.guiElement.tabs('option', 'selected', currentTab);
-	}
-	return this;
 };
 /**
  * Header MenuBar object

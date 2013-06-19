@@ -378,13 +378,3 @@ GUIEditor.prototype.focusObject = function(focusTarget) {
 		$("html, body").stop().animate({ scrollTop: scrollHeight }, 500);
 	}
 };
-
-GUIEditor.prototype.changeSelectedTab = function(reverse) {
-	if (this.selectedElement == null)
-		return this;
-	var currentTab = this.selectedElement.guiElement.tabs('option', 'selected') + (reverse? -1: 1);
-	if (currentTab < this.selectedElement.guiElement.tabs('length') && currentTab >= 0) {
-		this.selectedElement.guiElement.tabs('option', 'selected', currentTab);
-	}
-	return this;
-};

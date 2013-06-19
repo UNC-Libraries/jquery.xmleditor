@@ -1,9 +1,9 @@
-ul li {
+.xml_editor_container ul li {
 	text-indent: 0;
 	margin: 0;
 }
 
-p, ul {
+.xml_editor_container p, .xml_editor_container ul {
 	margin: 0;
 }
 
@@ -22,34 +22,9 @@ p, ul {
 /* end clearfix */
 .ui-helper-zfix { width: 100%; height: 100%; top: 0; left: 0; position: absolute; opacity: 0; filter:Alpha(Opacity=0); }
 
-/* Interaction Cues
-----------------------------------*/
-.ui-state-disabled { cursor: default !important; }
-
-.ui-widget { font-family: Trebuchet MS, Tahoma, Verdana, Arial, sans-serif; font-size: 1.1em; }
-.ui-widget input, .ui-widget select, .ui-widget textarea, .ui-widget button { font-family: Trebuchet MS, Tahoma, Verdana, Arial, sans-serif; font-size: 1em; }
-.ui-widget-content { border: 1px solid #dddddd; background: #eeeeee; color: #333333; }
-.ui-widget-content a { color: #333333; }
-
-.ui-state-default, .ui-widget-content .ui-state-default { border: 1px solid #cccccc; background: #f6f6f6; font-weight: bold; color: #1c94c4; outline: none; }
-.ui-state-default a, .ui-state-default a:link, .ui-state-default a:visited { color: #1c94c4; text-decoration: none; outline: none; }
-.ui-state-hover, .ui-widget-content .ui-state-hover, .ui-state-focus, .ui-widget-content .ui-state-focus { border: 1px solid #fbcb09; background: #fdf5ce; font-weight: bold; color: #c77405; outline: none; }
-.ui-state-hover a, .ui-state-hover a:hover { color: #c77405; text-decoration: none; outline: none; }
-.ui-state-active, .ui-widget-content .ui-state-active { border: 1px solid #fbd850; background: #ffffff; font-weight: bold; color: #eb8f00; outline: none; }
-.ui-state-active a, .ui-state-active a:link, .ui-state-active a:visited { color: #eb8f00; outline: none; text-decoration: none; }
-
-.ui-tabs .ui-tabs-nav { list-style: none; position: relative;}
-.ui-tabs .ui-tabs-nav li { position: relative; float: left; border-bottom-width: 0 !important; margin: 0 .2em -1px 0; padding: 0; }
-.ui-tabs .ui-tabs-nav li a { float: left; text-decoration: none; padding: .5em 1em; }
-.ui-tabs .ui-tabs-nav li.ui-tabs-selected { padding-bottom: 1px; border-bottom-width: 0; }
-.ui-tabs .ui-tabs-nav li.ui-tabs-selected a, .ui-tabs .ui-tabs-nav li.ui-state-disabled a, .ui-tabs .ui-tabs-nav li.ui-state-processing a { cursor: text; }
-.ui-tabs .ui-tabs-nav li a, .ui-tabs.ui-tabs-collapsible .ui-tabs-nav li.ui-tabs-selected a { cursor: pointer; } /* first selector in group seems obsolete, but required to overcome bug in Opera applying cursor: text overall if defined elsewhere... */
-.ui-tabs .ui-tabs-panel { display: block; background: none; border-width: 0;}
-.ui-tabs .ui-tabs-hide { display: none !important; }
-
 /****************/
 
-input[type="text"], select, textarea {
+.xml_input, .xml_select, .xml_textarea {
 	max-width: 100%;
 	display: block;
 	border: 1px solid #cccfdd;
@@ -59,17 +34,17 @@ input[type="text"], select, textarea {
 	padding-left: 4px;
 }
 
-input[type="text"] {
+.xml_input {
 	width: 99%;
 	height: 25px;
 }
 
-select {
+.xml_select {
 	height: 25px;
 	min-width: 120px;
 }
 
-textarea, .textareaClone {
+.xml_textarea, .textareaClone {
 	max-height: 18em;
 	width: 99%;
 	resize: vertical;
@@ -77,27 +52,7 @@ textarea, .textareaClone {
 	padding: 4px 0 0 5px;
 }
 
-input.button {
-	width: 100px;
-	position: absolute;
-	right: 20px;
-	bottom: 20px;
-	background: #09C;
-	color: #fff;
-	/*font-family: Tahoma, Geneva, sans-serif;*/
-	height: 30px;
-	-webkit-border-radius: 15px;
-	-moz-border-radius: 15px;
-	border-radius: 15px;
-	border: 1p solid #999;
-}
-
-input.button:hover {
-	background: #fff;
-	color: #09C;
-}
-
-textarea:focus,input:focus {
+.xml_textarea:focus, .xml_input:focus {
 	border: 1px solid #09C;
 }
 
@@ -129,7 +84,7 @@ textarea:focus,input:focus {
 	margin-left: 0px;
 }
 
-.element_header, .xml_tab_area > .ui-tabs-nav {
+.element_header {
 	padding: 4px 1px 1px 7px;
 	line-height: 22px;
 	height: 22px;
@@ -163,12 +118,6 @@ textarea:focus,input:focus {
 	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#F0FFFF', endColorstr='#f5f5f9');
 	background: -webkit-gradient(linear, left top, left bottom, from(#F0FFFF), to(#f5f5f9));
 	background: -moz-linear-gradient(top,  #F0FFFF,  #f5f5f9);
-}
-
-.xml_tab_area > .ui-tabs-nav  {
-	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#eeeeFF', endColorstr='#CDF2E6');
-	background: -webkit-gradient(linear, left top, left bottom, from(#eeeeFF), to(#CDF2E6));
-	background: -moz-linear-gradient(top,  #eeeeFF,  #CDF2E6);
 }
 
 .xml_element.selected {
@@ -228,11 +177,11 @@ textarea:focus,input:focus {
 	padding: 0px 10px 10px 10px;
 }
 
-.xml_content > .placeholder, .xml_element > .xml_children > div.placeholder {
+.xml_content > .placeholder, .xml_element > .xml_children > .placeholder {
 	display: none;
 }
 
-.xml_content > div:last-child.placeholder, .xml_element > .xml_children > div:last-child.placeholder  {
+.xml_content > .placeholder:last-child, .xml_element > .xml_children > .placeholder:last-child  {
 	display: block;
 	font-style: italic;
 	color: #bbb;
@@ -294,10 +243,6 @@ textarea:focus,input:focus {
 .content_block + .content_block {
 	padding-top: 0px;
 }
-
-/*.content_block:last-child {
-	padding-bottom: 12px;
-}*/
 
 /* Menu */
 
@@ -383,36 +328,6 @@ textarea:focus,input:focus {
 	border: 0;
 }
 
-.xml_work_area > div {
-	/*border-top: 1px solid #e5e5e5;*/
-}
-
-.ui-tabs {
-	padding: 0;
-}
-
-.ui-widget-header {
-	border: 0;
-	border-bottom: 1px solid #ddd; 	
-}
-
-.xml_tab_area.ui-tabs > .ui-tabs-nav li a {
-	padding: 0.1em 1em;
-}
-
-.xml_tab_area > .ui-tabs-nav {
-	height: 24px;	
-}
-
-.xml_tab_area > .ui-tabs-nav > .ui-state-default {
-	background-color: #eeeeee;
-}
-
-.xml_tab_area > .ui-tabs-nav > .ui-tabs-selected {
-	background-color: #fafafa;
-}
-
-
 /* XML editor */
 .xml_tab_area {
 	background-color: #ffffff;	
@@ -422,11 +337,6 @@ textarea:focus,input:focus {
 	line-height: 16px;
 	padding: 3px 18px 0 10px;
 }
-
-.text_content.ui-tabs-panel {
-	padding: 0px;	
-}
-
 
 .xml_tab_area .gui_content { 
 	padding: 3px 5px 0 0px;

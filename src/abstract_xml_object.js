@@ -9,7 +9,8 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 	if (this.objectType.values.length > 0){
 		var selectionValues = this.objectType.values;
 		input = $('<select />').attr({
-			'id' : inputID
+			'id' : inputID,
+			'class' : 'xml_select'
 		}).appendTo(appendTarget);
 
 		$.each(selectionValues, function() {
@@ -23,7 +24,8 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 			|| this.objectType.attribute){
 		input = $('<textarea/>').attr({
 			'id' : inputID,
-			'value' : startingValue
+			'value' : startingValue,
+			'class' : 'xml_textarea'
 		}).appendTo(appendTarget).one('focus', function() {
 			if ($(this).val() == " ") {
 				$(this).val("");
@@ -35,7 +37,8 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 		input = $('<input/>').attr({
 			'id' : inputID,
 			'type' : 'text',
-			'value' : startingValue
+			'value' : startingValue,
+			'class' : 'xml_input'
 		}).appendTo(appendTarget).one('focus', function() {
 			if ($(this).val() == " ") {
 				$(this).val("");

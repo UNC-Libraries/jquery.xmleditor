@@ -620,12 +620,12 @@ $.widget( "xml.xmlEditor", {
 		}
 		
 		if (e.altKey && e.shiftKey && e.keyCode == 'X'.charCodeAt(0)) {
-			this.xmlTabContainer.tabs('select', 0);
+			this.modeChange(0);
 			return false;
 		}
 		
 		if (e.altKey && e.shiftKey && e.keyCode == 'T'.charCodeAt(0)) {
-			this.xmlTabContainer.tabs('select', 1);
+			this.modeChange(1);
 			return false;
 		}
 		
