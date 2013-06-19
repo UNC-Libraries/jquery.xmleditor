@@ -195,7 +195,11 @@ $.widget( "xml.xmlEditor", {
 				data : (this.options.ajaxOptions.xmlRetrievalParams),
 				dataType : "text",
 				success : function(data) {
+					console.time("Load");
+					//console.profile();
 					self.loadDocument(data);
+					//console.profileEnd();
+					console.timeEnd("Load");
 				}
 			});
 		} else {

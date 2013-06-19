@@ -20,24 +20,26 @@ XMLAttribute.prototype.getDomElement = function () {
 XMLAttribute.prototype.render = function (){
 	this.attributeID = this.xmlElement.guiElementID + "_" + this.objectType.nameEsc;
 	
-	var elementNode = this.xmlElement.guiElement;
-	
 	this.attributeContainer = $("<div/>").attr({
 		'id' : this.attributeID + "_cont",
 		'class' : attributeContainerClass
-	}).data('xmlAttribute', this).appendTo(elementNode.children("." + attributesContainerClass));
+	}).data('xmlAttribute', this).appendTo(this.xmlElement.getAttributeContainer());
 	
 	var self = this;
-	$("<a/>").html("(x) ").css("cursor", "pointer").appendTo(this.attributeContainer);
+	var removeButton = document.createElement('a');
+	removeButton.appendChild(document.createTextNode('(x) '));
+	this.attributeContainer[0].appendChild(removeButton);
 	
-	$('<label/>').text(this.objectType.name).appendTo(this.attributeContainer);
+	var label = document.createElement('label');
+	label.appendChild(document.createTextNode(this.objectType.name));
+	this.attributeContainer[0].appendChild(label);
 	
 	var attributeValue = this.xmlElement.xmlNode.attr(this.objectType.name);
 	if (attributeValue == '' && this.objectType.defaultValue != null) {
 		attributeValue = this.objectType.defaultValue;
 	}
 	
-	this.attributeInput = this.createElementInput(this.attributeID.replace(":", "-"), attributeValue, this.attributeContainer);
+	this.attributeInput = this.createElementInput(this.attributeID.replace(":", "-"), attributeValue, this.attributeContainer[0]);
 	this.attributeInput.data('xmlAttribute', this);
 	
 	return this.attributeInput;

@@ -6,46 +6,55 @@ function AbstractXMLObject(editor, objectType) {
 
 AbstractXMLObject.prototype.createElementInput = function (inputID, startingValue, appendTarget){
 	var input = null;
+	var $input = null;
 	if (this.objectType.values.length > 0){
 		var selectionValues = this.objectType.values;
-		input = $('<select />').attr({
-			'id' : inputID,
-			'class' : 'xml_select'
-		}).appendTo(appendTarget);
-
-		$.each(selectionValues, function() {
-			$('<option />', {
-				value : this,
-				text : this.toString(),
-				selected : (startingValue == this)
-			}).appendTo(input);
-		});
+		input = document.createElement('select');
+		input.id = inputID;
+		input.className = 'xml_select';
+		appendTarget.appendChild(input);
+		
+		for (var index in selectionValues) {
+			var selectionValue = selectionValues[index];
+			var option = new Option(selectionValue.toString(), selectionValue);
+			input.options[index] = option;
+			if (startingValue == selectionValue) {
+				console.log("SELECTED " + selectionValue);
+				input.options[index].selected = true;
+			}
+		}
+		$input = $(input);
 	} else if ((this.objectType.element && (this.objectType.type == 'string' || this.objectType.type == 'mixed')) 
 			|| this.objectType.attribute){
-		input = $('<textarea/>').attr({
-			'id' : inputID,
-			'value' : startingValue,
-			'class' : 'xml_textarea'
-		}).appendTo(appendTarget).one('focus', function() {
-			if ($(this).val() == " ") {
-				$(this).val("");
-			}
+		input = document.createElement('textarea');
+		input.id = inputID;
+		input.className = 'xml_textarea';
+		input.value = startingValue;
+		appendTarget.appendChild(input);
+		
+		$input = $(input);
+		var self = this;
+		$input.one('focus', function() {
+			if (!self.objectType.attribute)
+				$input.autosize();
+			if (this.value == " ")
+				this.value = "";
 		});
-		if (!this.objectType.attribute)
-			input.expandingTextarea();
 	} else if (this.objectType.type == 'ID' || this.objectType.type == 'date' || this.objectType.type == 'anyURI' ){
-		input = $('<input/>').attr({
-			'id' : inputID,
-			'type' : 'text',
-			'value' : startingValue,
-			'class' : 'xml_input'
-		}).appendTo(appendTarget).one('focus', function() {
-			if ($(this).val() == " ") {
-				$(this).val("");
-			}
+		input = document.createElement('input');
+		input.type = 'text';
+		input.id = inputID;
+		input.className = 'xml_input';
+		input.value = startingValue;
+		appendTarget.appendChild(input);
+		
+		$input = $(input);
+		$input.one('focus', function() {
+			if (this.value == " ")
+				this.value = "";
 		});
 	}
-	return input;
+	return $input;
 };
 
 AbstractXMLObject.prototype.focus = function() {

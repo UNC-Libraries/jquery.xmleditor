@@ -1,14 +1,3 @@
-.xml_editor_container ul li {
-	text-indent: 0;
-	margin: 0;
-}
-
-.xml_editor_container p, .xml_editor_container ul {
-	margin: 0;
-}
-
-/* jQuery UI styles */
-
 /* Layout helpers
 ----------------------------------*/
 .ui-helper-hidden { display: none; }
@@ -151,21 +140,23 @@
 }
 
 .element_header > .top_actions {
-	float: right;
+	text-align: right;
+	margin-top: -2px;
 }
 
-.element_header > .top_actions > input {
-	padding: 0px 2px;
+.element_header > .top_actions > span {
+	padding: 1px 5px;
 	border: 1px solid #aaaabb;
 	font-size: 11px;
 	margin: 0px 2px;
 	background-color: #eee;
-	font-family: Trebuchet MS, Tahoma, Verdana, Arial, sans-serif;
+	color: #4C4C4C;
+	font-weight: 400;
 	vertical-align: 50%;
 	cursor: pointer;
 }
 
-.element_header > .top_actions > input:hover {
+.element_header > .top_actions > span:hover {
 	background-color: #ddf;
 }
 
@@ -203,7 +194,7 @@
 	border-radius: 6px;
 }
 
-.attribute_container label {
+.attribute_container > label {
 	font-weight: bold;
 	line-height: 1.5em;
 	margin-right: 5px;
@@ -212,7 +203,7 @@
 	min-width: 90px;
 }
 
-.attribute_container textarea {
+.attribute_container > textarea {
 	display: inline;
 	resize: horizontal;
 	min-width: 100px;
@@ -220,18 +211,19 @@
 	width: 160px;	
 }
 
-.attribute_container select {
+.attribute_container > select {
 	vertical-align: 45%;
 	width: 166px;
 	display: inline-block;
 }
 
-.attribute_container a {
+.attribute_container > a {
 	color: #1C94C4;
 	vertical-align: 45%;
+	cursor: pointer;
 }
 
-.attribute_container a:hover {
+.attribute_container > a:hover {
 	color: #44468a;
 }
 
@@ -437,7 +429,7 @@
 	cursor: pointer;
 }
 
-.xml_menu_bar.active > ul > li > ul > li.disabled span {
+.xml_menu_bar.active > ul > li > ul > .disabled > span {
 	color: #B4B7BA;
 	cursor: default;
 }

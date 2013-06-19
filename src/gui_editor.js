@@ -102,7 +102,16 @@ GUIEditor.prototype.refreshDisplay = function() {
 };
 
 GUIEditor.prototype.refreshElements = function() {
+	console.time("rendering children");
+	var node = this.rootElement.getDomElement()[0];
+	var originalParent = node.parentNode;
+	var fragment = document.createDocumentFragment();
+	fragment.appendChild(node);
+	
 	this.rootElement.renderChildren(true);
+	
+	originalParent.appendChild(fragment);
+	console.timeEnd("rendering children");
 	return this;
 };
 
