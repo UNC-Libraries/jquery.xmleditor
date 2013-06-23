@@ -14,7 +14,6 @@
 <script src="../lib/cycle.js"></script>
 <script src="../lib/jquery.autosize-min.js"></script>
 <script src="../lib/vkbeautify.js"></script>
-<script src="examples/mods.js"></script>
 <script src="../jquery.xmleditor.js"></script>
 </head>
 <body>
@@ -32,11 +31,12 @@
 		$(function() {
 			console.time('Initial');
 			$("#xml_editor").xmlEditor({
-				schemaObject : modsSchema,
 				documentTitle : "A Spoonful of Math Helps The Medicine Go Down",
 				ajaxOptions: {
 					xmlRetrievalPath: "examples/spoonful_of_mods.xml"
-				}
+				},
+				schema : "examples/mods.json",
+				libPath : '../lib/'
 			});
 			console.timeEnd('Initial');
 		});

@@ -322,15 +322,17 @@ XMLElement.prototype.getSelectedAttribute = function () {
 XMLElement.prototype.updated = function () {
 	if (this.guiElement == null)
 		return;
-	this.childCount = (this.objectType.elements.length == 0)? 0: this.childContainer[0].children.length;
-	this.attributeCount = (this.objectType.attributes == null || this.objectType.attributes.length == 0)? 0: this.attributeContainer[0].children.length;
+	this.childCount = 0;
+	this.attributeCount = 0;
 	
-	if (this.childContainer != null) {
+	if (this.childContainer != null && this.objectType.elements) {
+		this.childCount = this.childContainer[0].children.length;
 		if (this.childCount > 0)
 			this.childContainer.show();
 		else this.childContainer.hide();
 	}
-	if (this.attributeContainer != null) {
+	if (this.attributeContainer != null && this.objectType.attributes) {
+		this.attributeCount = this.attributeContainer[0].children.length;
 		if (this.attributeCount > 0)
 			this.attributeContainer.show();
 		else this.attributeContainer.hide();

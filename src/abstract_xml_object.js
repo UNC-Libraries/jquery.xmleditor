@@ -19,7 +19,6 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 			var option = new Option(selectionValue.toString(), selectionValue);
 			input.options[index] = option;
 			if (startingValue == selectionValue) {
-				console.log("SELECTED " + selectionValue);
 				input.options[index].selected = true;
 			}
 		}
@@ -35,7 +34,7 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 		$input = $(input);
 		var self = this;
 		$input.one('focus', function() {
-			if (!self.objectType.attribute)
+			if (!self.objectType.attribute && self.editor.options.expandingTextAreas)
 				$input.autosize();
 			if (this.value == " ")
 				this.value = "";

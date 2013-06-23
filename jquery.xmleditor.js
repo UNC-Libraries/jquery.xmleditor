@@ -3,31 +3,31 @@
 
 /*
 
-    Copyright 2008 The University of North Carolina at Chapel Hill
+	Copyright 2008 The University of North Carolina at Chapel Hill
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
 
-            http://www.apache.org/licenses/LICENSE-2.0
+			http://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
 
  */
 /*
  * jQuery xml Editor
  * 
  * Dependencies:
- *   vkbeautify.0.98.01.beta.js
- *   jquery 1.7.1
- *   jquery.ui 1.7.1
+ *   jquery 1.7+
+ *   jquery.ui 1.7+
  *   ajax ace editor
  *   jquery.xmlns.js
- *   expanding.js
+ *   jquery.autosize.js (optional)
+ *   vkbeautify.0.98.01.beta.js (optional)
  * 
  * @author Ben Pennell
  */
@@ -66,43 +66,39 @@ var editorHeaderClass = "xml_editor_header";
 
 $.widget( "xml.xmlEditor", {
 	options: {
-		addTopMenuHeaderText : 'Add Top Element',
-		addAttrMenuHeaderText : 'Add Attribute',
-		addElementMenuHeaderText : 'Add Subelement',
-		schemaObject: null,
-		confirmExitWhenUnsubmitted : true,
-		enableGUIKeybindings : true,
-		floatingMenu : true,
-		
+		schema: null,
+		loadSchemaAsychronously: true,
+		libPath: null,
 		ajaxOptions : {
 			xmlUploadPath: null,
 			xmlRetrievalPath: null,
 			xmlRetrievalParams : null
 		},
 		localXMLContentSelector: this.element,
+		
+		documentTitle : null,
+		addTopMenuHeaderText : 'Add Top Element',
+		addAttrMenuHeaderText : 'Add Attribute',
+		addElementMenuHeaderText : 'Add Subelement',
+		
+		confirmExitWhenUnsubmitted : true,
+		enableGUIKeybindings : true,
+		floatingMenu : true,
+		expandingTextAreas: true,
+		
 		prettyXML : true,
 		undoHistorySize: 20,
-		documentTitle : null,
-		namespaces: null,
+		menuEntries: undefined,
 		submitResponseHandler : null,
+		
+		namespaces: null,
 		targetNS: null,
-		targetPrefix: null,
-		menuEntries: undefined
+		targetPrefix: null
 	},
 	
 	_create: function() {
+		var self = this;
 		this.instanceNumber = $("xml-xmlEditor").length;
-		
-		// If the schema is a function, execute it to get the schema from it.
-		if (jQuery.isFunction(this.options.schemaObject)) {
-			this.schema = this.options.schemaObject.apply();
-		} else {
-			this.schema = JSON.retrocycle(this.options.schemaObject);
-		}
-		
-		if (!this.options.targetNS) {
-			this.targetNS = this.schema.namespace;
-		}
 		
 		// Tree of xml element types
 		this.xmlTree = null;
@@ -130,17 +126,31 @@ $.widget( "xml.xmlEditor", {
 		this.menuBar = null;
 		// Element modification object
 		this.modifyMenu = null;
-    },
+		
+		var url = document.location.href;
+		var index = url.lastIndexOf("/");
+		if (index != -1)
+			this.baseUrl = url.substring(0, index + 1);
+		
+		// Turn relative paths into absolute paths for the sake of web workers
+		if (this.options.libPath) {
+			if (this.options.libPath.indexOf('http') != 0)
+				this.libPath = this.baseUrl + this.options.libPath;
+			else this.libPath = this.options.libPath;
+		} else this.libPath = this.baseUrl + "lib/";
+		if ((typeof this.options.schema == 'string' || typeof this.options.schema instanceof String)
+				&& this.options.schema.indexOf('http') != 0)
+			this.options.schema = this.baseUrl + this.options.schema;
+		
+		this.loadSchema(this.options.schema);
+	},
  
-    _init: function() {
-    	if (this.options.submitResponseHandler == null)
-    		this.options.submitResponseHandler = this.swordSubmitResponseHandler;
-    	
-    	this.xmlTree = new SchemaTree(this.schema);
-    	this.xmlTree.build();
+	_init: function() {
+		if (this.options.submitResponseHandler == null)
+			this.options.submitResponseHandler = this.swordSubmitResponseHandler;
 		
 		// Retrieve the local xml content before we start populating the editor.
-    	var localXMLContent = null;
+		var localXMLContent = null;
 		if ($(this.options.localXMLContentSelector).is("textarea")) {
 			localXMLContent = $(this.options.localXMLContentSelector).val(); 
 		} else {
@@ -182,35 +192,116 @@ $.widget( "xml.xmlEditor", {
 				self.keydownCallback(e);
 			});
 		if (this.options.confirmExitWhenUnsubmitted) {
-			$(window).bind('beforeunload', $.proxy(function(e) {
-				if (this.xmlState.isChanged()) {
+			$(window).bind('beforeunload', function(e) {
+				if (self.xmlState != null && self.xmlState.isChanged()) {
 					return "The document contains unsaved changes.";
 				}
-			}, this));
+			});
 		}
 		
-		if (this.options.ajaxOptions.xmlRetrievalPath != null) {
+		this.loadDocument(this.options.ajaxOptions, localXMLContent);
+	},
+	
+	loadSchema: function(schema) {
+		var self = this;
+		// If the schema is a function, execute it to get the schema from it.
+		if (jQuery.isFunction(schema)) {
+			this.schema = schema.apply();
+		} else {
+			if (this.options.loadSchemaAsychronously && typeof(Worker) !== "undefined" && typeof(Blob) !== "undefined") {
+				var blob = new Blob([
+						"self.onmessage = function(e) {" +
+						"importScripts(e.data.libPath + 'cycle.js');" +
+						"var schema;" +
+						"if (typeof e.data.schema == 'string' || typeof e.data.schema instanceof String) {" +
+						"	var xmlhttp = new XMLHttpRequest();" +
+						"	xmlhttp.onreadystatechange = function() {" +
+						"		if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {" +
+						"			schema = eval('(' + xmlhttp.responseText + ')');" +
+						"			self.postMessage(JSON.retrocycle(schema));" +
+						"		}" +
+						"	};" +
+						"	xmlhttp.open('GET', e.data.schema, true);" +
+						"	xmlhttp.send();" +
+						"} else {" +
+						"	schema = JSON.retrocycle(e.data.schema);" +
+						"	self.postMessage(schema);" +
+						"}" +
+						"}"
+				], { type: "text/javascript" });
+				var worker = new Worker(window.URL.createObjectURL(blob));
+				worker.onmessage = function(e) {
+					self.schema = e.data;
+					self._schemaReady();
+					worker.terminate();
+				};
+				worker.onerror = function(e) {
+					console.log("Asynchronous schema loading failed, doing it the old fashion way", e);
+					self.schema = JSON.retrocycle(schema);
+					self._schemaReady();
+				};
+				console.time("retro");
+				console.log("Requesting", schema);
+				worker.postMessage({'schema' : schema, 'libPath' : this.libPath});
+			} else {
+				if (typeof schema == 'string' || typeof schema instanceof String) {
+					$.ajax({
+						url : schema,
+						async : self.options.loadSchemaAsynchronously,
+						dataType : 'json',
+						success : function(data) {
+							self.schema = data;
+							self._schemaReady();
+						}
+					});
+				} else {
+					self.schema = JSON.retrocycle(schema);
+					self._schemaReady();
+				}
+			}
+		}
+	},
+	
+	loadDocument: function(ajaxOptions, localXMLContent) {
+		if (ajaxOptions != null && ajaxOptions.xmlRetrievalPath != null) {
+			var self = this;
 			$.ajax({
 				type : "GET",
-				url : this.options.ajaxOptions.xmlRetrievalPath,
-				data : (this.options.ajaxOptions.xmlRetrievalParams),
+				url : ajaxOptions.xmlRetrievalPath,
+				data : (ajaxOptions.xmlRetrievalParams),
 				dataType : "text",
 				success : function(data) {
-					console.time("Load");
-					//console.profile();
-					self.loadDocument(data);
-					//console.profileEnd();
-					console.timeEnd("Load");
+					self._documentReady(data);
 				}
 			});
 		} else {
-			this.loadDocument(localXMLContent);
+			this._documentReady(localXMLContent);
 		}
 	},
-    
-    loadDocument: function(xmlString) {
+	
+	_documentReady : function(xmlString) {
+		console.time("Load");
+		//console.profile();
 		this.xmlState = new DocumentState(xmlString, this);
 		this.xmlState.extractNamespacePrefixes();
+		//console.profileEnd();
+		console.timeEnd("Load");
+		this._documentAndSchemaReady();
+	},
+	
+	_schemaReady : function() {
+		if (!this.options.targetNS) {
+			this.targetNS = this.schema.namespace;
+		}
+		this.xmlTree = new SchemaTree(this.schema);
+		this.xmlTree.build();
+		this._documentAndSchemaReady();
+	},
+	
+	_documentAndSchemaReady : function() {
+		// Join back up asynchronous loading of document and schema
+		if (!this.xmlTree || !this.xmlState)
+			return;
 		// Add namespaces into jquery
 		this.xmlState.namespaces.namespaceURIs = $.extend({}, this.xmlTree.namespaces.namespaceURIs, this.xmlState.namespaces.namespaceURIs);
 		this.xmlState.namespaces.namespaceToPrefix = $.extend({}, this.xmlTree.namespaces.namespaceToPrefix, this.xmlState.namespaces.namespaceToPrefix);
@@ -218,6 +309,7 @@ $.widget( "xml.xmlEditor", {
 		this.targetPrefix = this.xmlState.namespaces.getNamespacePrefix(this.options.targetNS);
 		if (this.targetPrefix != "")
 			this.targetPrefix += ":";
+		
 		this.constructEditor();
 		this.refreshDisplay();
 		// Capture baseline undo state
@@ -536,15 +628,15 @@ $.widget( "xml.xmlEditor", {
 	},
 	
 	getXPath: function(element) {
-	    var xpath = '';
-	    for ( ; element && element.nodeType == 1; element = element.parentNode ) {
-	        var id = $(element.parentNode).children(element.tagName.replace(":", "\\:")).index(element) + 1;
-	        id = ('[' + id + ']');
-	        if (element.tagName.indexOf("xml:") == -1)
-	        	xpath = '/xml:' + element.tagName + id + xpath;
-	        else xpath = '/' + element.tagName + id + xpath;
-	    }
-	    return xpath;
+		var xpath = '';
+		for ( ; element && element.nodeType == 1; element = element.parentNode ) {
+			var id = $(element.parentNode).children(element.tagName.replace(":", "\\:")).index(element) + 1;
+			id = ('[' + id + ']');
+			if (element.tagName.indexOf("xml:") == -1)
+				xpath = '/xml:' + element.tagName + id + xpath;
+			else xpath = '/' + element.tagName + id + xpath;
+		}
+		return xpath;
 	},
 				
 	keydownCallback: function(e) {
@@ -655,15 +747,15 @@ $.widget( "xml.xmlEditor", {
 	
 	refreshMenuSelected: function(self) {
 		var suffixes = ['Deselect', 'Next_Element', 'Previous_Element', 'Parent', 'First_Child', 'Next_Sibling', 
-		                'Previous_Sibling', 'Next_Attribute', 'Previous_Attribute', 'Delete', 'Move_Element_Up', 
-		                'Move_Element_Down'];
+						'Previous_Sibling', 'Next_Attribute', 'Previous_Attribute', 'Delete', 'Move_Element_Up', 
+						'Move_Element_Down'];
 		var hasSelected = self.guiEditor.selectedElement != null && self.guiEditor.active;
 		$.each(suffixes, function(){
 			if (hasSelected)
 				$("#" + xmlMenuHeaderPrefix + this.toString()).removeClass("disabled").data("menuItemData").enabled = true;
 			else $("#" + xmlMenuHeaderPrefix + this.toString()).addClass("disabled").data("menuItemData").enabled = false;
 		});
-	}
+	},
 });
 function AbstractXMLObject(editor, objectType) {
 	this.editor = editor;
@@ -686,7 +778,6 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 			var option = new Option(selectionValue.toString(), selectionValue);
 			input.options[index] = option;
 			if (startingValue == selectionValue) {
-				console.log("SELECTED " + selectionValue);
 				input.options[index].selected = true;
 			}
 		}
@@ -702,7 +793,7 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 		$input = $(input);
 		var self = this;
 		$input.one('focus', function() {
-			if (!self.objectType.attribute)
+			if (!self.objectType.attribute && self.editor.options.expandingTextAreas)
 				$input.autosize();
 			if (this.value == " ")
 				this.value = "";
@@ -935,7 +1026,7 @@ function GUIEditor(editor) {
 GUIEditor.prototype.initialize = function(parentContainer) {
 	this.xmlContent = $("<div class='" + xmlContentClass + "'/>");
 	this.xmlContent.data("xml", {});
-	$("<div/>").attr("class", "placeholder").html("There are no elements in this document.  Use the menu on the right to add new top level elements.")
+	var placeholder = $("<div/>").attr("class", "placeholder").html("There are no elements in this document.  Use the menu on the right to add new top level elements.")
 			.appendTo(this.xmlContent);
 	
 	this.guiContent = $("<div/>").attr({'id' : guiContentClass + this.editor.instanceNumber, 'class' : guiContentClass}).appendTo(parentContainer);
@@ -947,6 +1038,7 @@ GUIEditor.prototype.initialize = function(parentContainer) {
 	this.rootElement.guiElement = this.xmlContent;
 	this.rootElement.guiElement.data("xmlElement", this.rootElement);
 	this.rootElement.childContainer = this.xmlContent;
+	this.rootElement.placeholder = placeholder;
 	this.rootElement.initializeGUI();
 	
 	this._initEventBindings();
@@ -2696,15 +2788,17 @@ XMLElement.prototype.getSelectedAttribute = function () {
 XMLElement.prototype.updated = function () {
 	if (this.guiElement == null)
 		return;
-	this.childCount = (this.objectType.elements.length == 0)? 0: this.childContainer[0].children.length;
-	this.attributeCount = (this.objectType.attributes == null || this.objectType.attributes.length == 0)? 0: this.attributeContainer[0].children.length;
+	this.childCount = 0;
+	this.attributeCount = 0;
 	
-	if (this.childContainer != null) {
+	if (this.childContainer != null && this.objectType.elements) {
+		this.childCount = this.childContainer[0].children.length;
 		if (this.childCount > 0)
 			this.childContainer.show();
 		else this.childContainer.hide();
 	}
-	if (this.attributeContainer != null) {
+	if (this.attributeContainer != null && this.objectType.attributes) {
+		this.attributeCount = this.attributeContainer[0].children.length;
 		if (this.attributeCount > 0)
 			this.attributeContainer.show();
 		else this.attributeContainer.hide();

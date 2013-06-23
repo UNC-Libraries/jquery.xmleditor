@@ -12,7 +12,7 @@ function GUIEditor(editor) {
 GUIEditor.prototype.initialize = function(parentContainer) {
 	this.xmlContent = $("<div class='" + xmlContentClass + "'/>");
 	this.xmlContent.data("xml", {});
-	$("<div/>").attr("class", "placeholder").html("There are no elements in this document.  Use the menu on the right to add new top level elements.")
+	var placeholder = $("<div/>").attr("class", "placeholder").html("There are no elements in this document.  Use the menu on the right to add new top level elements.")
 			.appendTo(this.xmlContent);
 	
 	this.guiContent = $("<div/>").attr({'id' : guiContentClass + this.editor.instanceNumber, 'class' : guiContentClass}).appendTo(parentContainer);
@@ -24,6 +24,7 @@ GUIEditor.prototype.initialize = function(parentContainer) {
 	this.rootElement.guiElement = this.xmlContent;
 	this.rootElement.guiElement.data("xmlElement", this.rootElement);
 	this.rootElement.childContainer = this.xmlContent;
+	this.rootElement.placeholder = placeholder;
 	this.rootElement.initializeGUI();
 	
 	this._initEventBindings();
