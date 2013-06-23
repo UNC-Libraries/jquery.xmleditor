@@ -455,49 +455,39 @@ $.widget( "xml.xmlEditor", {
 		}
 	},
 	
-	getBlobBuilder: function() {
-		return window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder || window.MSBlobBuilder;
-	},
-	
 	exportXML: function() {
-		window.URL = window.webkitURL || window.URL;
-		window.BlobBuilder = this.getBlobBuilder();
-		
-		if (window.BlobBuilder === undefined) {
+		if (typeof(Blob) === "undefined") {
 			this.addProblem("Browser does not support saving files via this editor.  To save, copy and paste the document from the Text view.");
 			return false;
 		}
 		
-		if (this.textEditor.active) {
-			try {
-				this.setXMLFromEditor();
-			} catch (e) {
-				this.xmlState.setDocumentHasChanged(true);
-				$("." + submissionStatusClass).html("Failed to save<br/>See errors at top").css("background-color", "#ffbbbb").animate({backgroundColor: "#ffffff"}, 1000);
-				this.addProblem("Cannot save due to invalid xml", e);
-				return false;
+		var exportDialog = $("<form><input type='text' class='xml_export_filename' placeholder='file.xml'/><input type='submit' value='Export'/></form>")
+				.dialog({modal: true, dialogClass: 'xml_dialog', resizable : false, title: 'Enter file name', height: 80});
+		var self = this;
+		exportDialog.submit(function(){
+			if (self.textEditor.active) {
+				try {
+					self.setXMLFromEditor();
+				} catch (e) {
+					self.xmlState.setDocumentHasChanged(true);
+					$("." + submissionStatusClass).html("Failed to save<br/>See errors at top").css("background-color", "#ffbbbb").animate({backgroundColor: "#ffffff"}, 1000);
+					self.addProblem("Cannot save due to invalid xml", e);
+					return false;
+				}
 			}
-		}
-		
-		var xmlString = this.xml2Str(this.xmlState.xml);
-		var blobBuilder = new BlobBuilder();
-		blobBuilder.append(xmlString);
-		
-		var mimeType = "text/xml";
-		
-		var a = document.createElement('a');
-		a.download = "xml.xml";
-		a.href = window.URL.createObjectURL(blobBuilder.getBlob(mimeType));
-		
-		a.dataset.downloadurl = [mimeType, a.download, a.href].join(':');
-		a.target = "exportXML";
-		
-		var event = document.createEvent("MouseEvents");
-		event.initMouseEvent(
-			"click", true, false, window, 0, 0, 0, 0, 0
-			, false, false, false, false, 0, null
-		);
-		a.dispatchEvent(event);
+			var xmlString = self.xml2Str(self.xmlState.xml);
+			var blob = new Blob([xmlString], { type: "text/xml" }); 
+			var url = URL.createObjectURL(blob);
+			
+			exportDialog.dialog('option', 'title', '');
+			var fileName = exportDialog.find('input[type="text"]').val();
+			if (!fileName)
+				fileName = "file.xml";
+			var download = $('<a>Download ' + fileName + '</a>').attr("href", url);
+			download.attr("download", fileName);
+			exportDialog.empty().append(download);
+			return false;
+		});
 	},
 
 	submitXML: function() {
@@ -1424,7 +1414,7 @@ function MenuBar(editor) {
 				action : $.proxy(self.editor.submitXML, self.editor)
 			}, {
 				label : 'Export',
-				enabled : (self.editor.getBlobBuilder() !== undefined),
+				enabled : (typeof(Blob) !== undefined),
 				binding : "alt+shift+e",
 				action : $.proxy(self.editor.exportXML, self.editor)
 			} ]
@@ -1803,7 +1793,7 @@ ModifyMenuPanel.prototype.initialize = function (parentContainer) {
 		'value' : 'Submit Changes'
 	}).appendTo(this.menuColumn);
 	if (this.editor.options.ajaxOptions.xmlUploadPath == null) {
-		if (this.editor.getBlobBuilder()){
+		if (typeof(Blob) !== undefined){
 			submitButton.attr("value", "Export");
 		} else {
 			submitButton.attr("disabled", "disabled");

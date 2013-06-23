@@ -11,6 +11,88 @@
 /* end clearfix */
 .ui-helper-zfix { width: 100%; height: 100%; top: 0; left: 0; position: absolute; opacity: 0; filter:Alpha(Opacity=0); }
 
+.xml_dialog.ui-dialog {
+	position: absolute;
+	top: 0;
+	left: 0;
+	padding: .2em;
+	outline: 0;
+	border-radius : 6px;
+	font-family: Trebuchet MS, Tahoma, Verdana, Arial, sans-serif;
+	font-size: 14px;
+}
+.xml_dialog .ui-dialog-titlebar {
+	padding: .4em 1em;
+	position: relative;
+}
+.xml_dialog .ui-dialog-title {
+	float: left;
+	margin: .1em 0;
+	white-space: nowrap;
+	width: 90%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.xml_dialog .ui-dialog-titlebar-close {
+	position: absolute;
+	right: 1em;
+	top: 50%;
+	width: 21px;
+	margin: -10px 0 0 0;
+	padding: 1px;
+	height: 20px;
+}
+.xml_dialog .ui-dialog-content {
+	position: relative;
+	border: 0;
+	padding: .5em 1em;
+	background: none;
+	overflow: auto;
+}
+.xml_dialog .ui-dialog-buttonpane {
+	text-align: left;
+	border-width: 1px 0 0 0;
+	background-image: none;
+	margin-top: .5em;
+	padding: .3em 1em .5em .4em;
+}
+.xml_dialog .ui-dialog-buttonpane .ui-dialog-buttonset {
+	float: right;
+}
+.xml_dialog .ui-dialog-buttonpane button {
+	margin: .5em .4em .5em 0;
+	cursor: pointer;
+}
+.xml_dialog .ui-resizable-se {
+	width: 12px;
+	height: 12px;
+	right: -5px;
+	bottom: -5px;
+	background-position: 16px 16px;
+}
+
+.ui-draggable .ui-dialog-titlebar {
+	cursor: move;
+}
+
+.ui-widget-overlay {
+	background-color: #777777;
+	opacity: .3;
+	filter: Alpha(Opacity=30);
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+
+.ui-widget-content {
+	border: 1px solid #aaaaaa;
+	background: #ffffff;
+}
+
+.xml_export_filename {
+	width: 160px;
+}
+
 /****************/
 
 .xml_input, .xml_select, .xml_textarea {

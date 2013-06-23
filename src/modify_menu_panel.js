@@ -21,7 +21,7 @@ ModifyMenuPanel.prototype.initialize = function (parentContainer) {
 		'value' : 'Submit Changes'
 	}).appendTo(this.menuColumn);
 	if (this.editor.options.ajaxOptions.xmlUploadPath == null) {
-		if (this.editor.getBlobBuilder()){
+		if (typeof(Blob) !== undefined){
 			submitButton.attr("value", "Export");
 		} else {
 			submitButton.attr("disabled", "disabled");

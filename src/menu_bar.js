@@ -19,7 +19,7 @@ function MenuBar(editor) {
 				action : $.proxy(self.editor.submitXML, self.editor)
 			}, {
 				label : 'Export',
-				enabled : (self.editor.getBlobBuilder() !== undefined),
+				enabled : (typeof(Blob) !== undefined),
 				binding : "alt+shift+e",
 				action : $.proxy(self.editor.exportXML, self.editor)
 			} ]
