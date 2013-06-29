@@ -530,6 +530,7 @@
 	float: right;
 	margin-left: 10px;
 	margin-right: 0px;
+	transition: border-color 0.2s linear 0s, box-shadow 0.2s linear 0s, color 0.2s linear 0s;
 }
 
 .xml_menu_bar .active_mode_tab {	
