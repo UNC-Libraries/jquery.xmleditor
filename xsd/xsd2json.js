@@ -370,12 +370,21 @@ Xsd2Json.prototype.buildList = function(node, object) {
 };
 
 Xsd2Json.prototype.buildUnion = function(node, object) {
-	var memberTypes = $(node).attr('memberTypes').split(" ");
+	var $node = $(node);
+	var memberTypes = $node.attr('memberTypes');
+	if (memberTypes) {
+		memberTypes = memberTypes.split(' ');
+		var self = this;
+		$.each(memberTypes, function(){
+			var xsdObj = self.resolveXSD(this);
+			var targetNode = xsdObj.xsd.children("xs|simpleType[name='" + this + "']")[0];
+			xsdObj.buildType(targetNode, object);
+		});
+	}
 	var self = this;
-	$.each(memberTypes, function(){
-		var xsdObj = self.resolveXSD(this);
-		var targetNode = xsdObj.xsd.children("xs|simpleType[name='" + this + "']")[0];
-		xsdObj.buildType(targetNode, object);
+	var children = $node.children('xs|simpleType');
+	$children.each(function() {
+		self.buildSimpleType(this, object);
 	});
 };
 
