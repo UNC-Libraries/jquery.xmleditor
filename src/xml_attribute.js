@@ -53,8 +53,6 @@ XMLAttribute.prototype.remove = function() {
 	}
 	this.xmlElement.removeAttribute(this.objectType);
 	this.attributeContainer.remove();
-	this.xmlElement.updated();
-	this.editor.xmlState.documentChangedEvent();
 };
 
 XMLAttribute.prototype.syncValue = function() {

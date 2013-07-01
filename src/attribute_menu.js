@@ -38,14 +38,13 @@ AttributeMenu.prototype.populate = function (xmlElement) {
 	$.each(this.target.objectType.attributes, function(){
 		var attribute = this;
 		var addButton = $("<li/>").attr({
-			title : 'Add ' + attribute.name,
-			'id' : xmlElement.guiElementID + "_" + attribute.nameEsc + "_add"
-		}).html(attribute.name).click(function(){
-			self.owner.editor.addAttributeButtonCallback(this);
-		}).data('xml', {
+				title : 'Add ' + attribute.name,
+				'id' : xmlElement.guiElementID + "_" + attribute.nameEsc + "_add"
+			}).html(attribute.name)
+			.data('xml', {
 				"objectType": attribute,
 				"target": xmlElement
-		}).appendTo(self.menuContent);
+			}).appendTo(self.menuContent);
 		
 		if (attribute.name in attributesPresent) {
 			addButton.addClass("disabled");

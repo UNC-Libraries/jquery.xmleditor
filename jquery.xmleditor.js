@@ -74,6 +74,8 @@ $.widget( "xml.xmlEditor", {
 			xmlRetrievalParams : null
 		},
 		localXMLContentSelector: this.element,
+		// Event function trigger after an xml element is update via the gui
+		elementUpdated : undefined,
 		
 		documentTitle : null,
 		addTopMenuHeaderText : 'Add Top Element',
@@ -858,14 +860,13 @@ AttributeMenu.prototype.populate = function (xmlElement) {
 	$.each(this.target.objectType.attributes, function(){
 		var attribute = this;
 		var addButton = $("<li/>").attr({
-			title : 'Add ' + attribute.name,
-			'id' : xmlElement.guiElementID + "_" + attribute.nameEsc + "_add"
-		}).html(attribute.name).click(function(){
-			self.owner.editor.addAttributeButtonCallback(this);
-		}).data('xml', {
+				title : 'Add ' + attribute.name,
+				'id' : xmlElement.guiElementID + "_" + attribute.nameEsc + "_add"
+			}).html(attribute.name)
+			.data('xml', {
 				"objectType": attribute,
 				"target": xmlElement
-		}).appendTo(self.menuContent);
+			}).appendTo(self.menuContent);
 		
 		if (attribute.name in attributesPresent) {
 			addButton.addClass("disabled");
@@ -1025,7 +1026,6 @@ GUIEditor.prototype.initialize = function(parentContainer) {
 			.appendTo(this.xmlContent);
 	
 	this.guiContent = $("<div/>").attr({'id' : guiContentClass + this.editor.instanceNumber, 'class' : guiContentClass}).appendTo(parentContainer);
-	//this.guiContent = parentContainer;
 	
 	this.guiContent.append(this.xmlContent);
 	
@@ -1047,10 +1047,15 @@ GUIEditor.prototype._initEventBindings = function() {
 		$(this).data('xmlAttribute').select();
 		event.stopPropagation();
 	}).on('click', '.' + attributeContainerClass + " > a", function(event){
-		$(this).parents('.' + attributeContainerClass).eq(0).data('xmlAttribute').remove();
+		var attribute = $(this).parents('.' + attributeContainerClass).eq(0).data('xmlAttribute');
+		attribute.remove();
+		attribute.xmlElement.updated({action : 'attributeRemoved', target : attribute});
+		self.editor.xmlState.documentChangedEvent();
 		event.stopPropagation();
 	}).on('change', '.' + attributeContainerClass + ' > input,.' + attributeContainerClass + ' > textarea', function(event){
-		$(this).parents('.' + attributeContainerClass).eq(0).data('xmlAttribute').syncValue();
+		var attribute = $(this).parents('.' + attributeContainerClass).eq(0).data('xmlAttribute');
+		attribute.syncValue();
+		attribute.xmlElement.updated({action : 'attributeSynced', target : attribute});
 		self.editor.xmlState.documentChangedEvent();
 	});
 	// Element
@@ -1066,6 +1071,11 @@ GUIEditor.prototype._initEventBindings = function() {
 	}).on('click', '.top_actions .delete', function(event){
 		self.deleteElement($(this).parents('.' + xmlElementClass).eq(0).data('xmlElement'));
 		event.stopPropagation();
+	}).on('change', '.element_text', function(event){
+		var xmlElement = $(this).parents('.' + xmlElementClass).eq(0).data('xmlElement')
+		xmlElement.syncText();
+		xmlElement.updated({action : 'valueSynced'});
+		self.editor.xmlState.documentChangedEvent();
 	});
 };
 
@@ -1127,7 +1137,7 @@ GUIEditor.prototype.refreshElements = function() {
 
 GUIEditor.prototype.addElementEvent = function(parentElement, newElement) {
 	if (parentElement.guiElementID != this.xmlContent.attr("id")) {
-		parentElement.updated();
+		parentElement.updated({action : 'childAdded', target : newElement});
 	}
 	this.focusObject(newElement.guiElement);
 	this.selectElement(newElement);
@@ -1138,7 +1148,7 @@ GUIEditor.prototype.addElementEvent = function(parentElement, newElement) {
 GUIEditor.prototype.addAttributeEvent = function(parentElement, objectType, addButton) {
 	var attribute = new XMLAttribute(objectType, parentElement, this.editor);
 	attribute.render();
-	parentElement.updated();
+	parentElement.updated({action : 'attributeAdded', target : objectType.name});
 	this.focusObject(attribute.attributeContainer);
 	addButton.addClass("disabled");
 	attribute.addButton = addButton;
@@ -1206,7 +1216,10 @@ GUIEditor.prototype.deleteElement = function(xmlElement) {
 			afterDeleteSelection = xmlElement.guiElement.parents("." + xmlElementClass).first();
 		this.selectElement(afterDeleteSelection);
 	}
+	var parent = xmlElement.parentElement;
 	xmlElement.remove();
+	if (parent)
+		parent.updated({action : 'childRemoved', target : xmlElement});
 	this.editor.xmlState.documentChangedEvent();
 	return this;
 };
@@ -2433,8 +2446,6 @@ XMLAttribute.prototype.remove = function() {
 	}
 	this.xmlElement.removeAttribute(this.objectType);
 	this.attributeContainer.remove();
-	this.xmlElement.updated();
-	this.editor.xmlState.documentChangedEvent();
 };
 
 XMLAttribute.prototype.syncValue = function() {
@@ -2521,7 +2532,7 @@ XMLElement.prototype.render = function(parentElement, recursive) {
 	var self = this;
 	
 	this.initializeGUI();
-	this.updated();
+	this.updated({action : 'render'});
 	
 	return this.guiElement;
 };
@@ -2645,11 +2656,6 @@ XMLElement.prototype.addTextContainer = function () {
 	this.textInput.addClass('element_text');
 	if (textContainsChildren)
 		this.textInput.attr("disabled", "disabled");
-	var self = this;
-	this.textInput.change(function() {
-		self.syncText();
-		self.editor.xmlState.documentChangedEvent();
-	});
 };
 
 XMLElement.prototype.addSubelementContainer = function (recursive) {
@@ -2691,25 +2697,16 @@ XMLElement.prototype.addElement = function(objectType) {
 	if (this.guiElement != null)
 		childElement.render(this, true);
 	
-	this.updated();
-	
 	return childElement;
 };
 
 XMLElement.prototype.syncText = function() {
+	var newText = this.textInput.val();
 	if (this.xmlNode[0].childNodes.length > 0) {
-		this.xmlNode[0].childNodes[0].nodeValue = this.textInput.val();
+		this.xmlNode[0].childNodes[0].nodeValue = newText;
 	} else {
-		this.xmlNode[0].appendChild(document.createTextNode(this.textInput.val()));
+		this.xmlNode[0].appendChild(document.createTextNode(newText));
 	}
-};
-
-XMLElement.prototype.childRemoved = function(child) {
-	this.updated();
-};
-
-XMLElement.prototype.attributeRemoved = function(child) {
-	this.updated();
 };
 
 XMLElement.prototype.remove = function() {
@@ -2718,11 +2715,6 @@ XMLElement.prototype.remove = function() {
 	
 	if (this.guiElement != null) {
 		this.guiElement.remove();
-	}
-	
-	// Notify parent this object was removed
-	if (this.parentElement != null) {
-		this.parentElement.childRemoved(this);
 	}
 };
 
@@ -2770,7 +2762,6 @@ XMLElement.prototype.addAttribute = function (objectType) {
 
 XMLElement.prototype.removeAttribute = function (objectType) {
 	this.xmlNode[0].removeAttribute(objectType.name);
-	this.updated();
 };
 
 
@@ -2779,7 +2770,7 @@ XMLElement.prototype.getSelectedAttribute = function () {
 };
 
 
-XMLElement.prototype.updated = function () {
+XMLElement.prototype.updated = function (event) {
 	if (this.guiElement == null)
 		return;
 	this.childCount = 0;
@@ -2803,6 +2794,9 @@ XMLElement.prototype.updated = function () {
 	} else {
 		this.placeholder.hide();
 	}
+	
+	if (this.editor.options.elementUpdated)
+		this.editor.options.elementUpdated.call(this, event);
 };
 
 XMLElement.prototype.select = function() {

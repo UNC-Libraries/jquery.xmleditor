@@ -60,6 +60,7 @@ See the [runtime schema generation demo](http://unc-libraries.github.com/jquery.
 	- xmlRetrievalPath - URL to retrieve the starting XML document from
 	- xmlRetrievalParams - Any additional parameters to submit in the retrieval request
 - documentTitle - Title for the document being edited, which is displayed at the top of the editor.
+- elementUpdated - An optional event function which is triggered whenever an XML element is updated or rendered.  It is triggered in the context of the element object modified, and includes an event object indicating which event took place and any additional information.
 - menuEntries - A list of additional entries to add to the top menu bar, such as adding new help entries.
 - confirmExitWhenUnsubmitted - Causes web browsers to prompt users if they try to navigate away from the editor while there are unsubmitted changes.  Valid values: True or false.
 - undoHistorySize - The number of history states remembered by the undo/redo feature.  Default is 20.    

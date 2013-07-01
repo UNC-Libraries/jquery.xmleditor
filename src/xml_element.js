@@ -65,7 +65,7 @@ XMLElement.prototype.render = function(parentElement, recursive) {
 	var self = this;
 	
 	this.initializeGUI();
-	this.updated();
+	this.updated({action : 'render'});
 	
 	return this.guiElement;
 };
@@ -189,11 +189,6 @@ XMLElement.prototype.addTextContainer = function () {
 	this.textInput.addClass('element_text');
 	if (textContainsChildren)
 		this.textInput.attr("disabled", "disabled");
-	var self = this;
-	this.textInput.change(function() {
-		self.syncText();
-		self.editor.xmlState.documentChangedEvent();
-	});
 };
 
 XMLElement.prototype.addSubelementContainer = function (recursive) {
@@ -235,25 +230,16 @@ XMLElement.prototype.addElement = function(objectType) {
 	if (this.guiElement != null)
 		childElement.render(this, true);
 	
-	this.updated();
-	
 	return childElement;
 };
 
 XMLElement.prototype.syncText = function() {
+	var newText = this.textInput.val();
 	if (this.xmlNode[0].childNodes.length > 0) {
-		this.xmlNode[0].childNodes[0].nodeValue = this.textInput.val();
+		this.xmlNode[0].childNodes[0].nodeValue = newText;
 	} else {
-		this.xmlNode[0].appendChild(document.createTextNode(this.textInput.val()));
+		this.xmlNode[0].appendChild(document.createTextNode(newText));
 	}
-};
-
-XMLElement.prototype.childRemoved = function(child) {
-	this.updated();
-};
-
-XMLElement.prototype.attributeRemoved = function(child) {
-	this.updated();
 };
 
 XMLElement.prototype.remove = function() {
@@ -262,11 +248,6 @@ XMLElement.prototype.remove = function() {
 	
 	if (this.guiElement != null) {
 		this.guiElement.remove();
-	}
-	
-	// Notify parent this object was removed
-	if (this.parentElement != null) {
-		this.parentElement.childRemoved(this);
 	}
 };
 
@@ -314,7 +295,6 @@ XMLElement.prototype.addAttribute = function (objectType) {
 
 XMLElement.prototype.removeAttribute = function (objectType) {
 	this.xmlNode[0].removeAttribute(objectType.name);
-	this.updated();
 };
 
 
@@ -323,7 +303,7 @@ XMLElement.prototype.getSelectedAttribute = function () {
 };
 
 
-XMLElement.prototype.updated = function () {
+XMLElement.prototype.updated = function (event) {
 	if (this.guiElement == null)
 		return;
 	this.childCount = 0;
@@ -347,6 +327,9 @@ XMLElement.prototype.updated = function () {
 	} else {
 		this.placeholder.hide();
 	}
+	
+	if (this.editor.options.elementUpdated)
+		this.editor.options.elementUpdated.call(this, event);
 };
 
 XMLElement.prototype.select = function() {

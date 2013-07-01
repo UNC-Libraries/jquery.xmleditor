@@ -16,7 +16,6 @@ GUIEditor.prototype.initialize = function(parentContainer) {
 			.appendTo(this.xmlContent);
 	
 	this.guiContent = $("<div/>").attr({'id' : guiContentClass + this.editor.instanceNumber, 'class' : guiContentClass}).appendTo(parentContainer);
-	//this.guiContent = parentContainer;
 	
 	this.guiContent.append(this.xmlContent);
 	
@@ -38,10 +37,15 @@ GUIEditor.prototype._initEventBindings = function() {
 		$(this).data('xmlAttribute').select();
 		event.stopPropagation();
 	}).on('click', '.' + attributeContainerClass + " > a", function(event){
-		$(this).parents('.' + attributeContainerClass).eq(0).data('xmlAttribute').remove();
+		var attribute = $(this).parents('.' + attributeContainerClass).eq(0).data('xmlAttribute');
+		attribute.remove();
+		attribute.xmlElement.updated({action : 'attributeRemoved', target : attribute});
+		self.editor.xmlState.documentChangedEvent();
 		event.stopPropagation();
 	}).on('change', '.' + attributeContainerClass + ' > input,.' + attributeContainerClass + ' > textarea', function(event){
-		$(this).parents('.' + attributeContainerClass).eq(0).data('xmlAttribute').syncValue();
+		var attribute = $(this).parents('.' + attributeContainerClass).eq(0).data('xmlAttribute');
+		attribute.syncValue();
+		attribute.xmlElement.updated({action : 'attributeSynced', target : attribute});
 		self.editor.xmlState.documentChangedEvent();
 	});
 	// Element
@@ -57,6 +61,11 @@ GUIEditor.prototype._initEventBindings = function() {
 	}).on('click', '.top_actions .delete', function(event){
 		self.deleteElement($(this).parents('.' + xmlElementClass).eq(0).data('xmlElement'));
 		event.stopPropagation();
+	}).on('change', '.element_text', function(event){
+		var xmlElement = $(this).parents('.' + xmlElementClass).eq(0).data('xmlElement')
+		xmlElement.syncText();
+		xmlElement.updated({action : 'valueSynced'});
+		self.editor.xmlState.documentChangedEvent();
 	});
 };
 
@@ -118,7 +127,7 @@ GUIEditor.prototype.refreshElements = function() {
 
 GUIEditor.prototype.addElementEvent = function(parentElement, newElement) {
 	if (parentElement.guiElementID != this.xmlContent.attr("id")) {
-		parentElement.updated();
+		parentElement.updated({action : 'childAdded', target : newElement});
 	}
 	this.focusObject(newElement.guiElement);
 	this.selectElement(newElement);
@@ -129,7 +138,7 @@ GUIEditor.prototype.addElementEvent = function(parentElement, newElement) {
 GUIEditor.prototype.addAttributeEvent = function(parentElement, objectType, addButton) {
 	var attribute = new XMLAttribute(objectType, parentElement, this.editor);
 	attribute.render();
-	parentElement.updated();
+	parentElement.updated({action : 'attributeAdded', target : objectType.name});
 	this.focusObject(attribute.attributeContainer);
 	addButton.addClass("disabled");
 	attribute.addButton = addButton;
@@ -197,7 +206,10 @@ GUIEditor.prototype.deleteElement = function(xmlElement) {
 			afterDeleteSelection = xmlElement.guiElement.parents("." + xmlElementClass).first();
 		this.selectElement(afterDeleteSelection);
 	}
+	var parent = xmlElement.parentElement;
 	xmlElement.remove();
+	if (parent)
+		parent.updated({action : 'childRemoved', target : xmlElement});
 	this.editor.xmlState.documentChangedEvent();
 	return this;
 };

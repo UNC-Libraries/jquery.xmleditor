@@ -73,6 +73,8 @@ $.widget( "xml.xmlEditor", {
 			xmlRetrievalParams : null
 		},
 		localXMLContentSelector: this.element,
+		// Event function trigger after an xml element is update via the gui
+		elementUpdated : undefined,
 		
 		documentTitle : null,
 		addTopMenuHeaderText : 'Add Top Element',
