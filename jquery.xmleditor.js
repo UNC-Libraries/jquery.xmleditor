@@ -25,9 +25,8 @@
  *   jquery 1.7+
  *   jquery.ui 1.7+
  *   ajax ace editor
- *   jquery.xmlns.js
  *   jquery.autosize.js (optional)
- *   vkbeautify.0.98.01.beta.js (optional)
+ *   vkbeautify.js (optional)
  * 
  * @author Ben Pennell
  */

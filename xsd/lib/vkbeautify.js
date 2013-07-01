@@ -1,7 +1,7 @@
 /**
 * vkBeautify - javascript plugin to pretty-print or minify text in XML, JSON, CSS and SQL formats.
 *  
-* Version - 0.98.01.beta 
+* Version - 0.99.00.beta 
 * Copyright (c) 2012 Vadim Kiryukhin
 * vkiryukhin @ gmail.com
 * http://www.eslinstructor.net/vkbeautify/
@@ -28,7 +28,7 @@
 *        vkbeautify.cssmin(text [,preserve_comments]);
 *        vkbeautify.sqlmin(text);
 *
-*        @text - String; text to minify;ac
+*        @text - String; text to minify;
 *        @preserve_comments - Bool; [optional];
 *                Set this flag to true to prevent removing comments from @text ( minxml and mincss functions only. )
 *
@@ -86,15 +86,16 @@ vkbeautify.prototype.xml = function(text,step) {
 
 	var ar = text.replace(/>\s{0,}</g,"><")
 				 .replace(/</g,"~::~<")
-				 .replace(/xmlns\:/g,"~::~xmlns:")
-				 .replace(/xmlns\=/g,"~::~xmlns=")
+				 .replace(/\s*xmlns\:/g,"~::~xmlns:")
+				 .replace(/\s*xmlns\=/g,"~::~xmlns=")
 				 .split('~::~'),
 		len = ar.length,
 		inComment = false,
 		deep = 0,
 		str = '',
 		ix = 0,
-		shift = step ? createShiftArr(step) : this.shift;
+		shift = step ? createShiftArr(step) : this.shift,
+		withNamespace = false;
 
 		for(ix=0;ix<len;ix++) {
 			// start comment or <![CDATA[...]]> or <!DOCTYPE //
@@ -127,7 +128,9 @@ vkbeautify.prototype.xml = function(text,step) {
 			} else 
 			// </elm> //
 			if(ar[ix].search(/<\//) > -1) { 
-				str = !inComment ? str += shift[--deep]+ar[ix] : str += ar[ix];
+				--deep;
+				str = !inComment && !withNamespace? str += shift[deep] + ar[ix] : str += ar[ix];
+				withNamespace = false;
 			} else 
 			// <elm/> //
 			if(ar[ix].search(/\/>/) > -1 ) { 
@@ -140,6 +143,7 @@ vkbeautify.prototype.xml = function(text,step) {
 			// xmlns //
 			if( ar[ix].search(/xmlns\:/) > -1  || ar[ix].search(/xmlns\=/) > -1) { 
 				str += shift[deep]+ar[ix];
+				withNamespace = true;
 			} 
 			
 			else {
@@ -152,56 +156,14 @@ vkbeautify.prototype.xml = function(text,step) {
 
 vkbeautify.prototype.json = function(text,step) {
 
-    // Attempt to process using the native JSON first
 	var step = step ? step : this.step;
 	
-    if ( window.JSON && window.JSON.stringify ) {
-		if ( typeof text === "string" ) {
-			return JSON.stringify(JSON.parse(text), null, step);
-		}
-		if ( typeof text === "object" ) {
-			return JSON.stringify(text, null, step);
-		}
-		return null;
-    }
-
-	// there is no native JSON object, so let's use regexp
+	if (typeof JSON === 'undefined' ) return text; 
 	
-	if ( typeof text !== "string" || !text )  return null;
-
-	var ar = this.jsonmin(text).replace(/\{/g,"~::~{~::~")
-								.replace(/\[/g,"[~::~")
-								.replace(/\}/g,"~::~}")
-								.replace(/\]/g,"~::~]")
-								.replace(/\"\,/g,'",~::~')
-								.replace(/\,\"/g,',~::~"')
-								.replace(/\]\,/g,'],~::~')
-								.replace(/~::~\s{0,}~::~/g,"~::~")
-								.split('~::~'),
-				
-		len = ar.length,
-		deep = 0,
-		str = '',
-		ix = 0,
-		shift = step ? createShiftArr(step) : this.shift;;
-
-	for(ix=0;ix<len;ix++) {
-		if( /\{/.exec(ar[ix]))  { 
-			str += shift[deep++]+ar[ix];
-		} else 
-		if( /\[/.exec(ar[ix]))  { 
-			str += shift[deep++]+ar[ix];
-		}  else 
-		if( /\]/.exec(ar[ix]))  { 
-			str += shift[--deep]+ar[ix];
-		}  else 
-		if( /\}/.exec(ar[ix]))  { 
-			str += shift[--deep]+ar[ix];
-		} else {
-			str += shift[deep]+ar[ix];
-		}
-	}
-	return str.replace(/^\n{1,}/,'');
+	if ( typeof text === "string" ) return JSON.stringify(JSON.parse(text), null, step);
+	if ( typeof text === "object" ) return JSON.stringify(text, null, step);
+		
+	return text; // text is not string nor object
 }
 
 vkbeautify.prototype.css = function(text, step) {
@@ -256,7 +218,7 @@ function split_sql(str, tab) {
 				.replace(/ FROM /ig,"~::~FROM ")
 				.replace(/ GROUP\s{1,}BY/ig,"~::~GROUP BY ")
 				.replace(/ HAVING /ig,"~::~HAVING ")
-				//.replace(/ IN /ig,"~::~"+tab+"IN ")
+				//.replace(/ SET /ig," SET~::~")
 				.replace(/ IN /ig," IN ")
 				
 				.replace(/ JOIN /ig,"~::~JOIN ")
@@ -293,6 +255,8 @@ function split_sql(str, tab) {
 				.replace(/ NULL /ig," NULL ")
 				.replace(/ LIKE /ig," LIKE ")
 				.replace(/\s{0,}SELECT /ig,"SELECT ")
+				.replace(/\s{0,}UPDATE /ig,"UPDATE ")
+				.replace(/ SET /ig," SET ")
 							
 				.replace(/~::~{1,}/g,"~::~")
 				.split('~::~');
@@ -330,7 +294,11 @@ vkbeautify.prototype.sql = function(text,step) {
 			if( /\s{0,}\s{0,}SELECT\s{0,}/.exec(ar[ix]))  { 
 				ar[ix] = ar[ix].replace(/\,/g,",\n"+tab+tab+"")
 			} 
-		
+			
+			if( /\s{0,}\s{0,}SET\s{0,}/.exec(ar[ix]))  { 
+				ar[ix] = ar[ix].replace(/\,/g,",\n"+tab+tab+"")
+			} 
+			
 			if( /\s{0,}\(\s{0,}SELECT\s{0,}/.exec(ar[ix]))  { 
 				deep++;
 				str += shift[deep]+ar[ix];
@@ -364,21 +332,11 @@ vkbeautify.prototype.xmlmin = function(text, preserveComments) {
 }
 
 vkbeautify.prototype.jsonmin = function(text) {
-								  
-	return  text.replace(/\s{0,}\{\s{0,}/g,"{")
-				.replace(/\s{0,}\[$/g,"[")
-				.replace(/\[\s{0,}/g,"[")
-				.replace(/:\s{0,}\[/g,':[')
-		  		.replace(/\s{0,}\}\s{0,}/g,"}")
-				.replace(/\s{0,}\]\s{0,}/g,"]")
-				.replace(/\"\s{0,}\,/g,'",')
-				.replace(/\,\s{0,}\"/g,',"')
-				.replace(/\"\s{0,}:/g,'":')
-				.replace(/:\s{0,}\"/g,':"')
-				.replace(/:\s{0,}\[/g,':[')
-				.replace(/\,\s{0,}\[/g,',[')
-				.replace(/\,\s{2,}/g,', ')
-				.replace(/\]\s{0,},\s{0,}\[/g,'],[');							  
+
+	if (typeof JSON === 'undefined' ) return text; 
+	
+	return JSON.stringify(JSON.parse(text), null, 0); 
+				
 }
 
 vkbeautify.prototype.cssmin = function(text, preserveComments) {
@@ -401,3 +359,4 @@ vkbeautify.prototype.sqlmin = function(text) {
 window.vkbeautify = new vkbeautify();
 
 })();
+
