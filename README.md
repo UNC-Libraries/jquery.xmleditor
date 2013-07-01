@@ -99,7 +99,6 @@ Attribution
 ------
 
 [jquery](http://jquery.com/)
-[jquery.xmlns](https://github.com/rfk/jquery-xmlns)
 [json2.js and cycle.js](https://github.com/douglascrockford/JSON-js)
 [Cloud9 IDE](https://github.com/ajaxorg/cloud9)
 [jquery.autosize.js](http://www.jacklmoore.com/autosize/)

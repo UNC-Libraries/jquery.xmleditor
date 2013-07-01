@@ -25,7 +25,6 @@
  *   jquery 1.7+
  *   jquery.ui 1.7+
  *   ajax ace editor
- *   jquery.xmlns.js
  *   jquery.autosize.js (optional)
  *   vkbeautify.0.98.01.beta.js (optional)
  * 
@@ -131,6 +130,12 @@ $.widget( "xml.xmlEditor", {
 		if (index != -1)
 			this.baseUrl = url.substring(0, index + 1);
 		
+		// Detect optional features
+		if (!$.isFunction($.fn.autosize))
+			this.options.expandingTextAreas = false;
+		if (!vkbeautify)
+			this.options.prettyXML = false;
+		
 		// Turn relative paths into absolute paths for the sake of web workers
 		if (this.options.libPath) {
 			if (this.options.libPath.indexOf('http') != 0)
@@ -206,6 +211,7 @@ $.widget( "xml.xmlEditor", {
 		// If the schema is a function, execute it to get the schema from it.
 		if (jQuery.isFunction(schema)) {
 			this.schema = schema.apply();
+			self._schemaReady();
 		} else {
 			if (this.options.loadSchemaAsychronously && typeof(Worker) !== "undefined" && typeof(Blob) !== "undefined") {
 				var blob = new Blob([
@@ -304,7 +310,6 @@ $.widget( "xml.xmlEditor", {
 		// Add namespaces into jquery
 		this.xmlState.namespaces.namespaceURIs = $.extend({}, this.xmlTree.namespaces.namespaceURIs, this.xmlState.namespaces.namespaceURIs);
 		this.xmlState.namespaces.namespaceToPrefix = $.extend({}, this.xmlTree.namespaces.namespaceToPrefix, this.xmlState.namespaces.namespaceToPrefix);
-		this.xmlState.namespaces.addToJQuery();
 		this.targetPrefix = this.xmlState.namespaces.getNamespacePrefix(this.options.targetNS);
 		if (this.targetPrefix != "")
 			this.targetPrefix += ":";

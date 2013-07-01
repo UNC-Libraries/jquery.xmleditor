@@ -11,12 +11,6 @@ function NamespaceList(namespaceList) {
 	}
 }
 
-NamespaceList.prototype.addToJQuery = function() {
-	$.each(this.namespaceURIs, function (prefix, value) {
-		$.xmlns[prefix] = value;
-	});
-};
-
 NamespaceList.prototype.addNamespace = function(nsURI, nsPrefix) {
 	this.namespaceURIs[nsPrefix] = nsURI;
 	this.namespaceToPrefix[nsURI] = nsPrefix;

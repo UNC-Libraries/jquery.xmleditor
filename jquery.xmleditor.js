@@ -132,6 +132,12 @@ $.widget( "xml.xmlEditor", {
 		if (index != -1)
 			this.baseUrl = url.substring(0, index + 1);
 		
+		// Detect optional features
+		if (!$.isFunction($.fn.autosize))
+			this.options.expandingTextAreas = false;
+		if (!vkbeautify)
+			this.options.prettyXML = false;
+		
 		// Turn relative paths into absolute paths for the sake of web workers
 		if (this.options.libPath) {
 			if (this.options.libPath.indexOf('http') != 0)
@@ -207,6 +213,7 @@ $.widget( "xml.xmlEditor", {
 		// If the schema is a function, execute it to get the schema from it.
 		if (jQuery.isFunction(schema)) {
 			this.schema = schema.apply();
+			self._schemaReady();
 		} else {
 			if (this.options.loadSchemaAsychronously && typeof(Worker) !== "undefined" && typeof(Blob) !== "undefined") {
 				var blob = new Blob([
@@ -305,7 +312,6 @@ $.widget( "xml.xmlEditor", {
 		// Add namespaces into jquery
 		this.xmlState.namespaces.namespaceURIs = $.extend({}, this.xmlTree.namespaces.namespaceURIs, this.xmlState.namespaces.namespaceURIs);
 		this.xmlState.namespaces.namespaceToPrefix = $.extend({}, this.xmlTree.namespaces.namespaceToPrefix, this.xmlState.namespaces.namespaceToPrefix);
-		this.xmlState.namespaces.addToJQuery();
 		this.targetPrefix = this.xmlState.namespaces.getNamespacePrefix(this.options.targetNS);
 		if (this.targetPrefix != "")
 			this.targetPrefix += ":";
@@ -788,7 +794,7 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 			if (this.value == " ")
 				this.value = "";
 		});
-	} else if (this.objectType.type == 'ID' || this.objectType.type == 'date' || this.objectType.type == 'anyURI' ){
+	} else if (this.objectType.type){
 		input = document.createElement('input');
 		input.type = 'text';
 		input.id = inputID;
@@ -1714,6 +1720,7 @@ ModifyElementMenu.prototype.render = function(parentContainer) {
 };
 
 ModifyElementMenu.prototype.initEventHandlers = function() {
+	var self = this;
 	this.menuContent.on('click', 'li', function(event){
 		self.owner.editor.addChildElementCallback(this);
 	});
@@ -1915,12 +1922,6 @@ function NamespaceList(namespaceList) {
 	}
 }
 
-NamespaceList.prototype.addToJQuery = function() {
-	$.each(this.namespaceURIs, function (prefix, value) {
-		$.xmlns[prefix] = value;
-	});
-};
-
 NamespaceList.prototype.addNamespace = function(nsURI, nsPrefix) {
 	this.namespaceURIs[nsPrefix] = nsURI;
 	this.namespaceToPrefix[nsURI] = nsPrefix;
@@ -2053,7 +2054,7 @@ TextEditor.prototype.resetSelectedTagRange = function() {
 };
 
 TextEditor.prototype.initialize = function(parentContainer) {
-	this.xmlContent = $("<div/>").attr({'id' : textContentClass + this.instanceNumber, 'class' : textContentClass}).appendTo(parentContainer);
+	this.xmlContent = $("<div/>").attr({'id' : textContentClass + this.editor.instanceNumber, 'class' : textContentClass}).appendTo(parentContainer);
 	this.xmlEditorDiv = $("<div/>").attr('id', 'text_editor').appendTo(this.xmlContent);
 	this.aceEditor = ace.edit("text_editor");
 	this.aceEditor.setTheme("ace/theme/textmate");
@@ -2697,7 +2698,11 @@ XMLElement.prototype.addElement = function(objectType) {
 };
 
 XMLElement.prototype.syncText = function() {
-	this.xmlNode[0].innerHTML = this.textInput.val();
+	if (this.xmlNode[0].childNodes.length > 0) {
+		this.xmlNode[0].childNodes[0].nodeValue = this.textInput.val();
+	} else {
+		this.xmlNode[0].appendChild(document.createTextNode(this.textInput.val()));
+	}
 };
 
 XMLElement.prototype.childRemoved = function(child) {

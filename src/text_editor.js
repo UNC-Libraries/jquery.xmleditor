@@ -19,7 +19,7 @@ TextEditor.prototype.resetSelectedTagRange = function() {
 };
 
 TextEditor.prototype.initialize = function(parentContainer) {
-	this.xmlContent = $("<div/>").attr({'id' : textContentClass + this.instanceNumber, 'class' : textContentClass}).appendTo(parentContainer);
+	this.xmlContent = $("<div/>").attr({'id' : textContentClass + this.editor.instanceNumber, 'class' : textContentClass}).appendTo(parentContainer);
 	this.xmlEditorDiv = $("<div/>").attr('id', 'text_editor').appendTo(this.xmlContent);
 	this.aceEditor = ace.edit("text_editor");
 	this.aceEditor.setTheme("ace/theme/textmate");

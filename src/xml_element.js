@@ -241,7 +241,11 @@ XMLElement.prototype.addElement = function(objectType) {
 };
 
 XMLElement.prototype.syncText = function() {
-	this.xmlNode[0].innerHTML = this.textInput.val();
+	if (this.xmlNode[0].childNodes.length > 0) {
+		this.xmlNode[0].childNodes[0].nodeValue = this.textInput.val();
+	} else {
+		this.xmlNode[0].appendChild(document.createTextNode(this.textInput.val()));
+	}
 };
 
 XMLElement.prototype.childRemoved = function(child) {

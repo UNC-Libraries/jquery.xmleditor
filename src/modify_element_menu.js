@@ -59,6 +59,7 @@ ModifyElementMenu.prototype.render = function(parentContainer) {
 };
 
 ModifyElementMenu.prototype.initEventHandlers = function() {
+	var self = this;
 	this.menuContent.on('click', 'li', function(event){
 		self.owner.editor.addChildElementCallback(this);
 	});

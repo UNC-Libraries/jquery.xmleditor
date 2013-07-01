@@ -40,16 +40,13 @@ function Xsd2Json(xsd, options) {
 	this.xsd = null;
 	this.imports = {};
 	this.rootDefinitions = {};
-	this.elements = {};
 	this.types = {};
-	this.attributes = {};
 	this.namespaces = {
 			"xml": "http://www.w3.org/XML/1998/namespace",
 			"xmlns": "http://www.w3.org/2000/xmlns/",
 			"html": "http://www.w3.org/1999/xhtml/"
 	};
 	this.namespacePrefixes = {};
-	this.defaultNS = null;
 	this.targetNS = null;
 	this.root = null;
 	
@@ -72,7 +69,6 @@ function Xsd2Json(xsd, options) {
 };
 
 Xsd2Json.prototype.importAjax = function(url, originalAttempt) {
-	// console.log("importing" + url);
 	var originalURL = url;
 	// Prefer a local copy to the remote since likely can't get the remote copy due to cross domain ajax restrictions
 	if (!originalAttempt)
@@ -83,10 +79,8 @@ Xsd2Json.prototype.importAjax = function(url, originalAttempt) {
 		dataType: "text",
 		async: false,
 		success: function(data){
-			console.time("xsd2json" + self.options.rootElement);
 			self.xsd = $.parseXML(data).documentElement;
 			self.processSchema();
-			console.timeEnd("xsd2json" + self.options.rootElement);
 		}, error: function() {
 			if (!originalAttempt)
 				throw new Error("Unable to import " + url);
@@ -124,8 +118,6 @@ Xsd2Json.prototype.processSchema = function() {
 			namespacePrefix = attr.nodeName.substring(5).replace(":", "");
 			// Local namespaces
 			self.namespaces[namespacePrefix] = attr.nodeValue;
-			if (namespacePrefix == "")
-				self.defaultNS = attr.nodeValue;
 			// Store the namespace prefix for the xs namespace
 			if (attr.nodeValue == self.xsNS){
 				self.xsPrefix = namespacePrefix;
@@ -314,7 +306,6 @@ Xsd2Json.prototype.buildType = function(node, object) {
 	if (name != null){
 		// If this type has already been processed, then apply it
 		if (name in this.rootDefinitions) {
-			// console.log("Reusing type " + name);
 			this.mergeType(object, this.types[name]);
 			return;
 		}
@@ -596,7 +587,6 @@ Xsd2Json.prototype.execute = function(node, fnName, object) {
 	} 
 	
 	try {
-		// console.log(fnName);
 		return xsdObj[fnName](targetNode, object);
 	} catch (error) {
 		$("body").append("<br/>" + name + ": " + error + " ");

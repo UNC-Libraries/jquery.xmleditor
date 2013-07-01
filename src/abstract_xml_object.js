@@ -39,7 +39,7 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 			if (this.value == " ")
 				this.value = "";
 		});
-	} else if (this.objectType.type == 'ID' || this.objectType.type == 'date' || this.objectType.type == 'anyURI' ){
+	} else if (this.objectType.type){
 		input = document.createElement('input');
 		input.type = 'text';
 		input.id = inputID;
