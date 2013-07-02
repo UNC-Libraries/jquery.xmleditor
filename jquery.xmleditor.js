@@ -310,7 +310,6 @@ $.widget( "xml.xmlEditor", {
 		// Join back up asynchronous loading of document and schema
 		if (!this.xmlTree || !this.xmlState)
 			return;
-		// Add namespaces into jquery
 		this.xmlState.namespaces.namespaceURIs = $.extend({}, this.xmlTree.namespaces.namespaceURIs, this.xmlState.namespaces.namespaceURIs);
 		this.xmlState.namespaces.namespaceToPrefix = $.extend({}, this.xmlTree.namespaces.namespaceToPrefix, this.xmlState.namespaces.namespaceToPrefix);
 		this.targetPrefix = this.xmlState.namespaces.getNamespacePrefix(this.options.targetNS);
@@ -356,8 +355,8 @@ $.widget( "xml.xmlEditor", {
 				true, false, true);
 		this.modifyMenu.addAttributeMenu(addAttrMenuClass, this.options.addAttrMenuHeaderText, 
 				true, false, true);
-		this.modifyMenu.addMenu(addTopMenuClass, this.options.addTopMenuHeaderText, 
-				true, true).populate(this.guiEditor.rootElement, this.schema);
+		this.addTopLevelMenu = this.modifyMenu.addMenu(addTopMenuClass, this.options.addTopMenuHeaderText, 
+				true, true).populate(this.guiEditor.rootElement);
 		
 		if (this.options.floatingMenu) {
 			$(window).bind('scroll', $.proxy(this.modifyMenu.setMenuPosition, this.modifyMenu));
@@ -386,6 +385,7 @@ $.widget( "xml.xmlEditor", {
 			}
 		}
 		
+		this.xmlState.addNamespace(objectType);
 		var newElement = xmlElement.addElement(objectType);
 		
 		this.activeEditor.addElementEvent(xmlElement, newElement);
@@ -403,6 +403,7 @@ $.widget( "xml.xmlEditor", {
 			}
 		}
 		var data = $(instigator).data('xml');
+		this.xmlState.addNamespace(data.objectType);
 		data.target.addAttribute(data.objectType);
 		
 		this.activeEditor.addAttributeEvent(data.target, data.objectType, $(instigator));
@@ -451,6 +452,8 @@ $.widget( "xml.xmlEditor", {
 	setXMLFromEditor: function() {
 		var xmlString = this.textEditor.aceEditor.getValue();
 		this.xmlState.setXMLFromString(xmlString);
+		this.guiEditor.setRootElement(this.xmlState.xml.children()[0]);
+		this.addTopLevelMenu.populate(this.guiEditor.rootElement)
 	},
 	
 	saveXML: function() {
@@ -901,7 +904,7 @@ function DocumentState(baseXML, editor) {
 	this.changeState = 0;
 	this.editor = editor;
 	this.setXMLFromString(this.baseXML);
-	this.namespaces = new NamespaceList(editor.options.nameSpaces);
+	this.namespaces = new NamespaceList();
 }
 
 DocumentState.prototype.isChanged = function() {
@@ -954,6 +957,32 @@ DocumentState.prototype.updateStateMessage = function () {
 		$("." + submissionStatusClass).html("All changes saved");
 	}
 };
+
+DocumentState.prototype.addNamespace = function(prefixOrType, namespace) {
+	var prefix;
+	if (arguments.length == 1) {
+		var prefix = prefixOrType.name.split(':');
+		if (prefix.length > 1)
+			prefix = prefix[0];
+		else prefix = '';
+		namespace = prefixOrType.namespace;
+	} else {
+		prefix = prefixOrType;
+	}
+		
+	if (this.namespaces.containsURI(namespace))
+		return;
+	if (!prefix)
+		prefix = "ns";
+	var nsPrefix = prefix;
+	var i = 0;
+	while (nsPrefix in this.namespaces.namespaceURIs)
+		nsPrefix = prefix + (++i);
+	
+	var rootElement = this.xml.children()[0];
+	rootElement.setAttribute('xmlns:' + nsPrefix, namespace);
+	this.namespaces.addNamespace(namespace, nsPrefix);
+}
 
 DocumentState.prototype.extractNamespacePrefixes = function(nsURI) {
 	var prefix = null;
