@@ -28,17 +28,20 @@
  * @author Ben Pennell
  */
 ;
-function Xsd2Json(xsd, options) {
+function Xsd2Json(xsd, options, imports) {
 	var defaults = {
-		"schemaURI": "",
-		"rootElement": null,
-		"generateRoot": false
+		schemaURI: "",
+		rootElement: null,
+		generateRoot: false,
+		isImported : false
 	};
 	this.options = $.extend({}, defaults, options);
 	this.xsNS = "http://www.w3.org/2001/XMLSchema";
 	this.xsPrefix = "xs:";
 	this.xsd = null;
-	this.imports = {};
+	if (imports)
+		this.imports = imports;
+	else this.imports = {};
 	this.rootDefinitions = {};
 	this.types = {};
 	this.namespaces = {
@@ -48,6 +51,7 @@ function Xsd2Json(xsd, options) {
 	};
 	this.namespacePrefixes = {};
 	this.targetNS = null;
+	this.targetPrefix = null;
 	this.root = null;
 	
 	//if (xsd instanceof File){
@@ -132,13 +136,20 @@ Xsd2Json.prototype.processSchema = function() {
 	});
 	// Store the target namespace of this schema.
 	this.targetNS = this.xsd.getAttribute("targetNamespace");
+	this.targetPrefix = this.namespacePrefixes[this.targetNS];
+	if (this.targetPrefix.length > 0)
+		this.targetPrefix += ':';
 	// Load all of the imported schemas
 	var imports = this.getChildren(this.xsd, 'import');
+	this.imports[this.targetNS] = this;
 	for (var index in imports) {
 		var importNode = imports[index];
-		var importXSD = new Xsd2Json(importNode.getAttribute("schemaLocation"), $.extend({}, self.options, {"rootElement": null}));
-		var namespace = importNode.getAttribute("namespace");
-		this.imports[namespace] = importXSD;
+		var importNamespace = importNode.getAttribute('namespace');
+		if (importNamespace in this.imports) {
+			// Circular import or already imported by another schema
+		} else {
+			new Xsd2Json(importNode.getAttribute("schemaLocation"), $.extend({}, self.options, {rootElement: null, isImported : true}), this.imports);
+		}
 	}
 	// Begin constructing the element tree, either from a root element or the schema element
 	var selected = null;
@@ -146,28 +157,28 @@ Xsd2Json.prototype.processSchema = function() {
 		selected = this.getChildren(this.xsd, "element", this.options.rootElement)[0];
 	else selected = this.xsd;
 	try {
+		this.processingStarted = true;
 		if (this.options.rootElement != null)
 			this.root = this.buildElement(selected);
 		else this.root = this.buildSchema(selected);
 		// Add namespace prefixes to match the scoping of this document
 		this.adjustPrefixes(this.root);
+		if (!this.options.isImported)
+			this.resolveDefinitions(this.root);
 	} catch (e) {
 		console.log(e);
 	}
 };
 
 Xsd2Json.prototype.adjustPrefixes = function(object) {
-	if (object.typeRef == null) {
-		if (object.name.indexOf(":") == -1){
-			// Replace object name's prefix with the relative
-			var prefix = this.namespacePrefixes[object.namespace];
-			if (prefix != null && prefix != "") {
-				object.name = prefix + ":" + object.name;
-			}
-			object.nameEsc = object.name.replace(':', '-');
-		} else {
-			return;
+	if (object.name.indexOf(":") == -1){
+		// Replace object name's prefix with the relative
+		var prefix = this.namespacePrefixes[object.namespace];
+		if (prefix != null && prefix != "") {
+			object.name = prefix + ":" + object.name;
 		}
+	}
+	if (object.typeRef == null) {
 		// Adjust all the children
 		if (object.element || object.schema) {
 			var self = this;
@@ -185,6 +196,29 @@ Xsd2Json.prototype.adjustPrefixes = function(object) {
 		var typeDef = object.typeRef;
 		delete object.typeRef;
 		this.mergeType(object, typeDef);
+	}
+};
+
+Xsd2Json.prototype.resolveDefinition = function(object) {
+	if (object.schemaObject) {
+		var schemas = object.schemaObject;
+		var references = object.reference;
+		delete object.schemaObject;
+		delete object.reference;
+		for (var i = 0; i < schemas.length; i++){
+			this.mergeType(object, this.resolveDefinition(schemas[i].rootDefinitions[references[i]]));
+		}
+	}
+	return object;
+};
+
+Xsd2Json.prototype.resolveDefinitions = function(object) {
+	this.resolveDefinition(object);
+	if (object.element || object.schema) {
+		for (var i in object.elements) 
+			this.resolveDefinitions(object.elements[i]);
+		for (var i in object.attributes) 
+			this.resolveDefinitions(object.attributes[i]);
 	}
 };
 
@@ -214,7 +248,7 @@ Xsd2Json.prototype.buildElement = function(node, parentObject) {
 	if (hasSubGroup || hasRef){
 		definition = this.execute(node, 'buildElement');
 		if (hasSubGroup) {
-			definition = $.extend({}, definition, {'name' : name, 'localName' : name});
+			definition = $.extend({}, definition, {'name' : name, 'localName' : this.stripPrefix(name)});
 			if (node.parentNode === this.xsd && !hasRef)
 				this.rootDefinitions[name] = definition;
 		}
@@ -222,7 +256,7 @@ Xsd2Json.prototype.buildElement = function(node, parentObject) {
 		// Element has a name, means its a new element
 		definition = {
 				"name": name,
-				"localName" : name,
+				"localName" : this.stripPrefix(name),
 				"elements": [],
 				"attributes": [],
 				"values": [],
@@ -256,7 +290,6 @@ Xsd2Json.prototype.buildElement = function(node, parentObject) {
 }
 
 Xsd2Json.prototype.buildAttribute = function(node, parentObject) {
-	
 	var definition = null;
 	var name = node.getAttribute("name");
 	
@@ -266,7 +299,7 @@ Xsd2Json.prototype.buildAttribute = function(node, parentObject) {
 	} else {
 		definition = {
 				"name": name,
-				"localName" : name,
+				"localName" : this.stripPrefix(name),
 				"values": [],
 				"namespace": this.targetNS,
 				"attribute": true
@@ -575,6 +608,7 @@ Xsd2Json.prototype.execute = function(node, fnName, object) {
 			|| (this.xsPrefix != "" && resolveName.indexOf(this.xsPrefix) == -1)) {
 		xsdObj = this.resolveXSD(resolveName);
 		var unprefixedName = this.stripPrefix(name);
+		var prefixedName = xsdObj.targetPrefix + unprefixedName;
 		//Check for cached version of the definition
 		if (unprefixedName in xsdObj.rootDefinitions){
 			var definition = xsdObj.rootDefinitions[unprefixedName];
@@ -582,8 +616,10 @@ Xsd2Json.prototype.execute = function(node, fnName, object) {
 				return definition;
 			}
 		}
-		
-		targetNode = xsdObj.getChildren(xsdObj.xsd, undefined, this.stripPrefix(name))[0];
+		// Schema reference is not initialized yet, therefore it is a circular reference
+		if (!xsdObj.processingStarted && xsdObj !== this)
+			return {name: prefixedName, schemaObject : [xsdObj], reference : [prefixedName]};
+		targetNode = xsdObj.getChildren(xsdObj.xsd, undefined, unprefixedName)[0];
 	} 
 	
 	try {
@@ -602,9 +638,9 @@ Xsd2Json.prototype.stripPrefix = function(name) {
 Xsd2Json.prototype.resolveXSD = function(name) {
 	if (name != null){
 		var index = name.indexOf(":");
-		var nameNamespace = index == -1? null: name.substring(0, index);
-		var prefix = this.namespaces[nameNamespace];
-		var xsdObj = this.imports[prefix];
+		var prefix = index == -1? null: name.substring(0, index);
+		var namespace = this.namespaces[prefix];
+		var xsdObj = this.imports[namespace];
 		if (xsdObj == null)
 			xsdObj = this;
 		return xsdObj;

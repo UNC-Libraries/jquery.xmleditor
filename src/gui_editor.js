@@ -6,28 +6,32 @@ function GUIEditor(editor) {
 	this.rootElement = null;
 	this.active = false;
 	this.selectedElement = null;
-	
 }
 
 GUIEditor.prototype.initialize = function(parentContainer) {
 	this.xmlContent = $("<div class='" + xmlContentClass + "'/>");
 	this.xmlContent.data("xml", {});
-	var placeholder = $("<div/>").attr("class", "placeholder").html("There are no elements in this document.  Use the menu on the right to add new top level elements.")
+	this.placeholder = $("<div/>").attr("class", "placeholder").html("There are no elements in this document.  Use the menu on the right to add new top level elements.")
 			.appendTo(this.xmlContent);
 	
 	this.guiContent = $("<div/>").attr({'id' : guiContentClass + this.editor.instanceNumber, 'class' : guiContentClass}).appendTo(parentContainer);
 	
 	this.guiContent.append(this.xmlContent);
 	
-	this.rootElement = new XMLElement(this.editor.xmlState.xml.children().first(), this.editor.schema, this.editor);
-	this.rootElement.guiElement = this.xmlContent;
-	this.rootElement.guiElement.data("xmlElement", this.rootElement);
-	this.rootElement.childContainer = this.xmlContent;
-	this.rootElement.placeholder = placeholder;
-	this.rootElement.initializeGUI();
+	this.setRootElement(this.editor.xmlState.xml.children()[0]);
 	
 	this._initEventBindings();
 	return this;
+};
+
+GUIEditor.prototype.setRootElement = function(node) {
+	var objectType = this.editor.xmlTree.getElementDefinition(node);
+	this.rootElement = new XMLElement(node, objectType, this.editor);
+	this.rootElement.guiElement = this.xmlContent;
+	this.rootElement.guiElement.data("xmlElement", this.rootElement);
+	this.rootElement.childContainer = this.xmlContent;
+	this.rootElement.placeholder = this.placeholder;
+	this.rootElement.initializeGUI();
 };
 
 GUIEditor.prototype._initEventBindings = function() {

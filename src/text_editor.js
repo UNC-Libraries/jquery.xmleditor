@@ -181,6 +181,7 @@ TextEditor.prototype.selectTagAtCursor = function() {
 		var unprefixedTitle = match[3];
 		if (!nsPrefix)
 			nsPrefix = "";
+		else nsPrefix = nsPrefix.substring(0, nsPrefix.length - 1);
 		// Get the schema's namespace prefix for the namespace of the node from the document
 		// Determine what namespace is bound in the document to the prefix on this node
 		var documentNS = this.editor.xmlState.namespaces.namespaceURIs[nsPrefix];
@@ -206,9 +207,9 @@ TextEditor.prototype.selectTagAtCursor = function() {
 		var self = this;
 		var instanceNumber = this.tagOccurrences(preceedingLines, tagTitle);
 		// Find the element that matches this tag by occurrence number and tag name
-		var elementNode = $("*", this.editor.xmlState.xml).filter(function() {
-	        return self.editor.nsEquals(this, unprefixedTitle, documentNS);
-	      })[instanceNumber];
+		var elementNode = $(unprefixedTitle, this.editor.xmlState.xml).filter(function() {
+			return this.namespaceURI == documentNS;
+		})[instanceNumber];
 		if (elementNode == null)
 			return this;
 		

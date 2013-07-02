@@ -1016,28 +1016,32 @@ function GUIEditor(editor) {
 	this.rootElement = null;
 	this.active = false;
 	this.selectedElement = null;
-	
 }
 
 GUIEditor.prototype.initialize = function(parentContainer) {
 	this.xmlContent = $("<div class='" + xmlContentClass + "'/>");
 	this.xmlContent.data("xml", {});
-	var placeholder = $("<div/>").attr("class", "placeholder").html("There are no elements in this document.  Use the menu on the right to add new top level elements.")
+	this.placeholder = $("<div/>").attr("class", "placeholder").html("There are no elements in this document.  Use the menu on the right to add new top level elements.")
 			.appendTo(this.xmlContent);
 	
 	this.guiContent = $("<div/>").attr({'id' : guiContentClass + this.editor.instanceNumber, 'class' : guiContentClass}).appendTo(parentContainer);
 	
 	this.guiContent.append(this.xmlContent);
 	
-	this.rootElement = new XMLElement(this.editor.xmlState.xml.children().first(), this.editor.schema, this.editor);
-	this.rootElement.guiElement = this.xmlContent;
-	this.rootElement.guiElement.data("xmlElement", this.rootElement);
-	this.rootElement.childContainer = this.xmlContent;
-	this.rootElement.placeholder = placeholder;
-	this.rootElement.initializeGUI();
+	this.setRootElement(this.editor.xmlState.xml.children()[0]);
 	
 	this._initEventBindings();
 	return this;
+};
+
+GUIEditor.prototype.setRootElement = function(node) {
+	var objectType = this.editor.xmlTree.getElementDefinition(node);
+	this.rootElement = new XMLElement(node, objectType, this.editor);
+	this.rootElement.guiElement = this.xmlContent;
+	this.rootElement.guiElement.data("xmlElement", this.rootElement);
+	this.rootElement.childContainer = this.xmlContent;
+	this.rootElement.placeholder = this.placeholder;
+	this.rootElement.initializeGUI();
 };
 
 GUIEditor.prototype._initEventBindings = function() {
@@ -2228,6 +2232,7 @@ TextEditor.prototype.selectTagAtCursor = function() {
 		var unprefixedTitle = match[3];
 		if (!nsPrefix)
 			nsPrefix = "";
+		else nsPrefix = nsPrefix.substring(0, nsPrefix.length - 1);
 		// Get the schema's namespace prefix for the namespace of the node from the document
 		// Determine what namespace is bound in the document to the prefix on this node
 		var documentNS = this.editor.xmlState.namespaces.namespaceURIs[nsPrefix];
@@ -2253,9 +2258,9 @@ TextEditor.prototype.selectTagAtCursor = function() {
 		var self = this;
 		var instanceNumber = this.tagOccurrences(preceedingLines, tagTitle);
 		// Find the element that matches this tag by occurrence number and tag name
-		var elementNode = $("*", this.editor.xmlState.xml).filter(function() {
-	        return self.editor.nsEquals(this, unprefixedTitle, documentNS);
-	      })[instanceNumber];
+		var elementNode = $(unprefixedTitle, this.editor.xmlState.xml).filter(function() {
+			return this.namespaceURI == documentNS;
+		})[instanceNumber];
 		if (elementNode == null)
 			return this;
 		
