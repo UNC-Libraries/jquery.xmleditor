@@ -7,6 +7,7 @@ function UndoHistory(editor) {
 	this.stateChangeEvent = null;
 	this.stateCaptureEvent = null;
 	this.editor = editor;
+	this.disabled = (typeof(document.implementation.createDocument) == "undefined");
 }
 
 UndoHistory.prototype.setStateChangeEvent = function(event) {
@@ -20,6 +21,7 @@ UndoHistory.prototype.setStateCaptureEvent = function(event) {
 };
 
 UndoHistory.prototype.cloneNewDocument = function(originalDoc) {
+	if (this.disabled) return;
 	var newDoc = originalDoc.implementation.createDocument(
 		originalDoc.namespaceURI, null, null
 	);
@@ -29,7 +31,7 @@ UndoHistory.prototype.cloneNewDocument = function(originalDoc) {
 };
 
 UndoHistory.prototype.changeHead = function(step){
-	console.profile();
+	if (this.disabled) return;
 	if ((step < 0 && this.headIndex + step < 0) 
 			|| (step > 0 && this.headIndex + step >= this.states.length
 			||  this.headIndex + step >= this.editor.options.undoHistorySize))
@@ -42,10 +44,10 @@ UndoHistory.prototype.changeHead = function(step){
 	
 	if (this.stateChangeEvent != null)
 		this.stateChangeEvent(this);
-	console.profileEnd();
 };
 
 UndoHistory.prototype.captureSnapshot = function () {
+	if (this.disabled) return;
 	if (this.editor.options.undoHistorySize <= 0)
 		return;
 	

@@ -254,7 +254,7 @@ TextEditor.prototype.addElementEvent = function(parentElement, newElement) {
 	this.reload();
 	// Move cursor to the newly added element
 	var instanceNumber = 0;
-	this.editor.xmlState.xml.find(newElement.xmlNode[0].localName).each(function() {
+	this.editor.xmlState.xml.find(newElement.xmlNode[0].nodeName).each(function() {
 		if (this === newElement.xmlNode.get(0)) {
 			return false;
 		}
@@ -262,13 +262,13 @@ TextEditor.prototype.addElementEvent = function(parentElement, newElement) {
 	});
 	var Range = require("ace/range").Range;
 	var startPosition = new Range(0,0,0,0);
-	var pattern = new RegExp("<(" + this.editor.options.targetPrefix + ":)?" + newElement.xmlNode[0].localName +"(\\s|\\/|>|$)", "g");
+	var pattern = new RegExp("<(" + this.editor.options.targetPrefix + ":)?" + localName(newElement.xmlNode[0]) +"(\\s|\\/|>|$)", "g");
 	this.aceEditor.find(pattern, {'regExp': true, 'start': startPosition, 'wrap': false});
 	for (var i = 0; i < instanceNumber; i++) {
 		this.aceEditor.findNext({'needle' : pattern});
 	}
 	this.aceEditor.clearSelection();
-	this.aceEditor.selection.moveCursorBy(0, -1 * newElement.xmlNode[0].localName.length);
+	this.aceEditor.selection.moveCursorBy(0, -1 * localName(newElement.xmlNode[0]).length);
 
 	this.editor.xmlState.syncedChangeEvent();
 };

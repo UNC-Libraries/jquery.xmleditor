@@ -6,6 +6,9 @@ function DocumentState(baseXML, editor) {
 	this.xml = null;
 	this.changeState = 0;
 	this.editor = editor;
+	this.domParser = null;
+	if (window.DOMParser)
+		this.domParser = new DOMParser();
 	this.setXMLFromString(this.baseXML);
 	this.namespaces = new NamespaceList();
 }
@@ -62,6 +65,7 @@ DocumentState.prototype.updateStateMessage = function () {
 };
 
 DocumentState.prototype.addNamespace = function(prefixOrType, namespace) {
+	if (this.xml[0].setAttributeNS)
 	var prefix;
 	if (arguments.length == 1) {
 		var prefix = prefixOrType.name.split(':');
@@ -82,8 +86,10 @@ DocumentState.prototype.addNamespace = function(prefixOrType, namespace) {
 	while (nsPrefix in this.namespaces.namespaceURIs)
 		nsPrefix = prefix + (++i);
 	
-	var rootElement = this.xml.children()[0];
-	rootElement.setAttribute('xmlns:' + nsPrefix, namespace);
+	var documentElement = this.xml[0].documentElement;
+	if (documentElement.setAttributeNS)
+		documentElement.setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:' + nsPrefix, namespace);
+	else documentElement.setAttribute('xmlns:' + nsPrefix, namespace);
 	this.namespaces.addNamespace(namespace, nsPrefix);
 }
 
@@ -105,26 +111,38 @@ DocumentState.prototype.extractNamespacePrefixes = function(nsURI) {
 	});
 };
 
+DocumentState.prototype.getIEXMLParser = function() {
+	var progIDs = [ 'Msxml2.DOMDocument.6.0', 'Msxml2.DOMDocument.3.0', 'Microsoft.XMLDOM' ];
+	for (var i = 0; i < progIDs.length; i++) {
+		try {
+			var xmlDOM = new ActiveXObject(progIDs[i]);
+			return xmlDOM;
+		} catch (e) { }
+	}
+	return null;
+};
+
 DocumentState.prototype.setXMLFromString = function(xmlString) {
+	// Strip out weird namespace header that IE adds to the document
+	var xmlDoc,
+		nsHeaderIndex = xmlString.indexOf('<?XML:NAMESPACE');
+	if (nsHeaderIndex != -1) {
+		nsHeaderIndex = xmlString.indexOf('/>', nsHeaderIndex);
+		xmlString = xmlString.substring(nsHeaderIndex + 2);
+	}
+	if (this.editor.options.prettyXML) {
+		xmlString = vkbeautify.xml(xmlString);
+	}
 	// parseXML doesn't return any info on why a document is invalid, so do it the old fashion way.
-	if (window.DOMParser) {
-		parser = new DOMParser();
-		if (this.editor.options.prettyXML) {
-			xmlString = vkbeautify.xml(xmlString);
-		}
-		xmlDoc = parser.parseFromString(xmlString, "application/xml");
-		
+	if (this.domParser) {
+		xmlDoc = this.domParser.parseFromString(xmlString, "application/xml");
 		var parseError = xmlDoc.getElementsByTagName("parsererror");
 		if (parseError.length > 0){
 			throw new Error($(parseError).text());
 		}
 	} else {
-		// Internet Explorer
-		xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
+		xmlDoc = this.getIEXMLParser();
 		xmlDoc.async = false;
-		if (this.editor.options.prettyXML) {
-			xmlString = vkbeautify.xml(xmlString);
-		}
 		xmlDoc.loadXML(xmlString);
 		if (xmlDoc.parseError.errorCode != 0) {
 			throw new Error("Error in line " + xmlDoc.parseError.line + " position " + xmlDoc.parseError.linePos
@@ -132,6 +150,7 @@ DocumentState.prototype.setXMLFromString = function(xmlString) {
 					+ xmlDoc.parseError.reason + "Error Line: " + xmlDoc.parseError.srcText);
 		}
 	}
+	
 	this.xml = $(xmlDoc);
 	if (this.editor.guiEditor != null && this.editor.guiEditor.rootElement != null)
 		this.editor.guiEditor.rootElement.xmlNode = this.xml.children().first();

@@ -86,7 +86,7 @@ ModifyElementMenu.prototype.populate = function(xmlElement) {
 	this.menuContent.empty();
 	
 	this.target = xmlElement;
-	self = this;
+	var self = this;
 	
 	$.each(this.target.objectType.elements, function(){
 		var xmlElement = this;

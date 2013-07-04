@@ -221,9 +221,20 @@ XMLElement.prototype.addElement = function(objectType) {
 	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(objectType.namespace);
 	
 	// Create the new element in the target namespace with the matching prefix
-	var newElement = this.editor.xmlState.xml[0].createElementNS(objectType.namespace, prefix + objectType.localName);
-	newElement.appendChild(document.createTextNode(" "));
-	this.xmlNode[0].appendChild(newElement);
+	var xmlDocument = this.editor.xmlState.xml[0];
+	var newElement;
+	if (xmlDocument.createElementNS) {
+		newElement = xmlDocument.createElementNS(objectType.namespace, prefix + objectType.localName);
+		newElement.appendChild(xmlDocument.createTextNode(" "));
+		this.xmlNode[0].appendChild(newElement);
+	} else if (typeof(xmlDocument.createNode) != "undefined") {
+		// Older IE versions
+		newElement = xmlDocument.createNode(1, prefix + objectType.localName, objectType.namespace);
+		newElement.appendChild(xmlDocument.createTextNode(" "));
+		this.xmlNode[0].appendChild(newElement);
+	} else {
+		throw new Exception("Unable to add child due to incompatible browser");
+	}
 	
 	var childElement = new XMLElement(newElement, objectType, this.editor);
 	this.childCount++;
@@ -289,7 +300,12 @@ XMLElement.prototype.addAttribute = function (objectType) {
 	if (objectType.defaultValue) {
 		attributeValue = objectType.defaultValue;
 	}
-	this.xmlNode.attr(objectType.name, attributeValue);
+	var node = this.xmlNode[0];
+	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(objectType.namespace);
+	var attributeName = prefix + objectType.localName
+	if (node.setAttributeNS) {
+		node.setAttributeNS(prefix? objectType.namespace : null, attributeName, attributeValue);
+	} else this.xmlNode.attr(attributeName, attributeValue);
 	return attributeValue;
 };
 

@@ -6,6 +6,7 @@ AttributeMenu.prototype.constructor = AttributeMenu;
 AttributeMenu.prototype = Object.create( ModifyElementMenu.prototype );
 
 AttributeMenu.prototype.initEventHandlers = function() {
+	var self = this;
 	this.menuContent.on('click', 'li', function(event){
 		self.owner.editor.addAttributeButtonCallback(this);
 	});

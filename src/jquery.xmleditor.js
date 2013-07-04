@@ -62,6 +62,14 @@ var guiContentClass = "gui_content";
 var textContentClass = "text_content";
 var editorHeaderClass = "xml_editor_header";
 
+var localName = function(node) {
+	var localName = node.localName;
+	if (localName) return localName;
+	var index = node.nodeName.indexOf(':');
+	if (index == -1) return node.nodeName;
+	return node.nodeName.substring(index + 1);
+};
+
 $.widget( "xml.xmlEditor", {
 	options: {
 		schema: null,
@@ -215,7 +223,9 @@ $.widget( "xml.xmlEditor", {
 			this.schema = schema.apply();
 			self._schemaReady();
 		} else {
-			if (this.options.loadSchemaAsychronously && typeof(Worker) !== "undefined" && typeof(Blob) !== "undefined") {
+			// Load schema in separate thread for browsers tha support it.  IE10 blocked to avoid security error
+			if (this.options.loadSchemaAsychronously && !window.MSBlobBuilder
+					&& typeof(window.URL) !== "undefined" && typeof(Worker) !== "undefined" && typeof(Blob) !== "undefined") {
 				var blob = new Blob([
 						"self.onmessage = function(e) {" +
 						"importScripts(e.data.libPath + 'cycle.js');" +
@@ -243,12 +253,9 @@ $.widget( "xml.xmlEditor", {
 					worker.terminate();
 				};
 				worker.onerror = function(e) {
-					console.log("Asynchronous schema loading failed, doing it the old fashion way", e);
 					self.schema = JSON.retrocycle(schema);
 					self._schemaReady();
 				};
-				console.time("retro");
-				console.log("Requesting", schema);
 				worker.postMessage({'schema' : schema, 'libPath' : this.libPath});
 			} else {
 				if (typeof schema == 'string' || typeof schema instanceof String) {
@@ -257,7 +264,7 @@ $.widget( "xml.xmlEditor", {
 						async : self.options.loadSchemaAsynchronously,
 						dataType : 'json',
 						success : function(data) {
-							self.schema = data;
+							self.schema = JSON.retrocycle(data);
 							self._schemaReady();
 						}
 					});
@@ -287,12 +294,8 @@ $.widget( "xml.xmlEditor", {
 	},
 	
 	_documentReady : function(xmlString) {
-		console.time("Load");
-		//console.profile();
 		this.xmlState = new DocumentState(xmlString, this);
 		this.xmlState.extractNamespacePrefixes();
-		//console.profileEnd();
-		console.timeEnd("Load");
 		this._documentAndSchemaReady();
 	},
 	
@@ -312,8 +315,6 @@ $.widget( "xml.xmlEditor", {
 		this.xmlState.namespaces.namespaceURIs = $.extend({}, this.xmlTree.namespaces.namespaceURIs, this.xmlState.namespaces.namespaceURIs);
 		this.xmlState.namespaces.namespaceToPrefix = $.extend({}, this.xmlTree.namespaces.namespaceToPrefix, this.xmlState.namespaces.namespaceToPrefix);
 		this.targetPrefix = this.xmlState.namespaces.getNamespacePrefix(this.options.targetNS);
-		if (this.targetPrefix != "")
-			this.targetPrefix += ":";
 		
 		this.constructEditor();
 		this.refreshDisplay();
@@ -556,7 +557,7 @@ $.widget( "xml.xmlEditor", {
 	
 	swordSubmitResponseHandler: function(response) {
 		var responseObject = $(response);
-		if (responseObject.length > 0 && responseObject[responseObject.length - 1].localName == "sword:error") {
+		if (responseObject.length > 0 && localName(responseObject[responseObject.length - 1]) == "sword:error") {
 			return responseObject.find("atom\\:summary").html();
 		}
 		return false;
@@ -622,8 +623,8 @@ $.widget( "xml.xmlEditor", {
 
 	nsEquals: function(node, element, elementNS) {
 		if (element.substring)
-			return element == node.localName && elementNS == node.namespaceURI;
-		return element.localName == node.localName && node.namespaceURI == element.namespace;
+			return element == localName(node) && elementNS == node.namespaceURI;
+		return localName(element) == localName(node) && node.namespaceURI == element.namespace;
 	},
 	
 	getXPath: function(element) {
@@ -754,5 +755,5 @@ $.widget( "xml.xmlEditor", {
 				$("#" + xmlMenuHeaderPrefix + this.toString()).removeClass("disabled").data("menuItemData").enabled = true;
 			else $("#" + xmlMenuHeaderPrefix + this.toString()).addClass("disabled").data("menuItemData").enabled = false;
 		});
-	},
+	}
 });

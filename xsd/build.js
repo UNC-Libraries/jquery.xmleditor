@@ -24,7 +24,7 @@ if (system.args.length > 3) {
 	baseSchema = "*.xsd";
 }
 // Name of the JSON variable constructed from this schema
-var variableName = "schema";
+var variableName = null;
 if (system.args.length > 4) {
 	variableName = system.args[4];
 }
@@ -50,12 +50,14 @@ page.open("./build.html", function() {
     return extractor.stringify();
   }, schemaPath, baseSchema, rootElement);
   
-  if (json)
+  if (json) {
+    if (variableName != null)
+      json = "var " + variableName + " = " + json + ";";
     if (output)
-      fs.write(output, "var " + variableName + " = " + json + ";", "w");
+      fs.write(output, json, "w");
     else
-      console.log("var " + variableName + " = " + json + ";");
-  else
+      console.log(json);
+  } else
     console.error("null result from script evaluation");
   
   phantom.exit();

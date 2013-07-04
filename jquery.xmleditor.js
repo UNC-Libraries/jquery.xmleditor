@@ -63,6 +63,14 @@ var guiContentClass = "gui_content";
 var textContentClass = "text_content";
 var editorHeaderClass = "xml_editor_header";
 
+var localName = function(node) {
+	var localName = node.localName;
+	if (localName) return localName;
+	var index = node.nodeName.indexOf(':');
+	if (index == -1) return node.nodeName;
+	return node.nodeName.substring(index + 1);
+};
+
 $.widget( "xml.xmlEditor", {
 	options: {
 		schema: null,
@@ -216,7 +224,9 @@ $.widget( "xml.xmlEditor", {
 			this.schema = schema.apply();
 			self._schemaReady();
 		} else {
-			if (this.options.loadSchemaAsychronously && typeof(Worker) !== "undefined" && typeof(Blob) !== "undefined") {
+			// Load schema in separate thread for browsers tha support it.  IE10 blocked to avoid security error
+			if (this.options.loadSchemaAsychronously && !window.MSBlobBuilder
+					&& typeof(window.URL) !== "undefined" && typeof(Worker) !== "undefined" && typeof(Blob) !== "undefined") {
 				var blob = new Blob([
 						"self.onmessage = function(e) {" +
 						"importScripts(e.data.libPath + 'cycle.js');" +
@@ -244,12 +254,9 @@ $.widget( "xml.xmlEditor", {
 					worker.terminate();
 				};
 				worker.onerror = function(e) {
-					console.log("Asynchronous schema loading failed, doing it the old fashion way", e);
 					self.schema = JSON.retrocycle(schema);
 					self._schemaReady();
 				};
-				console.time("retro");
-				console.log("Requesting", schema);
 				worker.postMessage({'schema' : schema, 'libPath' : this.libPath});
 			} else {
 				if (typeof schema == 'string' || typeof schema instanceof String) {
@@ -258,7 +265,7 @@ $.widget( "xml.xmlEditor", {
 						async : self.options.loadSchemaAsynchronously,
 						dataType : 'json',
 						success : function(data) {
-							self.schema = data;
+							self.schema = JSON.retrocycle(data);
 							self._schemaReady();
 						}
 					});
@@ -288,12 +295,8 @@ $.widget( "xml.xmlEditor", {
 	},
 	
 	_documentReady : function(xmlString) {
-		console.time("Load");
-		//console.profile();
 		this.xmlState = new DocumentState(xmlString, this);
 		this.xmlState.extractNamespacePrefixes();
-		//console.profileEnd();
-		console.timeEnd("Load");
 		this._documentAndSchemaReady();
 	},
 	
@@ -313,8 +316,6 @@ $.widget( "xml.xmlEditor", {
 		this.xmlState.namespaces.namespaceURIs = $.extend({}, this.xmlTree.namespaces.namespaceURIs, this.xmlState.namespaces.namespaceURIs);
 		this.xmlState.namespaces.namespaceToPrefix = $.extend({}, this.xmlTree.namespaces.namespaceToPrefix, this.xmlState.namespaces.namespaceToPrefix);
 		this.targetPrefix = this.xmlState.namespaces.getNamespacePrefix(this.options.targetNS);
-		if (this.targetPrefix != "")
-			this.targetPrefix += ":";
 		
 		this.constructEditor();
 		this.refreshDisplay();
@@ -557,7 +558,7 @@ $.widget( "xml.xmlEditor", {
 	
 	swordSubmitResponseHandler: function(response) {
 		var responseObject = $(response);
-		if (responseObject.length > 0 && responseObject[responseObject.length - 1].localName == "sword:error") {
+		if (responseObject.length > 0 && localName(responseObject[responseObject.length - 1]) == "sword:error") {
 			return responseObject.find("atom\\:summary").html();
 		}
 		return false;
@@ -623,8 +624,8 @@ $.widget( "xml.xmlEditor", {
 
 	nsEquals: function(node, element, elementNS) {
 		if (element.substring)
-			return element == node.localName && elementNS == node.namespaceURI;
-		return element.localName == node.localName && node.namespaceURI == element.namespace;
+			return element == localName(node) && elementNS == node.namespaceURI;
+		return localName(element) == localName(node) && node.namespaceURI == element.namespace;
 	},
 	
 	getXPath: function(element) {
@@ -755,7 +756,7 @@ $.widget( "xml.xmlEditor", {
 				$("#" + xmlMenuHeaderPrefix + this.toString()).removeClass("disabled").data("menuItemData").enabled = true;
 			else $("#" + xmlMenuHeaderPrefix + this.toString()).addClass("disabled").data("menuItemData").enabled = false;
 		});
-	},
+	}
 });
 function AbstractXMLObject(editor, objectType) {
 	this.editor = editor;
@@ -831,6 +832,7 @@ AttributeMenu.prototype.constructor = AttributeMenu;
 AttributeMenu.prototype = Object.create( ModifyElementMenu.prototype );
 
 AttributeMenu.prototype.initEventHandlers = function() {
+	var self = this;
 	this.menuContent.on('click', 'li', function(event){
 		self.owner.editor.addAttributeButtonCallback(this);
 	});
@@ -903,6 +905,9 @@ function DocumentState(baseXML, editor) {
 	this.xml = null;
 	this.changeState = 0;
 	this.editor = editor;
+	this.domParser = null;
+	if (window.DOMParser)
+		this.domParser = new DOMParser();
 	this.setXMLFromString(this.baseXML);
 	this.namespaces = new NamespaceList();
 }
@@ -959,6 +964,7 @@ DocumentState.prototype.updateStateMessage = function () {
 };
 
 DocumentState.prototype.addNamespace = function(prefixOrType, namespace) {
+	if (this.xml[0].setAttributeNS)
 	var prefix;
 	if (arguments.length == 1) {
 		var prefix = prefixOrType.name.split(':');
@@ -979,8 +985,10 @@ DocumentState.prototype.addNamespace = function(prefixOrType, namespace) {
 	while (nsPrefix in this.namespaces.namespaceURIs)
 		nsPrefix = prefix + (++i);
 	
-	var rootElement = this.xml.children()[0];
-	rootElement.setAttribute('xmlns:' + nsPrefix, namespace);
+	var documentElement = this.xml[0].documentElement;
+	if (documentElement.setAttributeNS)
+		documentElement.setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:' + nsPrefix, namespace);
+	else documentElement.setAttribute('xmlns:' + nsPrefix, namespace);
 	this.namespaces.addNamespace(namespace, nsPrefix);
 }
 
@@ -1002,26 +1010,38 @@ DocumentState.prototype.extractNamespacePrefixes = function(nsURI) {
 	});
 };
 
+DocumentState.prototype.getIEXMLParser = function() {
+	var progIDs = [ 'Msxml2.DOMDocument.6.0', 'Msxml2.DOMDocument.3.0', 'Microsoft.XMLDOM' ];
+	for (var i = 0; i < progIDs.length; i++) {
+		try {
+			var xmlDOM = new ActiveXObject(progIDs[i]);
+			return xmlDOM;
+		} catch (e) { }
+	}
+	return null;
+};
+
 DocumentState.prototype.setXMLFromString = function(xmlString) {
+	// Strip out weird namespace header that IE adds to the document
+	var xmlDoc,
+		nsHeaderIndex = xmlString.indexOf('<?XML:NAMESPACE');
+	if (nsHeaderIndex != -1) {
+		nsHeaderIndex = xmlString.indexOf('/>', nsHeaderIndex);
+		xmlString = xmlString.substring(nsHeaderIndex + 2);
+	}
+	if (this.editor.options.prettyXML) {
+		xmlString = vkbeautify.xml(xmlString);
+	}
 	// parseXML doesn't return any info on why a document is invalid, so do it the old fashion way.
-	if (window.DOMParser) {
-		parser = new DOMParser();
-		if (this.editor.options.prettyXML) {
-			xmlString = vkbeautify.xml(xmlString);
-		}
-		xmlDoc = parser.parseFromString(xmlString, "application/xml");
-		
+	if (this.domParser) {
+		xmlDoc = this.domParser.parseFromString(xmlString, "application/xml");
 		var parseError = xmlDoc.getElementsByTagName("parsererror");
 		if (parseError.length > 0){
 			throw new Error($(parseError).text());
 		}
 	} else {
-		// Internet Explorer
-		xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
+		xmlDoc = this.getIEXMLParser();
 		xmlDoc.async = false;
-		if (this.editor.options.prettyXML) {
-			xmlString = vkbeautify.xml(xmlString);
-		}
 		xmlDoc.loadXML(xmlString);
 		if (xmlDoc.parseError.errorCode != 0) {
 			throw new Error("Error in line " + xmlDoc.parseError.line + " position " + xmlDoc.parseError.linePos
@@ -1029,6 +1049,7 @@ DocumentState.prototype.setXMLFromString = function(xmlString) {
 					+ xmlDoc.parseError.reason + "Error Line: " + xmlDoc.parseError.srcText);
 		}
 	}
+	
 	this.xml = $(xmlDoc);
 	if (this.editor.guiEditor != null && this.editor.guiEditor.rootElement != null)
 		this.editor.guiEditor.rootElement.xmlNode = this.xml.children().first();
@@ -1155,7 +1176,6 @@ GUIEditor.prototype.refreshDisplay = function() {
 };
 
 GUIEditor.prototype.refreshElements = function() {
-	console.time("rendering children");
 	var node = this.rootElement.getDomElement()[0];
 	var originalParent = node.parentNode;
 	var fragment = document.createDocumentFragment();
@@ -1164,7 +1184,6 @@ GUIEditor.prototype.refreshElements = function() {
 	this.rootElement.renderChildren(true);
 	
 	originalParent.appendChild(fragment);
-	console.timeEnd("rendering children");
 	return this;
 };
 
@@ -1792,7 +1811,7 @@ ModifyElementMenu.prototype.populate = function(xmlElement) {
 	this.menuContent.empty();
 	
 	this.target = xmlElement;
-	self = this;
+	var self = this;
 	
 	$.each(this.target.objectType.elements, function(){
 		var xmlElement = this;
@@ -2043,7 +2062,7 @@ SchemaTree.prototype.build = function(elementName, elementDef, parentDef) {
  * disambiguate when the name is not unique.
  */
 SchemaTree.prototype.getElementDefinition = function(elementNode) {
-	var prefixedName = this.namespaces.getNamespacePrefix(elementNode.namespaceURI) + elementNode.localName;
+	var prefixedName = this.namespaces.getNamespacePrefix(elementNode.namespaceURI) + localName(elementNode);
 	var defList = this.nameToDef[prefixedName];
 	if (defList == null)
 		return null;
@@ -2066,7 +2085,7 @@ SchemaTree.prototype.pathMatches = function(elementNode, definition) {
 			if (definition.parents[index] == null || definition.parents[index].schema)
 				return true;
 		} else {
-			if (parentDef.localName == parentNode.localName && parentDef.namespace == parentNode.namespaceURI) {
+			if (localName(parentDef) == localName(parentNode) && parentDef.namespace == parentNode.namespaceURI) {
 				// Parent definitions matched, so continue the walk
 				var answer = this.pathMatches(parentNode, parentDef);
 				// If this particular parent definition matched all the way, then return true.
@@ -2334,7 +2353,7 @@ TextEditor.prototype.addElementEvent = function(parentElement, newElement) {
 	this.reload();
 	// Move cursor to the newly added element
 	var instanceNumber = 0;
-	this.editor.xmlState.xml.find(newElement.xmlNode[0].localName).each(function() {
+	this.editor.xmlState.xml.find(newElement.xmlNode[0].nodeName).each(function() {
 		if (this === newElement.xmlNode.get(0)) {
 			return false;
 		}
@@ -2342,13 +2361,13 @@ TextEditor.prototype.addElementEvent = function(parentElement, newElement) {
 	});
 	var Range = require("ace/range").Range;
 	var startPosition = new Range(0,0,0,0);
-	var pattern = new RegExp("<(" + this.editor.options.targetPrefix + ":)?" + newElement.xmlNode[0].localName +"(\\s|\\/|>|$)", "g");
+	var pattern = new RegExp("<(" + this.editor.options.targetPrefix + ":)?" + localName(newElement.xmlNode[0]) +"(\\s|\\/|>|$)", "g");
 	this.aceEditor.find(pattern, {'regExp': true, 'start': startPosition, 'wrap': false});
 	for (var i = 0; i < instanceNumber; i++) {
 		this.aceEditor.findNext({'needle' : pattern});
 	}
 	this.aceEditor.clearSelection();
-	this.aceEditor.selection.moveCursorBy(0, -1 * newElement.xmlNode[0].localName.length);
+	this.aceEditor.selection.moveCursorBy(0, -1 * localName(newElement.xmlNode[0]).length);
 
 	this.editor.xmlState.syncedChangeEvent();
 };
@@ -2367,6 +2386,7 @@ function UndoHistory(editor) {
 	this.stateChangeEvent = null;
 	this.stateCaptureEvent = null;
 	this.editor = editor;
+	this.disabled = (typeof(document.implementation.createDocument) == "undefined");
 }
 
 UndoHistory.prototype.setStateChangeEvent = function(event) {
@@ -2380,6 +2400,7 @@ UndoHistory.prototype.setStateCaptureEvent = function(event) {
 };
 
 UndoHistory.prototype.cloneNewDocument = function(originalDoc) {
+	if (this.disabled) return;
 	var newDoc = originalDoc.implementation.createDocument(
 		originalDoc.namespaceURI, null, null
 	);
@@ -2389,7 +2410,7 @@ UndoHistory.prototype.cloneNewDocument = function(originalDoc) {
 };
 
 UndoHistory.prototype.changeHead = function(step){
-	console.profile();
+	if (this.disabled) return;
 	if ((step < 0 && this.headIndex + step < 0) 
 			|| (step > 0 && this.headIndex + step >= this.states.length
 			||  this.headIndex + step >= this.editor.options.undoHistorySize))
@@ -2402,10 +2423,10 @@ UndoHistory.prototype.changeHead = function(step){
 	
 	if (this.stateChangeEvent != null)
 		this.stateChangeEvent(this);
-	console.profileEnd();
 };
 
 UndoHistory.prototype.captureSnapshot = function () {
+	if (this.disabled) return;
 	if (this.editor.options.undoHistorySize <= 0)
 		return;
 	
@@ -2722,9 +2743,34 @@ XMLElement.prototype.addElement = function(objectType) {
 	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(objectType.namespace);
 	
 	// Create the new element in the target namespace with the matching prefix
-	var newElement = this.editor.xmlState.xml[0].createElementNS(objectType.namespace, prefix + objectType.localName);
-	newElement.appendChild(document.createTextNode(" "));
-	this.xmlNode[0].appendChild(newElement);
+	var xmlDocument = this.editor.xmlState.xml[0];
+	var newElement;
+	if (xmlDocument.createElementNS) {
+		newElement = xmlDocument.createElementNS(objectType.namespace, prefix + objectType.localName);
+		newElement.appendChild(xmlDocument.createTextNode(" "));
+		this.xmlNode[0].appendChild(newElement);
+	} else {
+		if (typeof(xmlDocument.createNode) != "undefined") {
+			// Older IE versions
+			newElement = xmlDocument.createNode(1, prefix + objectType.localName, objectType.namespace);
+			newElement.appendChild(xmlDocument.createTextNode(" "));
+			this.xmlNode[0].appendChild(newElement);
+		} else {
+			// last resort, nuclear option
+			newElement = xmlDocument.createElement('XML_EDITOR_PLACEHOLDER');
+			this.xmlNode[0].appendChild(newElement);
+			var xmlStr = this.editor.xml2Str(this.editor.xmlState.xml);
+			var index = xmlStr.indexOf('<XML_EDITOR_PLACEHOLDER');
+			var closeIndex = xmlStr.indexOf('/>', index);
+			var newTag = '<' + prefix + objectType.localName + '/>';
+			xmlStr = xmlStr.substring(0, index) + newTag + xmlStr.substring(index);
+			
+			this.editor.xmlState.setXMLFromString(xmlStr);
+			var placeholderTag = this.editor.xmlState.xml.find('XML_EDITOR_PLACEHOLDER');
+			newElement = placeholderTag.prev();
+			placeholderTag.remove();
+		}
+	}
 	
 	var childElement = new XMLElement(newElement, objectType, this.editor);
 	this.childCount++;
@@ -2790,7 +2836,12 @@ XMLElement.prototype.addAttribute = function (objectType) {
 	if (objectType.defaultValue) {
 		attributeValue = objectType.defaultValue;
 	}
-	this.xmlNode.attr(objectType.name, attributeValue);
+	var node = this.xmlNode[0];
+	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(objectType.namespace);
+	var attributeName = prefix + objectType.localName
+	if (node.setAttributeNS) {
+		node.setAttributeNS(prefix? objectType.namespace : null, attributeName, attributeValue);
+	} else this.xmlNode.attr(attributeName, attributeValue);
 	return attributeValue;
 };
 
