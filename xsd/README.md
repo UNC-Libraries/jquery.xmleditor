@@ -6,7 +6,7 @@ xsd2json
 This directory contains a script for PhantomJS, build.js, which can build the mods.js file at the root of the repository or as follows:
 
     $ phantomjs build.js ../mods.js
-    $ phantomjs build.js ../demo/examples/mods.js ../demo/examples/mods-3-4/ mods-3-4.xsd modsSchema mods
+    $ phantomjs build.js ../demo/examples/mods.json ../demo/examples/mods-3-4/ mods-3-4.xsd
     $ phantomjs build.js dcterms.js ../demo/examples/dcterms/ ../demo/examples/dcterms.xsd dctermsSchema
 
 Usage: build.js [<output filename> <schema path> <base schema filename> <JSON variable name> <root schema element>]
@@ -18,4 +18,4 @@ Usage: build.js [<output filename> <schema path> <base schema filename> <JSON va
 
 
 ## To extract the schema object at run time
-`var extractor = new Xsd2Json("mods-3-4.xsd", {"schemaURI":"mods-3-4/", "rootElement": "mods"});`
+`var extractor = new Xsd2Json("mods-3-4.xsd", {"schemaURI":"mods-3-4/"});`

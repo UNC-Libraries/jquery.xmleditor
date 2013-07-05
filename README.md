@@ -23,7 +23,7 @@ For our own usage, it retrieves and submits documents to a SWORD 2.0 enabled rep
 
 ## How to use
 ### Locating schema files
-Due to restrictions most web browsers have on cross domain requests in javascript, all necessary XSD files must be located in the same domain as the page the editor is embedded in.  
+Due to restrictions web browsers have on cross domain requests in javascript, all necessary XSD files must be located in the same domain as the page the editor is embedded in.  
 But rather than lugging the XSD files around everywhere, you can precompile a JSON representation of your schemas to include instead.  
 It'll also save your users some loading time.
 
@@ -32,21 +32,21 @@ It'll also save your users some loading time.
 <div id="xml_editor"><root></root></div>
 <script>
   $(function() {
-		$("#xml_editor").modsEditor({
+		$("#xml_editor").xmlEditor({
                 schema: schema
         });
   });
 </script>
 ```
 
-### Generate and use the schema object at run time instead of precompiling
+### Generate and use the schema object at run-time instead of precompiling
 See the [runtime schema generation demo](http://unc-libraries.github.com/jquery.xmleditor/demo/xsd2json_example.html)
 ```
 <script>
   $(function() {
         var extractor = new Xsd2Json("mods-3-4.xsd", {"schemaURI":"mods-3-4/", "rootElement": "mods"});
 
-        $("#mods_editor").modsEditor({
+        $("#mods_editor").xmlEditor({
                 schema: extractor.getSchema()
         });
   });
@@ -63,13 +63,7 @@ See the [runtime schema generation demo](http://unc-libraries.github.com/jquery.
 - elementUpdated - An optional event function which is triggered whenever an XML element is updated or rendered.  It is triggered in the context of the element object modified, and includes an event object indicating which event took place and any additional information.
 - menuEntries - A list of additional entries to add to the top menu bar, such as adding new help entries.
 - confirmExitWhenUnsubmitted - Causes web browsers to prompt users if they try to navigate away from the editor while there are unsubmitted changes.  Valid values: True or false.
-- undoHistorySize - The number of history states remembered by the undo/redo feature.  Default is 20.    
-- namespaces - Associative list containing any additional namespaces you wish to make active in the editor
-- targetNS - Namespace URI for the base document being edited.  If not set, it is determined by the namespace of the root node from the provided schema.
-- targetPrefix - Suggested prefix for the target namespace.  If not set, the prefix will be determined based on the prefix of the targetNS
-
-
-### Startup options for xsd2json
+- undoHistorySize - The number of history states remembered by the undo/redo feature.  Default is 20.
 
 ### Building the plugin yourself
 If we wish to build the combined jquery.xmleditor.js yourself, you can use the provided rake script.  With rake installed, simple type "rake" in the root directory of this project.

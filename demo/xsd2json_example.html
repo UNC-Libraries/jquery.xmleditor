@@ -11,7 +11,6 @@
 <script src="../lib/jquery-ui.min.js"></script>
 <script src="../lib/json2.js"></script>
 <script src="../lib/cycle.js"></script>
-<script src="../lib/expanding.js"></script>
 <script src="../lib/vkbeautify.js"></script>
 <script src="../xsd/xsd2json.js"></script>
 <script src="../jquery.xmleditor.js"></script>
@@ -30,7 +29,7 @@
 	</div>
 	<script>
 		$(function() {
-			var extractor = new Xsd2Json("dcterms.xsd", {"schemaURI":"examples/dcterms/", "generateRoot": true});
+			var extractor = new Xsd2Json("dcterms.xsd", {"schemaURI":"examples/dcterms/"});
 			
 			$("#xml_editor").xmlEditor({
 				schemaObject: extractor.getSchema()

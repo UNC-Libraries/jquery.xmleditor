@@ -73,18 +73,25 @@ var localName = function(node) {
 
 $.widget( "xml.xmlEditor", {
 	options: {
+		// Schema object to be used
 		schema: null,
+		// Whether or not to attempt to load the schema in a worker thread, if available
 		loadSchemaAsychronously: true,
+		// Path to directory containing cycle.js, needed for loadSchemaAsychronously
 		libPath: null,
+		// Document retrieval and upload parameters
 		ajaxOptions : {
 			xmlUploadPath: null,
 			xmlRetrievalPath: null,
 			xmlRetrievalParams : null
 		},
+		// Function triggered after uploading XML document, to interpret if the response was successful or not.  If upload failed, an error message should be returned.
+		submitResponseHandler : null,
+		// Selector to the XML to be used as the starting document, if it is embedded in the current page
 		localXMLContentSelector: this.element,
 		// Event function trigger after an xml element is update via the gui
 		elementUpdated : undefined,
-		
+		// Title for the document, displayed in the header
 		documentTitle : null,
 		addTopMenuHeaderText : 'Add Top Element',
 		addAttrMenuHeaderText : 'Add Attribute',
@@ -93,16 +100,17 @@ $.widget( "xml.xmlEditor", {
 		confirmExitWhenUnsubmitted : true,
 		enableGUIKeybindings : true,
 		floatingMenu : true,
+		// Requires jquery.autosize, defaults to false if plugin isn't detected
 		expandingTextAreas: true,
 		
+		// Pretty formatting of XML output.  Requires vkbeauty.js, defaults to false is not available
 		prettyXML : true,
+		// Number of history states held for the undo feature
 		undoHistorySize: 20,
+		// Object containing additional entries to add to the header menu
 		menuEntries: undefined,
-		submitResponseHandler : null,
 		
-		namespaces: null,
-		targetNS: null,
-		targetPrefix: null
+		targetNS: null
 	},
 	
 	_create: function() {
@@ -2749,27 +2757,13 @@ XMLElement.prototype.addElement = function(objectType) {
 		newElement = xmlDocument.createElementNS(objectType.namespace, prefix + objectType.localName);
 		newElement.appendChild(xmlDocument.createTextNode(" "));
 		this.xmlNode[0].appendChild(newElement);
+	} else if (typeof(xmlDocument.createNode) != "undefined") {
+		// Older IE versions
+		newElement = xmlDocument.createNode(1, prefix + objectType.localName, objectType.namespace);
+		newElement.appendChild(xmlDocument.createTextNode(" "));
+		this.xmlNode[0].appendChild(newElement);
 	} else {
-		if (typeof(xmlDocument.createNode) != "undefined") {
-			// Older IE versions
-			newElement = xmlDocument.createNode(1, prefix + objectType.localName, objectType.namespace);
-			newElement.appendChild(xmlDocument.createTextNode(" "));
-			this.xmlNode[0].appendChild(newElement);
-		} else {
-			// last resort, nuclear option
-			newElement = xmlDocument.createElement('XML_EDITOR_PLACEHOLDER');
-			this.xmlNode[0].appendChild(newElement);
-			var xmlStr = this.editor.xml2Str(this.editor.xmlState.xml);
-			var index = xmlStr.indexOf('<XML_EDITOR_PLACEHOLDER');
-			var closeIndex = xmlStr.indexOf('/>', index);
-			var newTag = '<' + prefix + objectType.localName + '/>';
-			xmlStr = xmlStr.substring(0, index) + newTag + xmlStr.substring(index);
-			
-			this.editor.xmlState.setXMLFromString(xmlStr);
-			var placeholderTag = this.editor.xmlState.xml.find('XML_EDITOR_PLACEHOLDER');
-			newElement = placeholderTag.prev();
-			placeholderTag.remove();
-		}
+		throw new Exception("Unable to add child due to incompatible browser");
 	}
 	
 	var childElement = new XMLElement(newElement, objectType, this.editor);

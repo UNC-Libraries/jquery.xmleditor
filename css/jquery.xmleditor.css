@@ -168,28 +168,28 @@
 
 
 .top_level_element_group > .element_header {
-	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#FFFFFF', endColorstr='#dddddd');
+	background-color: #dddddd;
 	background: -webkit-gradient(linear, left top, left bottom, from(#FFFFFF), to(#dddddd));
 	background: -moz-linear-gradient(top,  #FFFFFF,  #dddddd);
 	background: linear-gradient(to bottom,  #FFFFFF,  #dddddd);
 }
 
 .top_level_element_group > .xml_children > .xml_element > .element_header {
-	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#FAFFFF', endColorstr='#e9e9eb');
+	background-color: #e9e9eb;
 	background: -webkit-gradient(linear, left top, left bottom, from(#FAFFFF), to(#e9e9eb));
 	background: -moz-linear-gradient(top,  #FAFFFF,  #e9e9eb);
 	background: linear-gradient(to bottom,  #FAFFFF,  #e9e9eb);
 }
 
 .top_level_element_group > .xml_children > .xml_element > .xml_children > .xml_element > .element_header {
-	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#F5FFFF', endColorstr='#f1f1f3');
+	background-color: #f1f1f3;
 	background: -webkit-gradient(linear, left top, left bottom, from(#F5FFFF), to(#f1f1f3));
 	background: -moz-linear-gradient(top,  #F5FFFF,  #f1f1f3);
 	background: linear-gradient(to bottom,  #F5FFFF,  #f1f1f3);
 }
 
 .top_level_element_group > .xml_children > .xml_element > .xml_children > .xml_element > .xml_children > .xml_element > .element_header {
-	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#F0FFFF', endColorstr='#f5f5f9');
+	background-color: #f5f5f9;
 	background: -webkit-gradient(linear, left top, left bottom, from(#F0FFFF), to(#f5f5f9));
 	background: -moz-linear-gradient(top,  #F0FFFF,  #f5f5f9);
 	background: linear-gradient(to bottom,  #F0FFFF,  #f5f5f9);
@@ -201,7 +201,7 @@
 }
 
 .xml_element.selected > .element_header {
-	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#C4DFE7', endColorstr='#A4CABB') !important;
+	background-color: #A4CABB !important;
 	background: -webkit-gradient(linear, left top, left bottom, from(#C4E9EE), color-stop(0.5, #5ECFE6), to(#76B6E1)) !important;
 	background: -moz-linear-gradient(top,  #C4E9EE, #5ECFE6, #76B6E1) !important;
 	background: linear-gradient(to bottom,  #C4E9EE,  #5ECFE6, #76B6E1) !important;
@@ -271,6 +271,8 @@
 
 .attribute_container {
 	display: inline-block;
+	*zoom: 1;
+	*display: inline;
 	margin-right: 20px;
 	padding: 2px;
 }
@@ -287,6 +289,8 @@
 	margin-right: 5px;
 	vertical-align: 28%;
 	display: inline-block;
+	*zoom: 1;
+	*display: inline;
 	min-width: 90px;
 }
 
@@ -302,6 +306,8 @@
 	vertical-align: 45%;
 	width: 166px;
 	display: inline-block;
+	*zoom: 1;
+	*display: inline;
 }
 
 .attribute_container > a {
@@ -466,12 +472,16 @@
 
 .xml_menu_bar > ul > li {
 	display: inline-block;
+	*zoom: 1;
+	*display: inline;
 	font-size: 14px;
 }
 
 .xml_menu_bar > ul > li > a > span {
 	padding: 6px 8px;
 	display: inline-block;
+	*zoom: 1;
+	*display: inline;
 	font-size: 15px;
 	cursor: pointer;
 }
