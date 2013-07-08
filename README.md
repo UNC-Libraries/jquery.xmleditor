@@ -11,6 +11,9 @@ This project was developed as a part of the [Carolina Digital Repository](https:
 This tool is intended to serve as a general schema driven XML editor that runs in web browsers, although some default behaviors are oriented towards it.  
 For our own usage, it retrieves and submits documents to a SWORD 2.0 enabled repository.
 
+## Browse support
+The editor should work in current versions of Chrome, Firefox, Safari, Opera, and IE9-10.  Performance will vary.  IE7-8 are mostly functional, although not all features work.
+
 ## Features
 - Graphical editor mode for displaying and modifying XML elements
 - Text editor mode for directly modifying the underlying document (using the [Cloud9](https://github.com/ajaxorg/cloud9) editor) 

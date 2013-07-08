@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<link rel="stylesheet" href="stylesheets/reset.css" type="text/css" />
+<link rel="stylesheet" href="stylesheets/demo.css" type="text/css" />
+<link rel="stylesheet" href="../css/jquery.xmleditor.css" type="text/css" />
+<script src="../lib/ace/src-min/ace.js"></script>
+<script src="../lib/jquery.min.js"></script>
+<script src="../lib/jquery-ui.min.js"></script>
+<script src="../lib/json2.js"></script>
+<script src="../lib/cycle.js"></script>
+<script src="../lib/jquery.autosize-min.js"></script>
+<script src="../lib/vkbeautify.js"></script>
+<script src="../xsd/xsd2json.js"></script>
+<script src="../jquery.xmleditor.js"></script>
+<style>
+.ui-autocomplete { 
+	width: 200px;
+	line-height: 24px;
+}
+</style>
+</head>
+<body>
+	<h1>EAC-CPF Example with Language Autocomplete</h1>
+	<p>Language suggestions in: control > languageDeclaration > language</p><br/>
+	<div id="xml_editor"><eac-cpf xmlns="urn:isbn:1-931666-33-4"></eac-cpf></div>
+<script>
+	$(function() {
+		var availableTags = [
+			"Aguano",
+			"Tucanoan",
+			"English",
+			"Spanish",
+			"French",
+			"Chinese",
+			"German",
+			"C++",
+			"Japanese",
+			"Urdu",
+			"Hindi"
+			];
+		var extractor = new Xsd2Json("cpf.xsd", {"schemaURI":"examples/eac-cpf/"});
+		$("#xml_editor").xmlEditor({
+								schema: extractor.getSchema(),
+								elementUpdated : function(event) {
+									if (event.action == 'render' && this.objectType.localName == 'language') {
+										this.textInput.autocomplete({
+											source: availableTags
+										});
+									}
+								}
+				});
+	});
+</script>
+</body>
+</html>

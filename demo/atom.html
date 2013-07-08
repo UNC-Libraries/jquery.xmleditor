@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<link rel="stylesheet" href="stylesheets/reset.css" type="text/css" />
+<link rel="stylesheet" href="stylesheets/demo.css" type="text/css" />
+<link rel="stylesheet" href="../css/jquery.xmleditor.css" type="text/css" />
+<script src="../lib/ace/src-min/ace.js"></script>
+<script src="../lib/jquery.min.js"></script>
+<script src="../lib/jquery-ui.min.js"></script>
+<script src="../lib/json2.js"></script>
+<script src="../lib/cycle.js"></script>
+<script src="../lib/jquery.autosize-min.js"></script>
+<script src="../lib/vkbeautify.js"></script>
+<script src="../xsd/xsd2json.js"></script>
+<script src="../jquery.xmleditor.js"></script>
+<style>
+#xml_editor > textarea { 
+	visibility: hidden;
+}
+</style>
+</head>
+<body>
+	<h1>Atom example</h1>
+	<div id="xml_editor">
+	<textarea>
+	<feed xmlns="http://www.w3.org/2005/Atom">
+  <id>http://localhost:8080/resources/timezones</id>
+  <title type="text">Time Zones</title>
+  <link href="http://localhost:8080/resources/timezones" rel="self">
+  </link>
+  <author>
+    <name>sandra</name>
+  </author>
+  <entry>
+    <id>http://localhost:8080/resources/timezones/Etc_GMT+12</id>
+    <title type="text">Etc/GMT+12 :: GMT-12:00</title>
+    <link href="http://localhost:8080/resources/timezones/Etc_GMT+12" rel="self">
+    </link>
+    <author>
+      <name>No Author</name>
+    </author>
+    <updated>1970-01-01T00:00:00.000Z</updated>
+    <content type="text">Oct 23, 2008 4:12:37 AM</content>
+  </entry>
+  <entry>
+    <id>http://localhost:8080/resources/timezones/Etc_GMT+11</id>
+    <title type="text">Etc/GMT+11 :: GMT-11:00</title>
+    <link href="http://localhost:8080/resources/timezones/Etc_GMT+11" rel="self">
+    </link>
+    <updated>1970-01-01T00:00:00.000Z</updated>
+    <content type="text">Oct 23, 2008 5:12:37 AM</content>
+  </entry>
+  <entry>
+    <id>http://localhost:8080/resources/timezones/MIT</id>
+    <title type="text">MIT :: West Samoa Time</title>
+    <link href="http://localhost:8080/resources/timezones/MIT" rel="self">
+    </link>
+    <updated>1970-01-01T00:00:00.000Z</updated>
+    <content type="text">Oct 23, 2008 5:12:37 AM</content>
+  </entry>
+  </feed>
+  </textarea></div>
+<script>
+	$(function() {
+		var extractor = new Xsd2Json("ATOM.xsd", {"schemaURI":"examples/atom/"});
+		$("#xml_editor").xmlEditor({
+						schema: extractor.getSchema(),
+						localXMLContentSelector : '#xml_editor > textarea'
+				});
+	});
+</script>
+</body>
+</html>
