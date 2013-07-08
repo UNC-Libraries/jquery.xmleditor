@@ -216,7 +216,6 @@ TextEditor.prototype.selectTagAtCursor = function() {
 		// Retrieve the schema definition for the selected node
 		var elementDef = this.editor.xmlTree.getElementDefinition(elementNode);
 		// Clear the menu if there was no definition or it was the root node
-		// TODO root nodes shouldn't be treated specially if they have a definition
 		if (elementDef == null || elementDef === this.editor.xmlTree.rootElement) {
 			this.editor.modifyMenu.clearContextualMenus();
 			return this;
@@ -254,7 +253,9 @@ TextEditor.prototype.addElementEvent = function(parentElement, newElement) {
 	this.reload();
 	// Move cursor to the newly added element
 	var instanceNumber = 0;
-	this.editor.xmlState.xml.find(newElement.xmlNode[0].nodeName).each(function() {
+	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace);
+	var tagSelector = prefix.replace(':', '\\:') + newElement.objectType.localName;
+	this.editor.xmlState.xml.find(tagSelector).each(function() {
 		if (this === newElement.xmlNode.get(0)) {
 			return false;
 		}

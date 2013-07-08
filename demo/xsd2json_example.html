@@ -32,7 +32,7 @@
 			var extractor = new Xsd2Json("dcterms.xsd", {"schemaURI":"examples/dcterms/"});
 			
 			$("#xml_editor").xmlEditor({
-				schemaObject: extractor.getSchema()
+				schema: extractor.getSchema()
 			});
 		});
 	</script>

@@ -154,15 +154,17 @@ $.widget( "xml.xmlEditor", {
 		if (!vkbeautify)
 			this.options.prettyXML = false;
 		
-		// Turn relative paths into absolute paths for the sake of web workers
-		if (this.options.libPath) {
-			if (this.options.libPath.indexOf('http') != 0)
-				this.libPath = this.baseUrl + this.options.libPath;
-			else this.libPath = this.options.libPath;
-		} else this.libPath = this.baseUrl + "lib/";
-		if ((typeof this.options.schema == 'string' || typeof this.options.schema instanceof String)
-				&& this.options.schema.indexOf('http') != 0)
-			this.options.schema = this.baseUrl + this.options.schema;
+		if (typeof(this.options.schema) != 'function') {
+			// Turn relative paths into absolute paths for the sake of web workers
+			if (this.options.libPath) {
+				if (this.options.libPath.indexOf('http') != 0)
+					this.libPath = this.baseUrl + this.options.libPath;
+				else this.libPath = this.options.libPath;
+			} else this.libPath = this.baseUrl + "lib/";
+			if ((typeof this.options.schema == 'string' || typeof this.options.schema instanceof String)
+					&& this.options.schema.indexOf('http') != 0)
+				this.options.schema = this.baseUrl + this.options.schema;
+		}
 		
 		this.loadSchema(this.options.schema);
 	},
@@ -418,6 +420,10 @@ $.widget( "xml.xmlEditor", {
 	},
 	
 	modeChange: function(mode) {
+		// Can't change mode to current mode
+		if ((mode == 0 && this.guiEditor.active) || (mode == 1 && this.textEditor.active))
+			return this;
+			
 		if (mode == 0) {
 			if (this.textEditor.isInitialized() && this.xmlState.isChanged()) {
 				// Try to reconstruct the xml object before changing tabs.  Cancel change if parse error to avoid losing changes.
@@ -444,6 +450,7 @@ $.widget( "xml.xmlEditor", {
 			$("#" + xmlMenuHeaderPrefix + "Text").addClass("active_mode_tab");
 		}
 		this.activeEditor.activate();
+		return this;
 	},
 	
 	refreshDisplay: function() {

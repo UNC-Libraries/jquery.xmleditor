@@ -34,7 +34,8 @@ XMLAttribute.prototype.render = function (){
 	label.appendChild(document.createTextNode(this.objectType.name));
 	this.attributeContainer[0].appendChild(label);
 	
-	var attributeValue = this.xmlElement.xmlNode.attr(this.objectType.name);
+	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace);
+	var attributeValue = this.xmlElement.xmlNode.attr(prefix + this.objectType.name);
 	if (attributeValue == '' && this.objectType.defaultValue != null) {
 		attributeValue = this.objectType.defaultValue;
 	}

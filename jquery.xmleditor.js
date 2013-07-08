@@ -155,15 +155,17 @@ $.widget( "xml.xmlEditor", {
 		if (!vkbeautify)
 			this.options.prettyXML = false;
 		
-		// Turn relative paths into absolute paths for the sake of web workers
-		if (this.options.libPath) {
-			if (this.options.libPath.indexOf('http') != 0)
-				this.libPath = this.baseUrl + this.options.libPath;
-			else this.libPath = this.options.libPath;
-		} else this.libPath = this.baseUrl + "lib/";
-		if ((typeof this.options.schema == 'string' || typeof this.options.schema instanceof String)
-				&& this.options.schema.indexOf('http') != 0)
-			this.options.schema = this.baseUrl + this.options.schema;
+		if (typeof(this.options.schema) != 'function') {
+			// Turn relative paths into absolute paths for the sake of web workers
+			if (this.options.libPath) {
+				if (this.options.libPath.indexOf('http') != 0)
+					this.libPath = this.baseUrl + this.options.libPath;
+				else this.libPath = this.options.libPath;
+			} else this.libPath = this.baseUrl + "lib/";
+			if ((typeof this.options.schema == 'string' || typeof this.options.schema instanceof String)
+					&& this.options.schema.indexOf('http') != 0)
+				this.options.schema = this.baseUrl + this.options.schema;
+		}
 		
 		this.loadSchema(this.options.schema);
 	},
@@ -419,6 +421,10 @@ $.widget( "xml.xmlEditor", {
 	},
 	
 	modeChange: function(mode) {
+		// Can't change mode to current mode
+		if ((mode == 0 && this.guiEditor.active) || (mode == 1 && this.textEditor.active))
+			return this;
+			
 		if (mode == 0) {
 			if (this.textEditor.isInitialized() && this.xmlState.isChanged()) {
 				// Try to reconstruct the xml object before changing tabs.  Cancel change if parse error to avoid losing changes.
@@ -445,6 +451,7 @@ $.widget( "xml.xmlEditor", {
 			$("#" + xmlMenuHeaderPrefix + "Text").addClass("active_mode_tab");
 		}
 		this.activeEditor.activate();
+		return this;
 	},
 	
 	refreshDisplay: function() {
@@ -1094,6 +1101,8 @@ GUIEditor.prototype.initialize = function(parentContainer) {
 
 GUIEditor.prototype.setRootElement = function(node) {
 	var objectType = this.editor.xmlTree.getElementDefinition(node);
+	if (objectType == null)
+		objectType = this.editor.xmlTree.rootElement;
 	this.rootElement = new XMLElement(node, objectType, this.editor);
 	this.rootElement.guiElement = this.xmlContent;
 	this.rootElement.guiElement.data("xmlElement", this.rootElement);
@@ -2323,7 +2332,6 @@ TextEditor.prototype.selectTagAtCursor = function() {
 		// Retrieve the schema definition for the selected node
 		var elementDef = this.editor.xmlTree.getElementDefinition(elementNode);
 		// Clear the menu if there was no definition or it was the root node
-		// TODO root nodes shouldn't be treated specially if they have a definition
 		if (elementDef == null || elementDef === this.editor.xmlTree.rootElement) {
 			this.editor.modifyMenu.clearContextualMenus();
 			return this;
@@ -2361,7 +2369,9 @@ TextEditor.prototype.addElementEvent = function(parentElement, newElement) {
 	this.reload();
 	// Move cursor to the newly added element
 	var instanceNumber = 0;
-	this.editor.xmlState.xml.find(newElement.xmlNode[0].nodeName).each(function() {
+	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace);
+	var tagSelector = prefix.replace(':', '\\:') + newElement.objectType.localName;
+	this.editor.xmlState.xml.find(tagSelector).each(function() {
 		if (this === newElement.xmlNode.get(0)) {
 			return false;
 		}
@@ -2490,7 +2500,8 @@ XMLAttribute.prototype.render = function (){
 	label.appendChild(document.createTextNode(this.objectType.name));
 	this.attributeContainer[0].appendChild(label);
 	
-	var attributeValue = this.xmlElement.xmlNode.attr(this.objectType.name);
+	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace);
+	var attributeValue = this.xmlElement.xmlNode.attr(prefix + this.objectType.name);
 	if (attributeValue == '' && this.objectType.defaultValue != null) {
 		attributeValue = this.objectType.defaultValue;
 	}

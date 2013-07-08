@@ -162,15 +162,16 @@ Xsd2Json.prototype.processSchema = function() {
 			this.root = this.buildElement(selected);
 		else this.root = this.buildSchema(selected);
 		// Add namespace prefixes to match the scoping of this document
-		this.adjustPrefixes(this.root);
+		this.adjustPrefixes(this.root, []);
 		if (!this.options.isImported)
-			this.resolveDefinitions(this.root);
+			this.resolveDefinitions(this.root, []);
 	} catch (e) {
 		console.log(e);
 	}
 };
 
-Xsd2Json.prototype.adjustPrefixes = function(object) {
+
+Xsd2Json.prototype.adjustPrefixes = function(object, objectStack) {
 	if (object.name.indexOf(":") == -1){
 		// Replace object name's prefix with the relative
 		var prefix = this.namespacePrefixes[object.namespace];
@@ -182,9 +183,14 @@ Xsd2Json.prototype.adjustPrefixes = function(object) {
 		// Adjust all the children
 		if (object.element || object.schema) {
 			var self = this;
-			$.each(object.elements, function(){
-				self.adjustPrefixes(this);
-			});
+			if (object.elements) {
+				objectStack.push(object);
+				$.each(object.elements, function(){
+					if ($.inArray(this, objectStack) == -1)
+						self.adjustPrefixes(this, objectStack);
+				});
+				objectStack.pop();
+			}
 			if (object.attributes != null) {
 				$.each(object.attributes, function(){
 					self.adjustPrefixes(this);
@@ -212,11 +218,16 @@ Xsd2Json.prototype.resolveDefinition = function(object) {
 	return object;
 };
 
-Xsd2Json.prototype.resolveDefinitions = function(object) {
+Xsd2Json.prototype.resolveDefinitions = function(object, objectStack) {
 	this.resolveDefinition(object);
 	if (object.element || object.schema) {
-		for (var i in object.elements) 
-			this.resolveDefinitions(object.elements[i]);
+		if (object.elements) {
+			objectStack.push(object);
+			for (var i in object.elements) 
+				if ($.inArray(object.elements[i], objectStack) == -1)
+					this.resolveDefinitions(object.elements[i], objectStack);
+			objectStack.pop();
+		}
 		for (var i in object.attributes) 
 			this.resolveDefinitions(object.attributes[i]);
 	}
@@ -242,6 +253,9 @@ Xsd2Json.prototype.buildSchema = function(node) {
 Xsd2Json.prototype.buildElement = function(node, parentObject) {
 	var definition = null;
 	var name = node.getAttribute("name");
+	if (node.parentNode === this.xsd && name in this.rootDefinitions) {
+		return this.rootDefinitions[name];
+	}
 	
 	var hasSubGroup = node.getAttribute("substitutionGroup") != null;
 	var hasRef = node.getAttribute("ref") != null;
@@ -249,8 +263,11 @@ Xsd2Json.prototype.buildElement = function(node, parentObject) {
 		definition = this.execute(node, 'buildElement');
 		if (hasSubGroup) {
 			definition = $.extend({}, definition, {'name' : name, 'localName' : this.stripPrefix(name)});
-			if (node.parentNode === this.xsd && !hasRef)
+			if (node.parentNode === this.xsd && !hasRef) {
+				if (name == 'namePart')
+					debugger;
 				this.rootDefinitions[name] = definition;
+			}
 		}
 	} else {
 		// Element has a name, means its a new element
@@ -265,8 +282,9 @@ Xsd2Json.prototype.buildElement = function(node, parentObject) {
 				"element": true
 		};
 		
-		if (node.parentNode === this.xsd)
+		if (node.parentNode === this.xsd) {
 			this.rootDefinitions[name] = definition;
+		}
 		
 		var type = node.getAttribute("type");
 		if (type == null) {
