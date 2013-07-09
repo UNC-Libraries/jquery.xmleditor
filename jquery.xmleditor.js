@@ -2634,7 +2634,8 @@ XMLElement.prototype.renderAttributes = function () {
 	
 	$(this.xmlNode[0].attributes).each(function() {
 		for ( var i = 0; i < attributesArray.length; i++) {
-			if (attributesArray[i].name == this.nodeName) {
+			var prefix = self.editor.xmlState.namespaces.getNamespacePrefix(attributesArray[i].namespace);
+			if (prefix + attributesArray[i].name == this.nodeName) {
 				var attribute = new XMLAttribute(attributesArray[i], self, self.editor);
 				attribute.render();
 				return;

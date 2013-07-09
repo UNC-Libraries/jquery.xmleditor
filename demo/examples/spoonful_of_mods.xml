@@ -32,15 +32,15 @@ Conclusions
 
 One key aspect of the healthcare system is its complexity, and policy makers want to design and reform the system in a way that affects competing goals. OR methodologies, particularly queueing theory, can be very useful in gaining deeper understanding of this complexity and exploring the potential effects of proposed changes on the system without making any actual changes.</mods:abstract>
   <mods:language>
-    <mods:languageTerm authority="iso639-2b" type="code">eng</mods:languageTerm>
+    <mods:languageTerm mods:authority="iso639-2b" mods:type="code">eng</mods:languageTerm>
   </mods:language>
   <mods:typeOfResource>text</mods:typeOfResource>
-  <mods:genre authorityURI="http://purl.org/eprint/type/" type="work type" valueURI="http://purl.org/eprint/type/JournalArticle">Journal Article</mods:genre>
+  <mods:genre mods:authorityURI="http://purl.org/eprint/type/" mods:type="work type" mods:valueURI="http://purl.org/eprint/type/JournalArticle">Journal Article</mods:genre>
   <mods:originInfo>
     <mods:publisher>BioMed Central Ltd</mods:publisher>
     <mods:dateIssued>2010-06-23</mods:dateIssued>
   </mods:originInfo>
-  <mods:genre authority="local">Peer Reviewed</mods:genre>
+  <mods:genre mods:authority="local">Peer Reviewed</mods:genre>
   <mods:accessCondition>
     <rights:copyright copyright.status="copyrighted" publication.status="published">
       <rights:rights.holder>
@@ -48,14 +48,14 @@ One key aspect of the healthcare system is its complexity, and policy makers wan
       </rights:rights.holder>
     </rights:copyright>
   </mods:accessCondition>
-  <mods:accessCondition type="use and reproduction" xlink2:href="http://creativecommons.org/licenses/by/2.0"></mods:accessCondition>
-  <mods:accessCondition type="restriction on access">Open Access</mods:accessCondition>
-  <mods:note type="citation/reference">BMC Medical Research Methodology. 2010 Jun 23;10(1):60</mods:note>
+  <mods:accessCondition mods:type="use and reproduction" xlink2:href="http://creativecommons.org/licenses/by/2.0"></mods:accessCondition>
+  <mods:accessCondition mods:type="restriction on access">Open Access</mods:accessCondition>
+  <mods:note mods:type="citation/reference">BMC Medical Research Methodology. 2010 Jun 23;10(1):60</mods:note>
   <mods:location>
     <mods:url>http://dx.doi.org/10.1186/1471-2288-10-60</mods:url>
   </mods:location>
-  <mods:identifier type="doi">10.1186/1471-2288-10-60</mods:identifier>
-  <mods:identifier displayLabel="PMID" type="pmpid">20573235</mods:identifier>
+  <mods:identifier mods:type="doi">10.1186/1471-2288-10-60</mods:identifier>
+  <mods:identifier mods:displayLabel="PMID" mods:type="pmpid">20573235</mods:identifier>
   <mods:name>
     <mods:namePart>Foster, E Michael</mods:namePart>
     <mods:affiliation>Department of Maternal and Child Health, UNC Gillings School of Global Public Health, University of North Carolina at Chapel Hill</mods:affiliation>
@@ -68,26 +68,26 @@ One key aspect of the healthcare system is its complexity, and policy makers wan
     <mods:namePart>Ziya, Serhan</mods:namePart>
     <mods:affiliation>Department of Statistics and Operations Research, UNC College of Arts &amp; Sciences, University of North Carolina at Chapel Hill</mods:affiliation>
   </mods:name>
-  <mods:relatedItem displayLabel="Source" type="otherFormat">
+  <mods:relatedItem mods:displayLabel="Source" mods:type="otherFormat">
     <mods:titleInfo>
       <mods:title>BMC Medical Research Methodology</mods:title>
     </mods:titleInfo>
-    <mods:identifier type="issn">1471-2288</mods:identifier>
+    <mods:identifier mods:type="issn">1471-2288</mods:identifier>
     <mods:originInfo>
       <mods:dateIssued>2010</mods:dateIssued>
     </mods:originInfo>
     <mods:part>
-      <mods:detail type="volume">
+      <mods:detail mods:type="volume">
         <mods:number>10</mods:number>
         <mods:caption>vol.</mods:caption>
       </mods:detail>
-      <mods:detail type="issue">
+      <mods:detail mods:type="issue">
         <mods:number>1</mods:number>
         <mods:caption>issue</mods:caption>
       </mods:detail>
     </mods:part>
     <mods:part>
-      <mods:extent unit="page">
+      <mods:extent mods:unit="page">
         <mods:start>60</mods:start>
       </mods:extent>
     </mods:part>
