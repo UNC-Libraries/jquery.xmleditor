@@ -349,16 +349,7 @@ $.widget( "xml.xmlEditor", {
 		this.modeChange(0);
 		
 		var self = this;
-		$(window).resize(function() {
-			self.xmlTabContainer.width(self.xmlEditorContainer.outerWidth() - self.modifyMenu.menuColumn.outerWidth());
-			if (self.activeEditor != null){
-				self.activeEditor.resize();
-			}
-			self.editorHeader.width(self.xmlTabContainer.width());
-			if (self.options.floatingMenu) {
-				self.modifyMenu.setMenuPosition();
-			}
-		});
+		$(window).resize($.proxy(this.resize, this));
 		
 		this.modifyMenu.initialize(this.xmlEditorContainer);
 		this.modifyMenu.addMenu(addElementMenuClass, this.options.addElementMenuHeaderText, 
@@ -375,8 +366,18 @@ $.widget( "xml.xmlEditor", {
 		$("." + submitButtonClass).click(function() {
 			self.saveXML();
 		});
-		//$(window).resize();
-		//this.refreshDisplay();
+		this.ready = true;
+	},
+	
+	resize: function () {
+		this.xmlTabContainer.width(this.xmlEditorContainer.outerWidth() - this.modifyMenu.menuColumn.outerWidth());
+		if (this.activeEditor != null){
+			this.activeEditor.resize();
+		}
+		this.editorHeader.width(this.xmlTabContainer.width());
+		if (this.options.floatingMenu) {
+			this.modifyMenu.setMenuPosition();
+		}
 	},
 	
 	addChildElementCallback: function (instigator) {
@@ -450,6 +451,8 @@ $.widget( "xml.xmlEditor", {
 			$("#" + xmlMenuHeaderPrefix + "Text").addClass("active_mode_tab");
 		}
 		this.activeEditor.activate();
+		if (this.ready)
+			this.resize();
 		return this;
 	},
 	

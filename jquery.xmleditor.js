@@ -350,16 +350,7 @@ $.widget( "xml.xmlEditor", {
 		this.modeChange(0);
 		
 		var self = this;
-		$(window).resize(function() {
-			self.xmlTabContainer.width(self.xmlEditorContainer.outerWidth() - self.modifyMenu.menuColumn.outerWidth());
-			if (self.activeEditor != null){
-				self.activeEditor.resize();
-			}
-			self.editorHeader.width(self.xmlTabContainer.width());
-			if (self.options.floatingMenu) {
-				self.modifyMenu.setMenuPosition();
-			}
-		});
+		$(window).resize($.proxy(this.resize, this));
 		
 		this.modifyMenu.initialize(this.xmlEditorContainer);
 		this.modifyMenu.addMenu(addElementMenuClass, this.options.addElementMenuHeaderText, 
@@ -376,8 +367,18 @@ $.widget( "xml.xmlEditor", {
 		$("." + submitButtonClass).click(function() {
 			self.saveXML();
 		});
-		//$(window).resize();
-		//this.refreshDisplay();
+		this.ready = true;
+	},
+	
+	resize: function () {
+		this.xmlTabContainer.width(this.xmlEditorContainer.outerWidth() - this.modifyMenu.menuColumn.outerWidth());
+		if (this.activeEditor != null){
+			this.activeEditor.resize();
+		}
+		this.editorHeader.width(this.xmlTabContainer.width());
+		if (this.options.floatingMenu) {
+			this.modifyMenu.setMenuPosition();
+		}
 	},
 	
 	addChildElementCallback: function (instigator) {
@@ -451,6 +452,8 @@ $.widget( "xml.xmlEditor", {
 			$("#" + xmlMenuHeaderPrefix + "Text").addClass("active_mode_tab");
 		}
 		this.activeEditor.activate();
+		if (this.ready)
+			this.resize();
 		return this;
 	},
 	
@@ -1212,6 +1215,7 @@ GUIEditor.prototype.addElementEvent = function(parentElement, newElement) {
 	this.selectElement(newElement);
 	
 	this.editor.xmlState.documentChangedEvent();
+	this.editor.resize();
 };
 
 GUIEditor.prototype.addAttributeEvent = function(parentElement, objectType, addButton) {
@@ -1222,6 +1226,7 @@ GUIEditor.prototype.addAttributeEvent = function(parentElement, objectType, addB
 	addButton.addClass("disabled");
 	attribute.addButton = addButton;
 	this.editor.xmlState.documentChangedEvent();
+	this.editor.resize();
 };
 
 GUIEditor.prototype.selectElement = function(selected) {
@@ -1465,9 +1470,9 @@ GUIEditor.prototype.isCompletelyOnScreen = function(object) {
 	var objectTop = object.offset().top;
 	var objectBottom = objectTop + object.height();
 	var docViewTop = $(window).scrollTop() + this.editor.editorHeader.height();
-    var docViewBottom = docViewTop + $(window).height() - this.editor.editorHeader.height();
-    
-    return (docViewTop < objectTop) && (docViewBottom > objectBottom);
+	var docViewBottom = docViewTop + $(window).height() - this.editor.editorHeader.height();
+
+	return (docViewTop < objectTop) && (docViewBottom > objectBottom);
 };
 
 GUIEditor.prototype.focusObject = function(focusTarget) {
@@ -1949,22 +1954,22 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 	if ($(window).scrollTop() >= menuTop) {
 		this.menuColumn.css({
 			position : 'fixed',
-			left : xmlEditorContainer.offset().left + xmlEditorContainer.outerWidth() - this.menuColumn.outerWidth(),
+			left : xmlEditorContainer.offset().left + xmlEditorContainer.outerWidth() - this.menuColumn.innerWidth(),
 			top : 0
 		});
 		this.editor.editorHeader.css({
-			position : (this.editor.guiEditor.active)? 'fixed' : 'absolute',
-			top : (this.editor.guiEditor.active)? 0 : menuTop
+			position : 'fixed',
+			top : 0
 		});
 	} else {
 		this.menuColumn.css({
 			position : 'absolute',
-			left : xmlEditorContainer.offset().left + xmlEditorContainer.outerWidth() - this.menuColumn.outerWidth(),
-			top : menuTop
+			left : xmlEditorContainer.outerWidth() - this.menuColumn.innerWidth(),
+			top : 0
 		});
 		this.editor.editorHeader.css({
 			position : 'absolute',
-			top : menuTop
+			top : 0
 		});
 	}
 	
@@ -2369,7 +2374,7 @@ TextEditor.prototype.addElementEvent = function(parentElement, newElement) {
 	this.reload();
 	// Move cursor to the newly added element
 	var instanceNumber = 0;
-	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace);
+	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(newElement.objectType.namespace);
 	var tagSelector = prefix.replace(':', '\\:') + newElement.objectType.localName;
 	this.editor.xmlState.xml.find(tagSelector).each(function() {
 		if (this === newElement.xmlNode.get(0)) {

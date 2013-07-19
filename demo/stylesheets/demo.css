@@ -90,3 +90,9 @@ body {
 	padding: 20px;
 	color: #777195;
 }
+
+#xml_editor {
+	font-family: Trebuchet MS, Tahoma, Verdana, Arial, sans-serif;
+	font-size: 14px;
+	background-color: #fff;
+}

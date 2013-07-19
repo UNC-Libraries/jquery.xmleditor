@@ -137,6 +137,7 @@ GUIEditor.prototype.addElementEvent = function(parentElement, newElement) {
 	this.selectElement(newElement);
 	
 	this.editor.xmlState.documentChangedEvent();
+	this.editor.resize();
 };
 
 GUIEditor.prototype.addAttributeEvent = function(parentElement, objectType, addButton) {
@@ -147,6 +148,7 @@ GUIEditor.prototype.addAttributeEvent = function(parentElement, objectType, addB
 	addButton.addClass("disabled");
 	attribute.addButton = addButton;
 	this.editor.xmlState.documentChangedEvent();
+	this.editor.resize();
 };
 
 GUIEditor.prototype.selectElement = function(selected) {
@@ -390,9 +392,9 @@ GUIEditor.prototype.isCompletelyOnScreen = function(object) {
 	var objectTop = object.offset().top;
 	var objectBottom = objectTop + object.height();
 	var docViewTop = $(window).scrollTop() + this.editor.editorHeader.height();
-    var docViewBottom = docViewTop + $(window).height() - this.editor.editorHeader.height();
-    
-    return (docViewTop < objectTop) && (docViewBottom > objectBottom);
+	var docViewBottom = docViewTop + $(window).height() - this.editor.editorHeader.height();
+
+	return (docViewTop < objectTop) && (docViewBottom > objectBottom);
 };
 
 GUIEditor.prototype.focusObject = function(focusTarget) {

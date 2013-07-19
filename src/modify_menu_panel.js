@@ -89,22 +89,22 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 	if ($(window).scrollTop() >= menuTop) {
 		this.menuColumn.css({
 			position : 'fixed',
-			left : xmlEditorContainer.offset().left + xmlEditorContainer.outerWidth() - this.menuColumn.outerWidth(),
+			left : xmlEditorContainer.offset().left + xmlEditorContainer.outerWidth() - this.menuColumn.innerWidth(),
 			top : 0
 		});
 		this.editor.editorHeader.css({
-			position : (this.editor.guiEditor.active)? 'fixed' : 'absolute',
-			top : (this.editor.guiEditor.active)? 0 : menuTop
+			position : 'fixed',
+			top : 0
 		});
 	} else {
 		this.menuColumn.css({
 			position : 'absolute',
-			left : xmlEditorContainer.offset().left + xmlEditorContainer.outerWidth() - this.menuColumn.outerWidth(),
-			top : menuTop
+			left : xmlEditorContainer.outerWidth() - this.menuColumn.innerWidth(),
+			top : 0
 		});
 		this.editor.editorHeader.css({
 			position : 'absolute',
-			top : menuTop
+			top : 0
 		});
 	}
 	
