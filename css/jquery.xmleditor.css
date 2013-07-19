@@ -362,6 +362,10 @@
 	background: linear-gradient(to right,  #dddddd,  #ffffff);
 	border-left: 1px solid #bbb;
 	margin: 0;
+	-webkit-user-select: none;
+	-ms-user-select: none;
+	-moz-user-select: -moz-none;
+	user-select: none;
 }
 
 .menu_content li {
@@ -468,7 +472,7 @@
 .xml_menu_bar {
 	margin-bottom: 3px;
 	overflow: auto;
-	width: inherit;	
+	width: inherit;
 }
 
 .xml_menu_bar > ul {
@@ -487,10 +491,14 @@
 .xml_menu_bar > ul > li > a > span {
 	padding: 6px 8px;
 	display: inline-block;
-	*zoom: 1;
-	*display: inline;
 	font-size: 15px;
 	cursor: pointer;
+	-webkit-user-select: none;
+	-ms-user-select: none;
+	-moz-user-select: -moz-none;
+	user-select: none;
+	*zoom: 1;
+	*display: inline;
 }
 
 .xml_menu_bar > ul > li > a > span:hover {
