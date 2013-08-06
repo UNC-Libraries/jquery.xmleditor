@@ -276,9 +276,12 @@ Xsd2Json.prototype.buildElement = function(node, parentObject) {
 				"localName" : this.stripPrefix(name),
 				"elements": [],
 				"attributes": [],
+				"choices": [],
 				"values": [],
 				"type": null,
 				"namespace": this.targetNS,
+				"minOccurs": node.getAttribute("minOccurs"),
+				"maxOccurs": node.getAttribute("maxOccurs"),
 				"element": true
 		};
 		
@@ -364,6 +367,7 @@ Xsd2Json.prototype.buildType = function(node, object) {
 		var type = {
 				elements: [],
 				attributes: [],
+				choices: [],
 				values: [],
 				namespace: node.namespaceURI
 			};
@@ -480,11 +484,17 @@ Xsd2Json.prototype.buildAll = function(node, object) {
 
 Xsd2Json.prototype.buildChoice = function(node, object) {
 	var self = this;
+	choice = {
+			"elements": [],
+			"minOccurs": node.getAttribute("minOccurs"),
+			"maxOccurs": node.getAttribute("maxOccurs")
+	};
 	var children = this.getChildren(node);
 	for (var i in children) {
 		var child = children[i];
 		if (child.localName == "element") {
-			self.buildElement(child, object);
+			var element = self.buildElement(child, object);
+			choice.elements.push(element.localName);
 		} else if (child.localName == "group") {
 			self.execute(child, 'buildGroup', object);
 		} else if (child.localName == "choice") {
@@ -495,6 +505,7 @@ Xsd2Json.prototype.buildChoice = function(node, object) {
 			self.buildAny(child, object);
 		}
 	}
+	object.choices.push(choice);
 };
 
 Xsd2Json.prototype.buildSequence = function(node, object) {
