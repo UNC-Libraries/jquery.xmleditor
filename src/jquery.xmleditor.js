@@ -381,6 +381,8 @@ $.widget( "xml.xmlEditor", {
 	},
 	
 	addChildElementCallback: function (instigator) {
+		if ($(instigator).hasClass("disabled"))
+			return;
 		var xmlElement = $(instigator).data("xml").target;
 		var objectType = $(instigator).data("xml").objectType;
 		
