@@ -1213,22 +1213,7 @@ GUIEditor.prototype.refreshElements = function() {
 };
 
 GUIEditor.prototype.addElementEvent = function(parentElement, newElement) {
-	var index = newElement.objectType.name;
-	var choiceList = parentElement.objectType.choices;
-	var localName = newElement.objectType.localName;
-	if (!parentElement.presentChildren[index])
-		parentElement.presentChildren[index] = 1;
-	else
-		parentElement.presentChildren[index] += 1;
-		
-	for (var i = 0; i < choiceList.length; i++) {
-		if ($.inArray(localName, choiceList[i].elements) > -1) {
-			if (!parentElement.choiceCount[i])
-				parentElement.choiceCount[i] = 1;
-			else
-				parentElement.choiceCount[i] += 1;
-		}
-	}
+	parentElement.addPresentChild(newElement);
 
 	if (parentElement.guiElementID != this.xmlContent.attr("id")) {
 		parentElement.updated({action : 'childAdded', target : newElement});
@@ -2710,23 +2695,7 @@ XMLElement.prototype.renderChildren = function(recursive) {
 			if (self.editor.nsEquals(this, elementsArray[i])) {
 				var childElement = new XMLElement($(this), elementsArray[i], self.editor);
 				childElement.render(self, recursive);
-				var index = childElement.objectType.name;
-				var choiceList = self.objectType.choices;
-				var localName = childElement.objectType.localName;
-				if (!self.presentChildren[index]) {
-					self.presentChildren[index] = 1;
-				}
-				else {
-					self.presentChildren[index] += 1;
-				}
-				for (var i = 0; i < choiceList.length; i++) {
-					if ($.inArray(localName, choiceList[i].elements) > -1) {
-						if (!self.choiceCount[i])
-							self.choiceCount[i] = 1;
-						else
-							self.choiceCount[i] += 1;
-					}
-				}
+				self.addPresentChild(childElement);
 				return;
 			}
 		}
@@ -2747,6 +2716,27 @@ XMLElement.prototype.renderAttributes = function () {
 			}
 		}
 	});
+};
+
+XMLElement.prototype.addPresentChild = function(childElement) {
+	var self = this;
+	var index = childElement.objectType.name;
+	var choiceList = self.objectType.choices;
+	var localName = childElement.objectType.localName;
+	if (!self.presentChildren[index]) {
+		self.presentChildren[index] = 1;
+	} else {
+		self.presentChildren[index] += 1;
+	}
+	for (var i = 0; i < choiceList.length; i++) {
+		if ($.inArray(localName, choiceList[i].elements) > -1) {
+			if (!self.choiceCount[i])
+				self.choiceCount[i] = 1;
+			else
+				self.choiceCount[i] += 1;
+		}
+	}
+	return;
 };
 
 XMLElement.prototype.initializeGUI = function () {

@@ -131,22 +131,7 @@ GUIEditor.prototype.refreshElements = function() {
 };
 
 GUIEditor.prototype.addElementEvent = function(parentElement, newElement) {
-	var index = newElement.objectType.name;
-	var choiceList = parentElement.objectType.choices;
-	var localName = newElement.objectType.localName;
-	if (!parentElement.presentChildren[index])
-		parentElement.presentChildren[index] = 1;
-	else
-		parentElement.presentChildren[index] += 1;
-		
-	for (var i = 0; i < choiceList.length; i++) {
-		if ($.inArray(localName, choiceList[i].elements) > -1) {
-			if (!parentElement.choiceCount[i])
-				parentElement.choiceCount[i] = 1;
-			else
-				parentElement.choiceCount[i] += 1;
-		}
-	}
+	parentElement.addPresentChild(newElement);
 
 	if (parentElement.guiElementID != this.xmlContent.attr("id")) {
 		parentElement.updated({action : 'childAdded', target : newElement});
