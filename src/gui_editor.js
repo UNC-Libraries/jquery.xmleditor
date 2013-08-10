@@ -124,19 +124,37 @@ GUIEditor.prototype.refreshElements = function() {
 	fragment.appendChild(node);
 	
 	this.rootElement.renderChildren(true);
+	this.editor.addTopLevelMenu.populate(this.rootElement);
 	
 	originalParent.appendChild(fragment);
 	return this;
 };
 
 GUIEditor.prototype.addElementEvent = function(parentElement, newElement) {
+	parentElement.addPresentChild(newElement);
+
 	if (parentElement.guiElementID != this.xmlContent.attr("id")) {
 		parentElement.updated({action : 'childAdded', target : newElement});
 	}
+	
+	var state = this.editor;
+	$.each(newElement.objectType.elements, function(){
+		if (this.minOccurs) {
+			var numElements = 0;
+			while (numElements < this.minOccurs) {
+				numElements++;
+				var childElement = newElement.addElement(this);
+				state.activeEditor.addElementEvent(newElement, childElement);
+			}
+		}
+	});
+
 	this.focusObject(newElement.guiElement);
 	this.selectElement(newElement);
-	
+	if (parentElement == this.rootElement)
+		this.editor.addTopLevelMenu.populate(this.rootElement);
 	this.editor.xmlState.documentChangedEvent();
+	this.editor.resize();
 };
 
 GUIEditor.prototype.addAttributeEvent = function(parentElement, objectType, addButton) {
@@ -147,6 +165,7 @@ GUIEditor.prototype.addAttributeEvent = function(parentElement, objectType, addB
 	addButton.addClass("disabled");
 	attribute.addButton = addButton;
 	this.editor.xmlState.documentChangedEvent();
+	this.editor.resize();
 };
 
 GUIEditor.prototype.selectElement = function(selected) {
@@ -184,7 +203,13 @@ GUIEditor.prototype.deselect = function() {
 GUIEditor.prototype.deleteSelected = function() {
 	if (this.selectedElement == null)
 		return this;
-	var selectedAttribute = this.selectedElement.getSelectedAttribute();
+	try {
+		var selectedAttribute = this.selectedElement.getSelectedAttribute();
+	} catch(error) {
+		// Attribute container undefined
+		var selectedAttribute = [];
+		selectedAttribute.length = 0;
+	}
 	if (selectedAttribute.length > 0) {
 		this.selectAttribute(true);
 		var newSelection = selectedAttribute.prev('.' + attributeContainerClass);
@@ -201,6 +226,23 @@ GUIEditor.prototype.deleteSelected = function() {
 };
 
 GUIEditor.prototype.deleteElement = function(xmlElement) {
+	var parent = xmlElement.parentElement;
+	var index = xmlElement.objectType.name;
+	if (parent) {
+		if (parent.presentChildren[index]) {
+			if (parent.presentChildren[index] > xmlElement.objectType.minOccurs) {
+				parent.presentChildren[index] -= 1;
+				var choiceList = parent.objectType.choices;
+				var localName = xmlElement.objectType.localName;
+				for (var i = 0; i < choiceList.length; i++) {
+					if ($.inArray(localName, choiceList[i].elements) > -1)
+						parent.choiceCount[i] -= 1;
+				}
+			}
+			else
+				return;
+		}
+	}
 	var isSelected = xmlElement.isSelected();
 	if (isSelected) {
 		var afterDeleteSelection = xmlElement.guiElement.next("." + xmlElementClass);
@@ -210,7 +252,12 @@ GUIEditor.prototype.deleteElement = function(xmlElement) {
 			afterDeleteSelection = xmlElement.guiElement.parents("." + xmlElementClass).first();
 		this.selectElement(afterDeleteSelection);
 	}
-	var parent = xmlElement.parentElement;
+	else if (parent.isSelected && parent != this.rootElement) {
+		this.editor.modifyMenu.refreshContextualMenus(parent);
+	}
+	if (parent == this.rootElement) {
+		this.editor.addTopLevelMenu.populate(this.rootElement);
+	}
 	xmlElement.remove();
 	if (parent)
 		parent.updated({action : 'childRemoved', target : xmlElement});
@@ -390,9 +437,9 @@ GUIEditor.prototype.isCompletelyOnScreen = function(object) {
 	var objectTop = object.offset().top;
 	var objectBottom = objectTop + object.height();
 	var docViewTop = $(window).scrollTop() + this.editor.editorHeader.height();
-    var docViewBottom = docViewTop + $(window).height() - this.editor.editorHeader.height();
-    
-    return (docViewTop < objectTop) && (docViewBottom > objectBottom);
+	var docViewBottom = docViewTop + $(window).height() - this.editor.editorHeader.height();
+
+	return (docViewTop < objectTop) && (docViewBottom > objectBottom);
 };
 
 GUIEditor.prototype.focusObject = function(focusTarget) {

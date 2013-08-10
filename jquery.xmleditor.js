@@ -350,16 +350,7 @@ $.widget( "xml.xmlEditor", {
 		this.modeChange(0);
 		
 		var self = this;
-		$(window).resize(function() {
-			self.xmlTabContainer.width(self.xmlEditorContainer.outerWidth() - self.modifyMenu.menuColumn.outerWidth());
-			if (self.activeEditor != null){
-				self.activeEditor.resize();
-			}
-			self.editorHeader.width(self.xmlTabContainer.width());
-			if (self.options.floatingMenu) {
-				self.modifyMenu.setMenuPosition();
-			}
-		});
+		$(window).resize($.proxy(this.resize, this));
 		
 		this.modifyMenu.initialize(this.xmlEditorContainer);
 		this.modifyMenu.addMenu(addElementMenuClass, this.options.addElementMenuHeaderText, 
@@ -376,11 +367,23 @@ $.widget( "xml.xmlEditor", {
 		$("." + submitButtonClass).click(function() {
 			self.saveXML();
 		});
-		//$(window).resize();
-		//this.refreshDisplay();
+		this.ready = true;
+	},
+	
+	resize: function () {
+		this.xmlTabContainer.width(this.xmlEditorContainer.outerWidth() - this.modifyMenu.menuColumn.outerWidth());
+		if (this.activeEditor != null){
+			this.activeEditor.resize();
+		}
+		this.editorHeader.width(this.xmlTabContainer.width());
+		if (this.options.floatingMenu) {
+			this.modifyMenu.setMenuPosition();
+		}
 	},
 	
 	addChildElementCallback: function (instigator) {
+		if ($(instigator).hasClass("disabled"))
+			return;
 		var xmlElement = $(instigator).data("xml").target;
 		var objectType = $(instigator).data("xml").objectType;
 		
@@ -451,6 +454,8 @@ $.widget( "xml.xmlEditor", {
 			$("#" + xmlMenuHeaderPrefix + "Text").addClass("active_mode_tab");
 		}
 		this.activeEditor.activate();
+		if (this.ready)
+			this.resize();
 		return this;
 	},
 	
@@ -797,6 +802,8 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 				input.options[index].selected = true;
 			}
 		}
+		if ((startingValue == " ") || (startingValue == ""))
+			input.selectedIndex = -1;
 		$input = $(input);
 	} else if ((this.objectType.element && (this.objectType.type == 'string' || this.objectType.type == 'mixed')) 
 			|| this.objectType.attribute){
@@ -1199,19 +1206,37 @@ GUIEditor.prototype.refreshElements = function() {
 	fragment.appendChild(node);
 	
 	this.rootElement.renderChildren(true);
+	this.editor.addTopLevelMenu.populate(this.rootElement);
 	
 	originalParent.appendChild(fragment);
 	return this;
 };
 
 GUIEditor.prototype.addElementEvent = function(parentElement, newElement) {
+	parentElement.addPresentChild(newElement);
+
 	if (parentElement.guiElementID != this.xmlContent.attr("id")) {
 		parentElement.updated({action : 'childAdded', target : newElement});
 	}
+	
+	var state = this.editor;
+	$.each(newElement.objectType.elements, function(){
+		if (this.minOccurs) {
+			var numElements = 0;
+			while (numElements < this.minOccurs) {
+				numElements++;
+				var childElement = newElement.addElement(this);
+				state.activeEditor.addElementEvent(newElement, childElement);
+			}
+		}
+	});
+
 	this.focusObject(newElement.guiElement);
 	this.selectElement(newElement);
-	
+	if (parentElement == this.rootElement)
+		this.editor.addTopLevelMenu.populate(this.rootElement);
 	this.editor.xmlState.documentChangedEvent();
+	this.editor.resize();
 };
 
 GUIEditor.prototype.addAttributeEvent = function(parentElement, objectType, addButton) {
@@ -1222,6 +1247,7 @@ GUIEditor.prototype.addAttributeEvent = function(parentElement, objectType, addB
 	addButton.addClass("disabled");
 	attribute.addButton = addButton;
 	this.editor.xmlState.documentChangedEvent();
+	this.editor.resize();
 };
 
 GUIEditor.prototype.selectElement = function(selected) {
@@ -1259,7 +1285,13 @@ GUIEditor.prototype.deselect = function() {
 GUIEditor.prototype.deleteSelected = function() {
 	if (this.selectedElement == null)
 		return this;
-	var selectedAttribute = this.selectedElement.getSelectedAttribute();
+	try {
+		var selectedAttribute = this.selectedElement.getSelectedAttribute();
+	} catch(error) {
+		// Attribute container undefined
+		var selectedAttribute = [];
+		selectedAttribute.length = 0;
+	}
 	if (selectedAttribute.length > 0) {
 		this.selectAttribute(true);
 		var newSelection = selectedAttribute.prev('.' + attributeContainerClass);
@@ -1276,6 +1308,23 @@ GUIEditor.prototype.deleteSelected = function() {
 };
 
 GUIEditor.prototype.deleteElement = function(xmlElement) {
+	var parent = xmlElement.parentElement;
+	var index = xmlElement.objectType.name;
+	if (parent) {
+		if (parent.presentChildren[index]) {
+			if (parent.presentChildren[index] > xmlElement.objectType.minOccurs) {
+				parent.presentChildren[index] -= 1;
+				var choiceList = parent.objectType.choices;
+				var localName = xmlElement.objectType.localName;
+				for (var i = 0; i < choiceList.length; i++) {
+					if ($.inArray(localName, choiceList[i].elements) > -1)
+						parent.choiceCount[i] -= 1;
+				}
+			}
+			else
+				return;
+		}
+	}
 	var isSelected = xmlElement.isSelected();
 	if (isSelected) {
 		var afterDeleteSelection = xmlElement.guiElement.next("." + xmlElementClass);
@@ -1285,7 +1334,12 @@ GUIEditor.prototype.deleteElement = function(xmlElement) {
 			afterDeleteSelection = xmlElement.guiElement.parents("." + xmlElementClass).first();
 		this.selectElement(afterDeleteSelection);
 	}
-	var parent = xmlElement.parentElement;
+	else if (parent.isSelected && parent != this.rootElement) {
+		this.editor.modifyMenu.refreshContextualMenus(parent);
+	}
+	if (parent == this.rootElement) {
+		this.editor.addTopLevelMenu.populate(this.rootElement);
+	}
 	xmlElement.remove();
 	if (parent)
 		parent.updated({action : 'childRemoved', target : xmlElement});
@@ -1465,9 +1519,9 @@ GUIEditor.prototype.isCompletelyOnScreen = function(object) {
 	var objectTop = object.offset().top;
 	var objectBottom = objectTop + object.height();
 	var docViewTop = $(window).scrollTop() + this.editor.editorHeader.height();
-    var docViewBottom = docViewTop + $(window).height() - this.editor.editorHeader.height();
-    
-    return (docViewTop < objectTop) && (docViewBottom > objectBottom);
+	var docViewBottom = docViewTop + $(window).height() - this.editor.editorHeader.height();
+
+	return (docViewTop < objectTop) && (docViewBottom > objectBottom);
 };
 
 GUIEditor.prototype.focusObject = function(focusTarget) {
@@ -1829,10 +1883,12 @@ ModifyElementMenu.prototype.populate = function(xmlElement) {
 	
 	this.target = xmlElement;
 	var self = this;
+	var parent = this.target;
+	var choiceList = parent.objectType.choices;
 	
 	$.each(this.target.objectType.elements, function(){
 		var xmlElement = this;
-		$("<li/>").attr({
+		var addButton = $("<li/>").attr({
 			title : 'Add ' + xmlElement.name
 		}).html(xmlElement.name)
 		.data('xml', {
@@ -1840,6 +1896,21 @@ ModifyElementMenu.prototype.populate = function(xmlElement) {
 				"target": self.target,
 				"objectType": xmlElement
 		}).appendTo(self.menuContent);
+		if (!parent.presentChildren)
+			parent.presentChildren = [];
+		if (!parent.choiceCount)
+			parent.choiceCount = [];
+		if (xmlElement.maxOccurs)
+		{
+			if (parent.presentChildren[xmlElement.name] >= xmlElement.maxOccurs)
+				addButton.addClass('disabled');
+		}
+		for (var i = 0; i < choiceList.length; i++) {
+			if ($.inArray(xmlElement.localName, choiceList[i].elements) > -1) {
+				if (parent.choiceCount[i] >= choiceList[i].maxOccurs)
+					addButton.addClass('disabled');
+			}
+		}
 	});
 	if (this.expanded) {
 		var endingHeight = this.menuContent.outerHeight() + 1;
@@ -1949,22 +2020,22 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 	if ($(window).scrollTop() >= menuTop) {
 		this.menuColumn.css({
 			position : 'fixed',
-			left : xmlEditorContainer.offset().left + xmlEditorContainer.outerWidth() - this.menuColumn.outerWidth(),
+			left : xmlEditorContainer.offset().left + xmlEditorContainer.outerWidth() - this.menuColumn.innerWidth(),
 			top : 0
 		});
 		this.editor.editorHeader.css({
-			position : (this.editor.guiEditor.active)? 'fixed' : 'absolute',
-			top : (this.editor.guiEditor.active)? 0 : menuTop
+			position : 'fixed',
+			top : 0
 		});
 	} else {
 		this.menuColumn.css({
 			position : 'absolute',
-			left : xmlEditorContainer.offset().left + xmlEditorContainer.outerWidth() - this.menuColumn.outerWidth(),
-			top : menuTop
+			left : xmlEditorContainer.outerWidth() - this.menuColumn.innerWidth(),
+			top : 0
 		});
 		this.editor.editorHeader.css({
 			position : 'absolute',
-			top : menuTop
+			top : 0
 		});
 	}
 	
@@ -2369,7 +2440,7 @@ TextEditor.prototype.addElementEvent = function(parentElement, newElement) {
 	this.reload();
 	// Move cursor to the newly added element
 	var instanceNumber = 0;
-	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace);
+	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(newElement.objectType.namespace);
 	var tagSelector = prefix.replace(':', '\\:') + newElement.objectType.localName;
 	this.editor.xmlState.xml.find(tagSelector).each(function() {
 		if (this === newElement.xmlNode.get(0)) {
@@ -2559,6 +2630,8 @@ function XMLElement(xmlNode, objectType, editor) {
 	this.childCount = 0;
 	this.attributeContainer = null;
 	this.attributeCount = 0;
+	this.presentChildren = [];
+	this.choiceCount = [];
 }
 
 XMLElement.prototype.constructor = XMLElement;
@@ -2622,6 +2695,7 @@ XMLElement.prototype.renderChildren = function(recursive) {
 			if (self.editor.nsEquals(this, elementsArray[i])) {
 				var childElement = new XMLElement($(this), elementsArray[i], self.editor);
 				childElement.render(self, recursive);
+				self.addPresentChild(childElement);
 				return;
 			}
 		}
@@ -2634,13 +2708,35 @@ XMLElement.prototype.renderAttributes = function () {
 	
 	$(this.xmlNode[0].attributes).each(function() {
 		for ( var i = 0; i < attributesArray.length; i++) {
-			if (attributesArray[i].name == this.nodeName) {
+			var prefix = self.editor.xmlState.namespaces.getNamespacePrefix(attributesArray[i].namespace);
+			if (prefix + attributesArray[i].name == this.nodeName) {
 				var attribute = new XMLAttribute(attributesArray[i], self, self.editor);
 				attribute.render();
 				return;
 			}
 		}
 	});
+};
+
+XMLElement.prototype.addPresentChild = function(childElement) {
+	var self = this;
+	var index = childElement.objectType.name;
+	var choiceList = self.objectType.choices;
+	var localName = childElement.objectType.localName;
+	if (!self.presentChildren[index]) {
+		self.presentChildren[index] = 1;
+	} else {
+		self.presentChildren[index] += 1;
+	}
+	for (var i = 0; i < choiceList.length; i++) {
+		if ($.inArray(localName, choiceList[i].elements) > -1) {
+			if (!self.choiceCount[i])
+				self.choiceCount[i] = 1;
+			else
+				self.choiceCount[i] += 1;
+		}
+	}
+	return;
 };
 
 XMLElement.prototype.initializeGUI = function () {

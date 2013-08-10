@@ -253,7 +253,7 @@ TextEditor.prototype.addElementEvent = function(parentElement, newElement) {
 	this.reload();
 	// Move cursor to the newly added element
 	var instanceNumber = 0;
-	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace);
+	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(newElement.objectType.namespace);
 	var tagSelector = prefix.replace(':', '\\:') + newElement.objectType.localName;
 	this.editor.xmlState.xml.find(tagSelector).each(function() {
 		if (this === newElement.xmlNode.get(0)) {
