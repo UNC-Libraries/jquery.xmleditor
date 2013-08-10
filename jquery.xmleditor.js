@@ -2575,7 +2575,7 @@ XMLElement.prototype.render = function(parentElement, recursive) {
 	// Create the element and add it to the container
 	this.guiElement = document.createElement('div');
 	this.guiElement.id = this.guiElementID;
-	this.guiElement.className = this.objectType.nameEsc + 'Instance ' + xmlElementClass;
+	this.guiElement.className = this.objectType.localName + 'Instance ' + xmlElementClass;
 	if (this.isTopLevel)
 		this.guiElement.className += ' ' + topLevelContainerClass;
 	this.parentElement.childContainer[0].appendChild(this.guiElement);
