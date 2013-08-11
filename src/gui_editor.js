@@ -131,8 +131,6 @@ GUIEditor.prototype.refreshElements = function() {
 };
 
 GUIEditor.prototype.addElementEvent = function(parentElement, newElement) {
-	parentElement.addPresentChild(newElement);
-
 	if (parentElement.guiElementID != this.xmlContent.attr("id")) {
 		parentElement.updated({action : 'childAdded', target : newElement});
 	}
@@ -227,22 +225,10 @@ GUIEditor.prototype.deleteSelected = function() {
 
 GUIEditor.prototype.deleteElement = function(xmlElement) {
 	var parent = xmlElement.parentElement;
-	var index = xmlElement.objectType.name;
-	if (parent) {
-		if (parent.presentChildren[index]) {
-			if (parent.presentChildren[index] > xmlElement.objectType.minOccurs) {
-				parent.presentChildren[index] -= 1;
-				var choiceList = parent.objectType.choices;
-				var localName = xmlElement.objectType.localName;
-				for (var i = 0; i < choiceList.length; i++) {
-					if ($.inArray(localName, choiceList[i].elements) > -1)
-						parent.choiceCount[i] -= 1;
-				}
-			}
-			else
-				return;
-		}
-	}
+	var index = xmlElement.objectType.localName;
+	if (!parent || !parent.childCanBeRemoved(xmlElement.objectType))
+		return;
+	parent.childRemoved(xmlElement);
 	var isSelected = xmlElement.isSelected();
 	if (isSelected) {
 		var afterDeleteSelection = xmlElement.guiElement.next("." + xmlElementClass);
@@ -251,16 +237,14 @@ GUIEditor.prototype.deleteElement = function(xmlElement) {
 		if (afterDeleteSelection.length == 0)
 			afterDeleteSelection = xmlElement.guiElement.parents("." + xmlElementClass).first();
 		this.selectElement(afterDeleteSelection);
-	}
-	else if (parent.isSelected && parent != this.rootElement) {
+	} else if (parent.isSelected && parent != this.rootElement) {
 		this.editor.modifyMenu.refreshContextualMenus(parent);
 	}
 	if (parent == this.rootElement) {
 		this.editor.addTopLevelMenu.populate(this.rootElement);
 	}
 	xmlElement.remove();
-	if (parent)
-		parent.updated({action : 'childRemoved', target : xmlElement});
+	parent.updated({action : 'childRemoved', target : xmlElement});
 	this.editor.xmlState.documentChangedEvent();
 	return this;
 };
@@ -367,8 +351,9 @@ GUIEditor.prototype.selectAttribute = function(reverse) {
 				newSelection.addClass("selected");
 			}
 		} else {
-			selectedAttribute = this.selectedElement.attributeContainer.children("." + attributeContainerClass)
-					.first().addClass("selected");
+			if (this.selectedElement.attributeContainer)
+				selectedAttribute = this.selectedElement.attributeContainer.children("." + attributeContainerClass)
+						.first().addClass("selected");
 		}
 	}
 };

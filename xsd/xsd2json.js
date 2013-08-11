@@ -253,19 +253,32 @@ Xsd2Json.prototype.buildSchema = function(node) {
 Xsd2Json.prototype.buildElement = function(node, parentObject) {
 	var definition = null;
 	var name = node.getAttribute("name");
-	if (node.parentNode === this.xsd && name in this.rootDefinitions) {
-		return this.rootDefinitions[name];
+	var parentIsSchema = node.parentNode === this.xsd;
+	
+	if (parentIsSchema) {
+		if (name in this.rootDefinitions)
+			return this.rootDefinitions[name];
+	} else {
+		var minOccurs = node.getAttribute("minOccurs");
+		var maxOccurs = node.getAttribute("maxOccurs");
+		if (parentObject && (minOccurs || maxOccurs)) {
+			var localName = this.stripPrefix(node.getAttribute("name") || node.getAttribute("ref"));
+			if (!("occurs" in parentObject))
+				parentObject.occurs = {};
+			parentObject.occurs[localName] = {
+					'min' : minOccurs,
+					'max' : maxOccurs
+			};
+		}
 	}
 	
 	var hasSubGroup = node.getAttribute("substitutionGroup") != null;
 	var hasRef = node.getAttribute("ref") != null;
 	if (hasSubGroup || hasRef){
-		definition = this.execute(node, 'buildElement');
+		definition = this.execute(node, 'buildElement', parentObject);
 		if (hasSubGroup) {
 			definition = $.extend({}, definition, {'name' : name, 'localName' : this.stripPrefix(name)});
 			if (node.parentNode === this.xsd && !hasRef) {
-				if (name == 'namePart')
-					debugger;
 				this.rootDefinitions[name] = definition;
 			}
 		}
@@ -276,16 +289,13 @@ Xsd2Json.prototype.buildElement = function(node, parentObject) {
 				"localName" : this.stripPrefix(name),
 				"elements": [],
 				"attributes": [],
-				"choices": [],
 				"values": [],
 				"type": null,
 				"namespace": this.targetNS,
-				"minOccurs": node.getAttribute("minOccurs"),
-				"maxOccurs": node.getAttribute("maxOccurs"),
 				"element": true
 		};
 		
-		if (node.parentNode === this.xsd) {
+		if (parentIsSchema) {
 			this.rootDefinitions[name] = definition;
 		}
 		
@@ -304,11 +314,23 @@ Xsd2Json.prototype.buildElement = function(node, parentObject) {
 		}
 	}
 	
+	// Add this element as a child of the parent, unless it is abstract or already added
 	if (parentObject != null && node.getAttribute("abstract") != "true")
-		parentObject.elements.push(definition);
+		if (!hasRef || (hasRef && !this.containsChild(parentObject, definition)))
+			parentObject.elements.push(definition);
 	
 	return definition;
 }
+
+Xsd2Json.prototype.containsChild = function(object, child) {
+	if (object.elements) {
+		for (var index in object.elements) {
+			if (object.elements[index].name == child.name)
+				return true;
+		}
+	}
+	return false;
+};
 
 Xsd2Json.prototype.buildAttribute = function(node, parentObject) {
 	var definition = null;
@@ -354,6 +376,7 @@ Xsd2Json.prototype.buildAttribute = function(node, parentObject) {
 Xsd2Json.prototype.buildType = function(node, object) {
 	if (node == null)
 		return;
+	
 	var needsMerge = false;
 	var extendingObject = object;
 	var name = node.getAttribute("name");
@@ -367,9 +390,8 @@ Xsd2Json.prototype.buildType = function(node, object) {
 		var type = {
 				elements: [],
 				attributes: [],
-				choices: [],
 				values: [],
-				namespace: node.namespaceURI
+				namespace: this.targetNS
 			};
 		this.rootDefinitions[name] = type;
 		//this.types[name] = type;
@@ -505,6 +527,8 @@ Xsd2Json.prototype.buildChoice = function(node, object) {
 			self.buildAny(child, object);
 		}
 	}
+	if (!('choices' in object))
+		object.choices = [];
 	object.choices.push(choice);
 };
 

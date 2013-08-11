@@ -398,8 +398,12 @@ $.widget( "xml.xmlEditor", {
 			}
 		}
 		
+		if (!xmlElement.childCanBeAdded(objectType))
+			return;
+		
 		this.xmlState.addNamespace(objectType);
 		var newElement = xmlElement.addElement(objectType);
+		xmlElement.addPresentChild(newElement);
 		
 		this.activeEditor.addElementEvent(xmlElement, newElement);
 	},

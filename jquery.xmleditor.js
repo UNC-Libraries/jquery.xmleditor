@@ -399,8 +399,12 @@ $.widget( "xml.xmlEditor", {
 			}
 		}
 		
+		if (!xmlElement.childCanBeAdded(objectType))
+			return;
+		
 		this.xmlState.addNamespace(objectType);
 		var newElement = xmlElement.addElement(objectType);
+		xmlElement.addPresentChild(newElement);
 		
 		this.activeEditor.addElementEvent(xmlElement, newElement);
 	},
@@ -1213,8 +1217,6 @@ GUIEditor.prototype.refreshElements = function() {
 };
 
 GUIEditor.prototype.addElementEvent = function(parentElement, newElement) {
-	parentElement.addPresentChild(newElement);
-
 	if (parentElement.guiElementID != this.xmlContent.attr("id")) {
 		parentElement.updated({action : 'childAdded', target : newElement});
 	}
@@ -1309,22 +1311,10 @@ GUIEditor.prototype.deleteSelected = function() {
 
 GUIEditor.prototype.deleteElement = function(xmlElement) {
 	var parent = xmlElement.parentElement;
-	var index = xmlElement.objectType.name;
-	if (parent) {
-		if (parent.presentChildren[index]) {
-			if (parent.presentChildren[index] > xmlElement.objectType.minOccurs) {
-				parent.presentChildren[index] -= 1;
-				var choiceList = parent.objectType.choices;
-				var localName = xmlElement.objectType.localName;
-				for (var i = 0; i < choiceList.length; i++) {
-					if ($.inArray(localName, choiceList[i].elements) > -1)
-						parent.choiceCount[i] -= 1;
-				}
-			}
-			else
-				return;
-		}
-	}
+	var index = xmlElement.objectType.localName;
+	if (!parent || !parent.childCanBeRemoved(xmlElement.objectType))
+		return;
+	parent.childRemoved(xmlElement);
 	var isSelected = xmlElement.isSelected();
 	if (isSelected) {
 		var afterDeleteSelection = xmlElement.guiElement.next("." + xmlElementClass);
@@ -1333,16 +1323,14 @@ GUIEditor.prototype.deleteElement = function(xmlElement) {
 		if (afterDeleteSelection.length == 0)
 			afterDeleteSelection = xmlElement.guiElement.parents("." + xmlElementClass).first();
 		this.selectElement(afterDeleteSelection);
-	}
-	else if (parent.isSelected && parent != this.rootElement) {
+	} else if (parent.isSelected && parent != this.rootElement) {
 		this.editor.modifyMenu.refreshContextualMenus(parent);
 	}
 	if (parent == this.rootElement) {
 		this.editor.addTopLevelMenu.populate(this.rootElement);
 	}
 	xmlElement.remove();
-	if (parent)
-		parent.updated({action : 'childRemoved', target : xmlElement});
+	parent.updated({action : 'childRemoved', target : xmlElement});
 	this.editor.xmlState.documentChangedEvent();
 	return this;
 };
@@ -1449,8 +1437,9 @@ GUIEditor.prototype.selectAttribute = function(reverse) {
 				newSelection.addClass("selected");
 			}
 		} else {
-			selectedAttribute = this.selectedElement.attributeContainer.children("." + attributeContainerClass)
-					.first().addClass("selected");
+			if (this.selectedElement.attributeContainer)
+				selectedAttribute = this.selectedElement.attributeContainer.children("." + attributeContainerClass)
+						.first().addClass("selected");
 		}
 	}
 };
@@ -1892,25 +1881,12 @@ ModifyElementMenu.prototype.populate = function(xmlElement) {
 			title : 'Add ' + xmlElement.name
 		}).html(xmlElement.name)
 		.data('xml', {
-				//"target": xmlElement,
 				"target": self.target,
 				"objectType": xmlElement
 		}).appendTo(self.menuContent);
-		if (!parent.presentChildren)
-			parent.presentChildren = [];
-		if (!parent.choiceCount)
-			parent.choiceCount = [];
-		if (xmlElement.maxOccurs)
-		{
-			if (parent.presentChildren[xmlElement.name] >= xmlElement.maxOccurs)
-				addButton.addClass('disabled');
-		}
-		for (var i = 0; i < choiceList.length; i++) {
-			if ($.inArray(xmlElement.localName, choiceList[i].elements) > -1) {
-				if (parent.choiceCount[i] >= choiceList[i].maxOccurs)
-					addButton.addClass('disabled');
-			}
-		}
+		// Disable the entry if its parent won't allow any more of this element type.
+		if (!parent.childCanBeAdded(xmlElement))
+			addButton.addClass('disabled');
 	});
 	if (this.expanded) {
 		var endingHeight = this.menuContent.outerHeight() + 1;
@@ -2718,25 +2694,74 @@ XMLElement.prototype.renderAttributes = function () {
 	});
 };
 
+/**
+ * Updates child occurrence counts in response to a newly added child element
+ */
 XMLElement.prototype.addPresentChild = function(childElement) {
 	var self = this;
-	var index = childElement.objectType.name;
+	var index = childElement.objectType.localName;
 	var choiceList = self.objectType.choices;
 	var localName = childElement.objectType.localName;
+	// Update child type counts
 	if (!self.presentChildren[index]) {
 		self.presentChildren[index] = 1;
 	} else {
 		self.presentChildren[index] += 1;
 	}
-	for (var i = 0; i < choiceList.length; i++) {
-		if ($.inArray(localName, choiceList[i].elements) > -1) {
-			if (!self.choiceCount[i])
-				self.choiceCount[i] = 1;
-			else
-				self.choiceCount[i] += 1;
+	if (choiceList) {
+		for (var i = 0; i < choiceList.length; i++) {
+			if ($.inArray(localName, choiceList[i].elements) > -1) {
+				if (!self.choiceCount[i])
+					self.choiceCount[i] = 1;
+				else
+					self.choiceCount[i] += 1;
+			}
 		}
 	}
+	
 	return;
+};
+
+XMLElement.prototype.childCanBeAdded = function(childType) {
+	var presentCount = this.presentChildren[childType.localName] || 0;
+	// For the moment, if occur is not set, then pretend its unbound until the other limits are implemented
+	// Normally, this should be defaulting to 1
+	var maxOccurs = this.objectType.occurs && childType.localName in this.objectType.occurs? 
+			this.objectType.occurs[childType.localName].max : "unbounded";
+	if (maxOccurs != 'unbounded' && presentCount >= maxOccurs)
+		return false;
+	
+	var choiceList = this.objectType.choices;
+	if (choiceList) {
+		for (var i = 0; i < choiceList.length; i++) {
+			if ($.inArray(this.objectType.localName, choiceList[i].elements) > -1) {
+				if (this.choiceCount[i] >= choiceList[i].maxOccurs)
+					return false;
+			}
+		}
+	}
+	
+	return true;
+};
+
+XMLElement.prototype.childCanBeRemoved = function(childType) {
+	// Not checking min for groups or choices to avoid irreplaceable children
+	var index = childType.localName;
+	if (this.presentChildren[index])
+		return (this.presentChildren[index] > this.objectType.occurs[index].min);
+	return true;
+};
+
+XMLElement.prototype.childRemoved = function(childElement) {
+	var index = childElement.objectType.localName;
+	this.presentChildren[index] -= 1;
+	var choiceList = this.objectType.choices;
+	if (choiceList) {
+		for (var i = 0; i < choiceList.length; i++) {
+			if ($.inArray(index, choiceList[i].elements) > -1)
+				parent.choiceCount[i] -= 1;
+		}
+	}
 };
 
 XMLElement.prototype.initializeGUI = function () {
@@ -2952,7 +2977,7 @@ XMLElement.prototype.removeAttribute = function (objectType) {
 
 
 XMLElement.prototype.getSelectedAttribute = function () {
-	return this.attributeContainer.children(".selected");
+	return this.attributeContainer? this.attributeContainer.children(".selected") : [];
 };
 
 
