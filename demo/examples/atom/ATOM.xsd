@@ -67,7 +67,7 @@
 	<!-- Person Construct -->
 	<xs:complexType name="atomPersonConstruct">
 		<xs:sequence>
-			<xs:element ref="atom:name" minOccurs="0" maxOccurs="1" />
+			<xs:element ref="atom:name" minOccurs="2" maxOccurs="3" />
 			<xs:element ref="atom:uri" minOccurs="0" maxOccurs="1" />
 			<xs:element ref="atom:email" minOccurs="0" maxOccurs="1" />
 			<xs:group ref="atom:extensionElement" minOccurs="0"

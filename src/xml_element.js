@@ -83,7 +83,7 @@ XMLElement.prototype.renderChildren = function(recursive) {
 			if (self.editor.nsEquals(this, elementsArray[i])) {
 				var childElement = new XMLElement($(this), elementsArray[i], self.editor);
 				childElement.render(self, recursive);
-				self.addPresentChild(childElement);
+				self.addChildrenCount(childElement);
 				return;
 			}
 		}
@@ -106,27 +106,31 @@ XMLElement.prototype.renderAttributes = function () {
 	});
 };
 
+XMLElement.prototype.addChildrenCount = function(childElement) {
+	this.updateChildrenCount(childElement, 1);
+};
+
 /**
  * Updates child occurrence counts in response to a newly added child element
  */
-XMLElement.prototype.addPresentChild = function(childElement) {
+XMLElement.prototype.updateChildrenCount = function(childElement, delta) {
 	var self = this;
+	this.childCount += delta;
 	var index = childElement.objectType.localName;
 	var choiceList = self.objectType.choices;
 	var localName = childElement.objectType.localName;
 	// Update child type counts
-	if (!self.presentChildren[index]) {
-		self.presentChildren[index] = 1;
-	} else {
-		self.presentChildren[index] += 1;
-	}
+	if (self.presentChildren[index])
+		self.presentChildren[index] += delta;
+	else
+		self.presentChildren[index] = delta > 0? delta : 0;
 	if (choiceList) {
 		for (var i = 0; i < choiceList.length; i++) {
 			if ($.inArray(localName, choiceList[i].elements) > -1) {
-				if (!self.choiceCount[i])
-					self.choiceCount[i] = 1;
+				if (self.choiceCount[i])
+					self.choiceCount[i] += delta;
 				else
-					self.choiceCount[i] += 1;
+					self.choiceCount[i] = delta > 0? delta : 0;
 			}
 		}
 	}
@@ -159,21 +163,28 @@ XMLElement.prototype.childCanBeAdded = function(childType) {
 XMLElement.prototype.childCanBeRemoved = function(childType) {
 	// Not checking min for groups or choices to avoid irreplaceable children
 	var index = childType.localName;
-	if (this.presentChildren[index])
+	if (this.presentChildren[index] && index in this.objectType.occurs)
 		return (this.presentChildren[index] > this.objectType.occurs[index].min);
 	return true;
 };
 
 XMLElement.prototype.childRemoved = function(childElement) {
-	var index = childElement.objectType.localName;
-	this.presentChildren[index] -= 1;
-	var choiceList = this.objectType.choices;
-	if (choiceList) {
-		for (var i = 0; i < choiceList.length; i++) {
-			if ($.inArray(index, choiceList[i].elements) > -1)
-				parent.choiceCount[i] -= 1;
+	this.updateChildrenCount(childElement, -1);
+};
+
+XMLElement.prototype.populateChildren = function() {
+	var self = this;
+	$.each(this.objectType.elements, function(){
+		if (self.objectType.occurs && this.localName in self.objectType.occurs) {
+			var minOccurs = self.objectType.occurs[this.localName].min;
+			if (minOccurs) {
+				for (var i = 0; i < minOccurs; i++) {
+					var childElement = self.addElement(this);
+					self.editor.activeEditor.addElementEvent(self, childElement);
+				}
+			}
 		}
-	}
+	});
 };
 
 XMLElement.prototype.initializeGUI = function () {
@@ -311,9 +322,10 @@ XMLElement.prototype.addElement = function(objectType) {
 	}
 	
 	var childElement = new XMLElement(newElement, objectType, this.editor);
-	this.childCount++;
+	this.addChildrenCount(childElement);
 	if (this.guiElement != null)
 		childElement.render(this, true);
+	childElement.populateChildren();
 	
 	return childElement;
 };

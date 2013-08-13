@@ -136,16 +136,6 @@ GUIEditor.prototype.addElementEvent = function(parentElement, newElement) {
 	}
 	
 	var state = this.editor;
-	$.each(newElement.objectType.elements, function(){
-		if (this.minOccurs) {
-			var numElements = 0;
-			while (numElements < this.minOccurs) {
-				numElements++;
-				var childElement = newElement.addElement(this);
-				state.activeEditor.addElementEvent(newElement, childElement);
-			}
-		}
-	});
 
 	this.focusObject(newElement.guiElement);
 	this.selectElement(newElement);
