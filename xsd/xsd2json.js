@@ -506,7 +506,7 @@ Xsd2Json.prototype.buildAll = function(node, object) {
 
 Xsd2Json.prototype.buildChoice = function(node, object) {
 	var self = this;
-	choice = {
+	var choice = {
 			"elements": [],
 			"minOccurs": node.getAttribute("minOccurs"),
 			"maxOccurs": node.getAttribute("maxOccurs")

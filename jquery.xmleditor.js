@@ -2727,7 +2727,7 @@ XMLElement.prototype.childCanBeAdded = function(childType) {
 	var choiceList = this.objectType.choices;
 	if (choiceList) {
 		for (var i = 0; i < choiceList.length; i++) {
-			if ($.inArray(this.objectType.localName, choiceList[i].elements) > -1) {
+			if ($.inArray(childType.localName, choiceList[i].elements) > -1) {
 				if (this.choiceCount[i] >= choiceList[i].maxOccurs)
 					return false;
 			}
@@ -2740,7 +2740,7 @@ XMLElement.prototype.childCanBeAdded = function(childType) {
 XMLElement.prototype.childCanBeRemoved = function(childType) {
 	// Not checking min for groups or choices to avoid irreplaceable children
 	var index = childType.localName;
-	if (this.presentChildren[index] && index in this.objectType.occurs)
+	if (this.presentChildren[index] && this.objectType.occurs && index in this.objectType.occurs)
 		return (this.presentChildren[index] > this.objectType.occurs[index].min);
 	return true;
 };
