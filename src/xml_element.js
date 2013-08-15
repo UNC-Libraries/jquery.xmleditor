@@ -144,14 +144,15 @@ XMLElement.prototype.childCanBeAdded = function(childType) {
 	// Normally, this should be defaulting to 1
 	var maxOccurs = this.objectType.occurs && childType.localName in this.objectType.occurs? 
 			this.objectType.occurs[childType.localName].max : "unbounded";
-	if (maxOccurs != 'unbounded' && presentCount >= maxOccurs)
+	if (maxOccurs != null && maxOccurs != 'unbounded' && presentCount >= maxOccurs)
 		return false;
 	
 	var choiceList = this.objectType.choices;
 	if (choiceList) {
 		for (var i = 0; i < choiceList.length; i++) {
 			if ($.inArray(childType.localName, choiceList[i].elements) > -1) {
-				if (this.choiceCount[i] >= choiceList[i].maxOccurs)
+				var choiceCount = this.choiceCount[i] || 0;
+				if (choiceList[i].maxOccurs && choiceCount >= choiceList[i].maxOccurs)
 					return false;
 			}
 		}
