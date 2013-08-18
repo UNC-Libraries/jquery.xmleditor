@@ -5,6 +5,8 @@ function AbstractXMLObject(editor, objectType) {
 }
 
 AbstractXMLObject.prototype.createElementInput = function (inputID, startingValue, appendTarget){
+	if (startingValue === undefined)
+		startingValue = "";
 	var input = null;
 	var $input = null;
 	if (this.objectType.values.length > 0){

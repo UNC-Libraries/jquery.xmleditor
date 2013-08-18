@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>jQuery.xmleditor</title>
+<link rel="stylesheet" href="stylesheets/reset.css" type="text/css" />
+<link rel="stylesheet" href="stylesheets/demo.css" type="text/css" />
+<link rel="stylesheet" href="../css/jquery.xmleditor.css" type="text/css" />
+<script src="../lib/ace/src-min/ace.js"></script>
+<script src="../lib/jquery.min.js"></script>
+<script src="../lib/jquery-ui.min.js"></script>
+<script src="../lib/json2.js"></script>
+<script src="../lib/cycle.js"></script>
+<script src="../lib/vkbeautify.js"></script>
+<script src="../xsd/xsd2json.js"></script>
+<script src="../jquery.xmleditor.js"></script>
+</head>
+<body>
+	<div class="wrapper">
+		<header>
+			<h1>jQuery.xmleditor Embedded XSD Demo</h1>
+			<a href="https://github.com/UNC-Libraries/jquery.xmleditor">View
+				the Project on GitHub <small>UNC-Libraries/jquery.xmleditor</small>
+			</a>
+		</header>
+	</div>
+	<div id="xml_editor">
+		<mods:mods xmlns:mods="http://www.loc.gov/mods/v3"> </mods:mods>
+	</div>
+	<script>
+		$(function() {
+			var extractor = new Xsd2Json("mods-3-4.xsd", {"schemaURI":"examples/mods-3-4/"});
+			
+			$("#xml_editor").xmlEditor({
+				schema: extractor.getSchema()
+			});
+		});
+	</script>
+	<footer>
+		<p>
+			This project is maintained by <a
+				href="https://github.com/UNC-Libraries">UNC-Libraries</a>
+		</p>
+	</footer>
+</body>
+</html>

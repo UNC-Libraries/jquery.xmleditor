@@ -34,7 +34,7 @@ XMLElement.prototype.render = function(parentElement, recursive) {
 	// Create the element and add it to the container
 	this.guiElement = document.createElement('div');
 	this.guiElement.id = this.guiElementID;
-	this.guiElement.className = this.objectType.nameEsc + 'Instance ' + xmlElementClass;
+	this.guiElement.className = this.objectType.name.replace(":", "_") + 'Instance ' + xmlElementClass;
 	if (this.isTopLevel)
 		this.guiElement.className += ' ' + topLevelContainerClass;
 	this.parentElement.childContainer[0].appendChild(this.guiElement);
@@ -92,9 +92,10 @@ XMLElement.prototype.renderAttributes = function () {
 	var attributesArray = this.objectType.attributes;
 	
 	$(this.xmlNode[0].attributes).each(function() {
+		var attrNamespace = this.namespaceURI? this.namespaceURI : self.objectType.namespace;
+		var attrLocalName = self.editor.stripPrefix(this.nodeName);
 		for ( var i = 0; i < attributesArray.length; i++) {
-			var prefix = self.editor.xmlState.namespaces.getNamespacePrefix(attributesArray[i].namespace);
-			if (prefix + attributesArray[i].name == this.nodeName) {
+			if (attributesArray[i].localName == attrLocalName && attributesArray[i].namespace == attrNamespace) {
 				var attribute = new XMLAttribute(attributesArray[i], self, self.editor);
 				attribute.render();
 				return;
@@ -302,11 +303,11 @@ XMLElement.prototype.addAttribute = function (objectType) {
 		attributeValue = objectType.defaultValue;
 	}
 	var node = this.xmlNode[0];
-	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(objectType.namespace);
-	var attributeName = prefix + objectType.localName
-	if (node.setAttributeNS) {
-		node.setAttributeNS(prefix? objectType.namespace : null, attributeName, attributeValue);
-	} else this.xmlNode.attr(attributeName, attributeValue);
+	var attributeName = objectType.localName
+	// Only add prefix to attribute if its not in the same namespace as its element
+	if (objectType.namespace != this.objectType.namespace) 
+		attributeName = this.editor.xmlState.namespaces.getNamespacePrefix(objectType.namespace) + attributeName;
+	this.xmlNode.attr(attributeName, attributeValue);
 	return attributeValue;
 };
 

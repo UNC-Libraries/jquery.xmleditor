@@ -18,7 +18,7 @@ XMLAttribute.prototype.getDomElement = function () {
 };
 
 XMLAttribute.prototype.render = function (){
-	this.attributeID = this.xmlElement.guiElementID + "_" + this.objectType.nameEsc;
+	this.attributeID = this.xmlElement.guiElementID + "_" + this.objectType.name.replace(":", "_");
 	
 	this.attributeContainer = $("<div/>").attr({
 		'id' : this.attributeID + "_cont",
@@ -34,7 +34,8 @@ XMLAttribute.prototype.render = function (){
 	label.appendChild(document.createTextNode(this.objectType.name));
 	this.attributeContainer[0].appendChild(label);
 	
-	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace);
+	var prefix = (this.xmlElement.objectType.namespace == this.objectType.namespace)?
+			"" : this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace);
 	var attributeValue = this.xmlElement.xmlNode.attr(prefix + this.objectType.name);
 	if (attributeValue == '' && this.objectType.defaultValue != null) {
 		attributeValue = this.objectType.defaultValue;
