@@ -8,6 +8,13 @@ function XMLAttribute(objectType, xmlElement, editor) {
 	this.attributeInput = null;
 	this.attributeContainer = null;
 	this.addButton = null;
+
+	var prefix;
+	this.attributeName = objectType.localName;
+	if (this.xmlElement.objectType.namespace != this.objectType.namespace) {
+		prefix = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace);
+		this.attributeName = prefix + this.attributeName;
+	}
 }
 
 XMLAttribute.prototype.constructor = XMLAttribute;
@@ -34,9 +41,7 @@ XMLAttribute.prototype.render = function (){
 	label.appendChild(document.createTextNode(this.objectType.name));
 	this.attributeContainer[0].appendChild(label);
 	
-	var prefix = (this.xmlElement.objectType.namespace == this.objectType.namespace)?
-			"" : this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace);
-	var attributeValue = this.xmlElement.xmlNode.attr(prefix + this.objectType.name);
+	var attributeValue = this.xmlElement.xmlNode.attr(this.attributeName);
 	if (attributeValue == '' && this.objectType.defaultValue != null) {
 		attributeValue = this.objectType.defaultValue;
 	}
@@ -58,11 +63,11 @@ XMLAttribute.prototype.remove = function() {
 };
 
 XMLAttribute.prototype.syncValue = function() {
-	this.xmlElement.xmlNode.attr(this.objectType.name, this.attributeInput.val());
+	this.xmlElement.xmlNode.attr(this.attributeName, this.attributeInput.val());
 };
 
 XMLAttribute.prototype.changeValue = function(value) {
-	this.xmlElement.xmlNode.attr(this.objectType.name, value);
+	this.xmlElement.xmlNode.attr(this.attributeName, value);
 };
 
 XMLAttribute.prototype.select = function() {

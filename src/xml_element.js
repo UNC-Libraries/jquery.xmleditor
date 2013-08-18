@@ -303,11 +303,15 @@ XMLElement.prototype.addAttribute = function (objectType) {
 		attributeValue = objectType.defaultValue;
 	}
 	var node = this.xmlNode[0];
+	var prefix;
 	var attributeName = objectType.localName
-	// Only add prefix to attribute if its not in the same namespace as its element
-	if (objectType.namespace != this.objectType.namespace) 
-		attributeName = this.editor.xmlState.namespaces.getNamespacePrefix(objectType.namespace) + attributeName;
-	this.xmlNode.attr(attributeName, attributeValue);
+	if (objectType.namespace != this.objectType.namespace) {
+		prefix = this.editor.xmlState.namespaces.getNamespacePrefix(objectType.namespace);
+		attributeName = prefix + attributeName;
+	}
+	if (node.setAttributeNS && prefix) {
+		node.setAttributeNS(objectType.namespace, attributeName, attributeValue);
+	} else this.xmlNode.attr(attributeName, attributeValue);
 	return attributeValue;
 };
 
