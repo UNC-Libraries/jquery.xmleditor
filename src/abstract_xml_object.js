@@ -30,7 +30,7 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 		input = document.createElement('textarea');
 		input.id = inputID;
 		input.className = 'xml_textarea';
-		input.value = startingValue;
+		input.value = startingValue? startingValue : " ";
 		appendTarget.appendChild(input);
 		
 		$input = $(input);
@@ -46,7 +46,7 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 		input.type = 'text';
 		input.id = inputID;
 		input.className = 'xml_input';
-		input.value = startingValue;
+		input.value = startingValue? startingValue : "";
 		appendTarget.appendChild(input);
 		
 		$input = $(input);

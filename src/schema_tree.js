@@ -5,13 +5,18 @@
 function SchemaTree(rootElement) {
 	this.nameToDef = {};
 	this.rootElement = rootElement;
+	this.namespaceIndexes = this.rootElement.namespaces;
 	this.namespaces = new NamespaceList();
+	for (var index in this.namespaceIndexes) {
+		var def = this.namespaceIndexes[index];
+		this.namespaces.addNamespace(def.uri, def.prefix);
+	}
 }
 
 SchemaTree.prototype.build = function(elementName, elementDef, parentDef) {
 	// Default to the root element if no element is given.
 	if (arguments.length == 0) {
-		elementName = this.rootElement.name;
+		elementName = this.rootElement.ns + ":" + this.rootElement.name;
 		elementDef = this.rootElement;
 		parentDef = null;
 	}
@@ -24,13 +29,10 @@ SchemaTree.prototype.build = function(elementName, elementDef, parentDef) {
 		elementDef["parents"] = [parentDef];
 	}
 	
-	// Collect the list of prefix/namespace pairs in use in this schema
-	var namespace = elementDef.namespace;
-	if (!this.namespaces.containsURI(namespace)) {
-		var nameParts = elementDef.name.split(":");
-		var prefix = (nameParts.length == 1)? "" : nameParts[0];
-		this.namespaces.addNamespace(namespace, prefix);
-	}
+	var namespaceDefinition = this.namespaceIndexes[elementDef.ns];
+	//Resolve namespace index into actual namespace uri
+	elementDef.namespace = namespaceDefinition.uri;
+	elementDef.name = namespaceDefinition.prefix? namespaceDefinition.prefix + ":" : "" + elementDef.localName;
 	
 	// Add this definition to the list matching its element name, in case of overlapping names
 	var definitionList = this.nameToDef[elementName];
@@ -40,10 +42,14 @@ SchemaTree.prototype.build = function(elementName, elementDef, parentDef) {
 		this.nameToDef[elementName].push(elementDef);
 	}
 	
-	// Call build on all the child elements of this element.
 	var self = this;
+	if (elementDef.attributes)
+		$.each(elementDef.attributes, function() {
+			this.namespace = self.namespaceIndexes[this.ns].uri;
+		});
+	// Call build on all the child elements of this element.
 	$.each(elementDef.elements, function() {
-		self.build(this.name, this, elementDef);
+		self.build(this.ns + ":" + this.localName, this, elementDef);
 	});
 };
 
@@ -54,7 +60,13 @@ SchemaTree.prototype.build = function(elementName, elementDef, parentDef) {
  * disambiguate when the name is not unique.
  */
 SchemaTree.prototype.getElementDefinition = function(elementNode) {
-	var prefixedName = this.namespaces.getNamespacePrefix(elementNode.namespaceURI) + localName(elementNode);
+	var namespaceIndex = 0;
+	$.each(this.namespaceIndexes, function(){
+		if (this.uri == elementNode.namespaceURI)
+			return false;
+		namespaceIndex++;
+	});
+	var prefixedName = namespaceIndex + ":" + localName(elementNode);
 	var defList = this.nameToDef[prefixedName];
 	if (defList == null)
 		return null;

@@ -80,7 +80,8 @@ XMLElement.prototype.renderChildren = function(recursive) {
 	var self = this;
 	this.xmlNode.children().each(function() {
 		for ( var i = 0; i < elementsArray.length; i++) {
-			if (self.editor.nsEquals(this, elementsArray[i])) {
+			var prefix = self.editor.xmlState.namespaces.getNamespacePrefix(elementsArray[i].namespace);
+			if (prefix + elementsArray[i].localName == this.nodeName) {
 				var childElement = new XMLElement($(this), elementsArray[i], self.editor);
 				childElement.render(self, recursive);
 				self.addChildrenCount(childElement);
@@ -97,7 +98,7 @@ XMLElement.prototype.renderAttributes = function () {
 	$(this.xmlNode[0].attributes).each(function() {
 		for ( var i = 0; i < attributesArray.length; i++) {
 			var prefix = self.editor.xmlState.namespaces.getNamespacePrefix(attributesArray[i].namespace);
-			if (prefix + attributesArray[i].name == this.nodeName) {
+			if (prefix + attributesArray[i].localName == this.nodeName) {
 				var attribute = new XMLAttribute(attributesArray[i], self, self.editor);
 				attribute.render();
 				return;

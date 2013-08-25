@@ -813,7 +813,7 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 		input = document.createElement('textarea');
 		input.id = inputID;
 		input.className = 'xml_textarea';
-		input.value = startingValue;
+		input.value = startingValue? startingValue : " ";
 		appendTarget.appendChild(input);
 		
 		$input = $(input);
@@ -829,7 +829,7 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 		input.type = 'text';
 		input.id = inputID;
 		input.className = 'xml_input';
-		input.value = startingValue;
+		input.value = startingValue? startingValue : "";
 		appendTarget.appendChild(input);
 		
 		$input = $(input);
@@ -849,8 +849,8 @@ AbstractXMLObject.prototype.focus = function() {
 AbstractXMLObject.prototype.getDomElement = function () {
 	return null;
 };
-function AttributeMenu(menuID, label, expanded, enabled, owner) {
-	ModifyElementMenu.call(this, menuID, label, expanded, enabled, owner);
+function AttributeMenu(menuID, label, expanded, enabled, owner, editor) {
+	ModifyElementMenu.call(this, menuID, label, expanded, enabled, owner, editor);
 }
 
 AttributeMenu.prototype.constructor = AttributeMenu;
@@ -889,10 +889,17 @@ AttributeMenu.prototype.populate = function (xmlElement) {
 	var self = this;
 	$.each(this.target.objectType.attributes, function(){
 		var attribute = this;
+		// Using prefix according to the xml document namespace prefixes
+		var nsPrefix = self.editor.xmlState.namespaces.getNamespacePrefix(attribute.namespace);
+		// Namespace not present in XML, so use prefix from schema
+		if (nsPrefix === undefined)
+			nsPrefix = self.editor.xmlTree.namespaces.getNamespacePrefix(attribute.namespace);
+			
+		var attrName = nsPrefix + attribute.localName;
 		var addButton = $("<li/>").attr({
-				title : 'Add ' + attribute.name,
-				'id' : xmlElement.guiElementID + "_" + attribute.nameEsc + "_add"
-			}).html(attribute.name)
+				title : 'Add ' + attrName,
+				'id' : xmlElement.guiElementID + "_" + attrName.replace(":", "_") + "_add"
+			}).html(attrName)
 			.data('xml', {
 				"objectType": attribute,
 				"target": xmlElement
@@ -989,14 +996,11 @@ DocumentState.prototype.updateStateMessage = function () {
 };
 
 DocumentState.prototype.addNamespace = function(prefixOrType, namespace) {
-	if (this.xml[0].setAttributeNS)
 	var prefix;
-	if (arguments.length == 1) {
-		var prefix = prefixOrType.name.split(':');
-		if (prefix.length > 1)
-			prefix = prefix[0];
-		else prefix = '';
+	if (typeof prefixOrType === "object"){
+		// When adding a ns from a schema definition, use schema prefix
 		namespace = prefixOrType.namespace;
+		prefix = this.editor.xmlTree.namespaces.getNamespacePrefix(namespace);
 	} else {
 		prefix = prefixOrType;
 	}
@@ -1780,7 +1784,7 @@ MenuBar.prototype.addEntry = function(entry) {
  * @returns
  */
 
-function ModifyElementMenu(menuID, label, expanded, enabled, owner) {
+function ModifyElementMenu(menuID, label, expanded, enabled, owner, editor) {
 	this.menuID = menuID;
 	this.label = label;
 	this.menuHeader = null;
@@ -1789,6 +1793,7 @@ function ModifyElementMenu(menuID, label, expanded, enabled, owner) {
 	this.expanded = expanded;
 	this.target = null;
 	this.owner = owner;
+	this.editor = editor;
 }
 
 ModifyElementMenu.prototype.destroy = function() {
@@ -1866,9 +1871,10 @@ ModifyElementMenu.prototype.populate = function(xmlElement) {
 	
 	$.each(this.target.objectType.elements, function(){
 		var xmlElement = this;
+		var elName = self.editor.xmlState.namespaces.getNamespacePrefix(xmlElement.namespace) + xmlElement.localName;
 		var addButton = $("<li/>").attr({
-			title : 'Add ' + xmlElement.name
-		}).html(xmlElement.name)
+			title : 'Add ' + elName
+		}).html(elName)
 		.data('xml', {
 				"target": self.target,
 				"objectType": xmlElement
@@ -1932,7 +1938,7 @@ ModifyMenuPanel.prototype.initialize = function (parentContainer) {
 ModifyMenuPanel.prototype.addMenu = function(menuID, label, expanded, enabled, contextual) {
 	if (arguments.length == 4)
 		contextual = false;
-	var menu = new ModifyElementMenu(menuID, label, expanded, enabled, this);
+	var menu = new ModifyElementMenu(menuID, label, expanded, enabled, this, this.editor);
 	this.menus[menuID] = {
 			"menu" : menu, 
 			"contextual": contextual
@@ -1945,7 +1951,7 @@ ModifyMenuPanel.prototype.addMenu = function(menuID, label, expanded, enabled, c
 ModifyMenuPanel.prototype.addAttributeMenu = function(menuID, label, expanded, enabled, contextual) {
 	if (arguments.length == 4)
 		contextual = false;
-	var menu = new AttributeMenu(menuID, label, expanded, enabled, this);
+	var menu = new AttributeMenu(menuID, label, expanded, enabled, this, this.editor);
 	this.menus[menuID] = {
 			"menu" : menu, 
 			"contextual": contextual
@@ -2066,13 +2072,18 @@ NamespaceList.prototype.getNamespacePrefix = function(nsURI) {
 function SchemaTree(rootElement) {
 	this.nameToDef = {};
 	this.rootElement = rootElement;
+	this.namespaceIndexes = this.rootElement.namespaces;
 	this.namespaces = new NamespaceList();
+	for (var index in this.namespaceIndexes) {
+		var def = this.namespaceIndexes[index];
+		this.namespaces.addNamespace(def.uri, def.prefix);
+	}
 }
 
 SchemaTree.prototype.build = function(elementName, elementDef, parentDef) {
 	// Default to the root element if no element is given.
 	if (arguments.length == 0) {
-		elementName = this.rootElement.name;
+		elementName = this.rootElement.ns + ":" + this.rootElement.name;
 		elementDef = this.rootElement;
 		parentDef = null;
 	}
@@ -2085,13 +2096,10 @@ SchemaTree.prototype.build = function(elementName, elementDef, parentDef) {
 		elementDef["parents"] = [parentDef];
 	}
 	
-	// Collect the list of prefix/namespace pairs in use in this schema
-	var namespace = elementDef.namespace;
-	if (!this.namespaces.containsURI(namespace)) {
-		var nameParts = elementDef.name.split(":");
-		var prefix = (nameParts.length == 1)? "" : nameParts[0];
-		this.namespaces.addNamespace(namespace, prefix);
-	}
+	var namespaceDefinition = this.namespaceIndexes[elementDef.ns];
+	//Resolve namespace index into actual namespace uri
+	elementDef.namespace = namespaceDefinition.uri;
+	elementDef.name = namespaceDefinition.prefix? namespaceDefinition.prefix + ":" : "" + elementDef.localName;
 	
 	// Add this definition to the list matching its element name, in case of overlapping names
 	var definitionList = this.nameToDef[elementName];
@@ -2101,10 +2109,14 @@ SchemaTree.prototype.build = function(elementName, elementDef, parentDef) {
 		this.nameToDef[elementName].push(elementDef);
 	}
 	
-	// Call build on all the child elements of this element.
 	var self = this;
+	if (elementDef.attributes)
+		$.each(elementDef.attributes, function() {
+			this.namespace = self.namespaceIndexes[this.ns].uri;
+		});
+	// Call build on all the child elements of this element.
 	$.each(elementDef.elements, function() {
-		self.build(this.name, this, elementDef);
+		self.build(this.ns + ":" + this.localName, this, elementDef);
 	});
 };
 
@@ -2115,7 +2127,13 @@ SchemaTree.prototype.build = function(elementName, elementDef, parentDef) {
  * disambiguate when the name is not unique.
  */
 SchemaTree.prototype.getElementDefinition = function(elementNode) {
-	var prefixedName = this.namespaces.getNamespacePrefix(elementNode.namespaceURI) + localName(elementNode);
+	var namespaceIndex = 0;
+	$.each(this.namespaceIndexes, function(){
+		if (this.uri == elementNode.namespaceURI)
+			return false;
+		namespaceIndex++;
+	});
+	var prefixedName = namespaceIndex + ":" + localName(elementNode);
 	var defList = this.nameToDef[prefixedName];
 	if (defList == null)
 		return null;
@@ -2337,9 +2355,6 @@ TextEditor.prototype.selectTagAtCursor = function() {
 		// Get the schema's namespace prefix for the namespace of the node from the document
 		// Determine what namespace is bound in the document to the prefix on this node
 		var documentNS = this.editor.xmlState.namespaces.namespaceURIs[nsPrefix];
-		// Determine what prefix is used for that namespace in the schema tree
-		var schemaPrefix = this.editor.xmlTree.namespaces.getNamespacePrefix(documentNS);
-		var prefixedTitle = schemaPrefix + unprefixedTitle; 
 		
 		if (this.editor.xmlState.changesNotSynced()) {
 			//Refresh the xml if it has changed
@@ -2533,7 +2548,8 @@ XMLAttribute.prototype.render = function (){
 	this.attributeContainer[0].appendChild(removeButton);
 	
 	var label = document.createElement('label');
-	label.appendChild(document.createTextNode(this.objectType.name));
+	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace);
+	label.appendChild(document.createTextNode(prefix + this.objectType.localName));
 	this.attributeContainer[0].appendChild(label);
 	
 	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace);
@@ -2657,7 +2673,8 @@ XMLElement.prototype.renderChildren = function(recursive) {
 	var self = this;
 	this.xmlNode.children().each(function() {
 		for ( var i = 0; i < elementsArray.length; i++) {
-			if (self.editor.nsEquals(this, elementsArray[i])) {
+			var prefix = self.editor.xmlState.namespaces.getNamespacePrefix(elementsArray[i].namespace);
+			if (prefix + elementsArray[i].localName == this.nodeName) {
 				var childElement = new XMLElement($(this), elementsArray[i], self.editor);
 				childElement.render(self, recursive);
 				self.addChildrenCount(childElement);
@@ -2674,7 +2691,7 @@ XMLElement.prototype.renderAttributes = function () {
 	$(this.xmlNode[0].attributes).each(function() {
 		for ( var i = 0; i < attributesArray.length; i++) {
 			var prefix = self.editor.xmlState.namespaces.getNamespacePrefix(attributesArray[i].namespace);
-			if (prefix + attributesArray[i].name == this.nodeName) {
+			if (prefix + attributesArray[i].localName == this.nodeName) {
 				var attribute = new XMLAttribute(attributesArray[i], self, self.editor);
 				attribute.render();
 				return;

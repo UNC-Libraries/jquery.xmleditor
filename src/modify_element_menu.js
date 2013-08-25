@@ -6,7 +6,7 @@
  * @param enabled
  * @returns
  */
-function ModifyElementMenu(menuID, label, expanded, enabled, owner) {
+function ModifyElementMenu(menuID, label, expanded, enabled, owner, editor) {
 	this.menuID = menuID;
 	this.label = label;
 	this.menuHeader = null;
@@ -15,6 +15,7 @@ function ModifyElementMenu(menuID, label, expanded, enabled, owner) {
 	this.expanded = expanded;
 	this.target = null;
 	this.owner = owner;
+	this.editor = editor;
 }
 
 ModifyElementMenu.prototype.destroy = function() {
@@ -92,9 +93,10 @@ ModifyElementMenu.prototype.populate = function(xmlElement) {
 	
 	$.each(this.target.objectType.elements, function(){
 		var xmlElement = this;
+		var elName = self.editor.xmlState.namespaces.getNamespacePrefix(xmlElement.namespace) + xmlElement.localName;
 		var addButton = $("<li/>").attr({
-			title : 'Add ' + xmlElement.name
-		}).html(xmlElement.name)
+			title : 'Add ' + elName
+		}).html(elName)
 		.data('xml', {
 				"target": self.target,
 				"objectType": xmlElement

@@ -36,7 +36,7 @@ ModifyMenuPanel.prototype.initialize = function (parentContainer) {
 ModifyMenuPanel.prototype.addMenu = function(menuID, label, expanded, enabled, contextual) {
 	if (arguments.length == 4)
 		contextual = false;
-	var menu = new ModifyElementMenu(menuID, label, expanded, enabled, this);
+	var menu = new ModifyElementMenu(menuID, label, expanded, enabled, this, this.editor);
 	this.menus[menuID] = {
 			"menu" : menu, 
 			"contextual": contextual
@@ -49,7 +49,7 @@ ModifyMenuPanel.prototype.addMenu = function(menuID, label, expanded, enabled, c
 ModifyMenuPanel.prototype.addAttributeMenu = function(menuID, label, expanded, enabled, contextual) {
 	if (arguments.length == 4)
 		contextual = false;
-	var menu = new AttributeMenu(menuID, label, expanded, enabled, this);
+	var menu = new AttributeMenu(menuID, label, expanded, enabled, this, this.editor);
 	this.menus[menuID] = {
 			"menu" : menu, 
 			"contextual": contextual

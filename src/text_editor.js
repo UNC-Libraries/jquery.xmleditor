@@ -185,9 +185,6 @@ TextEditor.prototype.selectTagAtCursor = function() {
 		// Get the schema's namespace prefix for the namespace of the node from the document
 		// Determine what namespace is bound in the document to the prefix on this node
 		var documentNS = this.editor.xmlState.namespaces.namespaceURIs[nsPrefix];
-		// Determine what prefix is used for that namespace in the schema tree
-		var schemaPrefix = this.editor.xmlTree.namespaces.getNamespacePrefix(documentNS);
-		var prefixedTitle = schemaPrefix + unprefixedTitle; 
 		
 		if (this.editor.xmlState.changesNotSynced()) {
 			//Refresh the xml if it has changed

@@ -65,14 +65,11 @@ DocumentState.prototype.updateStateMessage = function () {
 };
 
 DocumentState.prototype.addNamespace = function(prefixOrType, namespace) {
-	if (this.xml[0].setAttributeNS)
 	var prefix;
-	if (arguments.length == 1) {
-		var prefix = prefixOrType.name.split(':');
-		if (prefix.length > 1)
-			prefix = prefix[0];
-		else prefix = '';
+	if (typeof prefixOrType === "object"){
+		// When adding a ns from a schema definition, use schema prefix
 		namespace = prefixOrType.namespace;
+		prefix = this.editor.xmlTree.namespaces.getNamespacePrefix(namespace);
 	} else {
 		prefix = prefixOrType;
 	}

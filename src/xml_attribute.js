@@ -31,7 +31,8 @@ XMLAttribute.prototype.render = function (){
 	this.attributeContainer[0].appendChild(removeButton);
 	
 	var label = document.createElement('label');
-	label.appendChild(document.createTextNode(this.objectType.name));
+	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace);
+	label.appendChild(document.createTextNode(prefix + this.objectType.localName));
 	this.attributeContainer[0].appendChild(label);
 	
 	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace);
