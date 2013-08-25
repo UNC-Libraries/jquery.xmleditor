@@ -650,6 +650,11 @@ $.widget( "xml.xmlEditor", {
 		return localName(element) == localName(node) && node.namespaceURI == element.namespace;
 	},
 	
+	stripPrefix: function(name) {
+		var index = name.indexOf(":");
+		return index == -1? name: name.substring(index + 1);
+	},
+	
 	getXPath: function(element) {
 		var xpath = '';
 		for ( ; element && element.nodeType == 1; element = element.parentNode ) {

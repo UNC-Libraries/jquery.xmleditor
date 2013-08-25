@@ -651,6 +651,11 @@ $.widget( "xml.xmlEditor", {
 		return localName(element) == localName(node) && node.namespaceURI == element.namespace;
 	},
 	
+	stripPrefix: function(name) {
+		var index = name.indexOf(":");
+		return index == -1? name: name.substring(index + 1);
+	},
+	
 	getXPath: function(element) {
 		var xpath = '';
 		for ( ; element && element.nodeType == 1; element = element.parentNode ) {
@@ -788,6 +793,8 @@ function AbstractXMLObject(editor, objectType) {
 }
 
 AbstractXMLObject.prototype.createElementInput = function (inputID, startingValue, appendTarget){
+	if (startingValue === undefined)
+		startingValue = "";
 	var input = null;
 	var $input = null;
 	if (this.objectType.values.length > 0){
@@ -2525,6 +2532,13 @@ function XMLAttribute(objectType, xmlElement, editor) {
 	this.attributeInput = null;
 	this.attributeContainer = null;
 	this.addButton = null;
+
+	var prefix;
+	this.attributeName = objectType.localName;
+	if (this.xmlElement.objectType.namespace != this.objectType.namespace) {
+		prefix = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace);
+		this.attributeName = prefix + this.attributeName;
+	}
 }
 
 XMLAttribute.prototype.constructor = XMLAttribute;
@@ -2535,7 +2549,7 @@ XMLAttribute.prototype.getDomElement = function () {
 };
 
 XMLAttribute.prototype.render = function (){
-	this.attributeID = this.xmlElement.guiElementID + "_" + this.objectType.nameEsc;
+	this.attributeID = this.xmlElement.guiElementID + "_" + this.objectType.ns + "_" + this.objectType.localName;
 	
 	this.attributeContainer = $("<div/>").attr({
 		'id' : this.attributeID + "_cont",
@@ -2552,8 +2566,7 @@ XMLAttribute.prototype.render = function (){
 	label.appendChild(document.createTextNode(prefix + this.objectType.localName));
 	this.attributeContainer[0].appendChild(label);
 	
-	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace);
-	var attributeValue = this.xmlElement.xmlNode.attr(prefix + this.objectType.name);
+	var attributeValue = this.xmlElement.xmlNode.attr(this.attributeName);
 	if (attributeValue == '' && this.objectType.defaultValue != null) {
 		attributeValue = this.objectType.defaultValue;
 	}
@@ -2575,11 +2588,11 @@ XMLAttribute.prototype.remove = function() {
 };
 
 XMLAttribute.prototype.syncValue = function() {
-	this.xmlElement.xmlNode.attr(this.objectType.name, this.attributeInput.val());
+	this.xmlElement.xmlNode.attr(this.attributeName, this.attributeInput.val());
 };
 
 XMLAttribute.prototype.changeValue = function(value) {
-	this.xmlElement.xmlNode.attr(this.objectType.name, value);
+	this.xmlElement.xmlNode.attr(this.attributeName, value);
 };
 
 XMLAttribute.prototype.select = function() {
@@ -2629,7 +2642,7 @@ XMLElement.prototype.render = function(parentElement, recursive) {
 	// Create the element and add it to the container
 	this.guiElement = document.createElement('div');
 	this.guiElement.id = this.guiElementID;
-	this.guiElement.className = this.objectType.localName + 'Instance ' + xmlElementClass;
+	this.guiElement.className = this.objectType.ns + "_" + this.objectType.localName + 'Instance ' + xmlElementClass;
 	if (this.isTopLevel)
 		this.guiElement.className += ' ' + topLevelContainerClass;
 	this.parentElement.childContainer[0].appendChild(this.guiElement);
@@ -2689,9 +2702,10 @@ XMLElement.prototype.renderAttributes = function () {
 	var attributesArray = this.objectType.attributes;
 	
 	$(this.xmlNode[0].attributes).each(function() {
+		var attrNamespace = this.namespaceURI? this.namespaceURI : self.objectType.namespace;
+		var attrLocalName = self.editor.stripPrefix(this.nodeName);
 		for ( var i = 0; i < attributesArray.length; i++) {
-			var prefix = self.editor.xmlState.namespaces.getNamespacePrefix(attributesArray[i].namespace);
-			if (prefix + attributesArray[i].localName == this.nodeName) {
+			if (attributesArray[i].localName == attrLocalName && attributesArray[i].namespace == attrNamespace) {
 				var attribute = new XMLAttribute(attributesArray[i], self, self.editor);
 				attribute.render();
 				return;
@@ -2982,10 +2996,14 @@ XMLElement.prototype.addAttribute = function (objectType) {
 		attributeValue = objectType.defaultValue;
 	}
 	var node = this.xmlNode[0];
-	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(objectType.namespace);
-	var attributeName = prefix + objectType.localName
-	if (node.setAttributeNS) {
-		node.setAttributeNS(prefix? objectType.namespace : null, attributeName, attributeValue);
+	var prefix;
+	var attributeName = objectType.localName
+	if (objectType.namespace != this.objectType.namespace) {
+		prefix = this.editor.xmlState.namespaces.getNamespacePrefix(objectType.namespace);
+		attributeName = prefix + attributeName;
+	}
+	if (node.setAttributeNS && prefix) {
+		node.setAttributeNS(objectType.namespace, attributeName, attributeValue);
 	} else this.xmlNode.attr(attributeName, attributeValue);
 	return attributeValue;
 };
