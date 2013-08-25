@@ -32,7 +32,10 @@ SchemaTree.prototype.build = function(elementName, elementDef, parentDef) {
 	var namespaceDefinition = this.namespaceIndexes[elementDef.ns];
 	//Resolve namespace index into actual namespace uri
 	elementDef.namespace = namespaceDefinition.uri;
-	elementDef.name = namespaceDefinition.prefix? namespaceDefinition.prefix + ":" : "" + elementDef.localName;
+	if (!elementDef.schema) {
+		elementDef.localName = elementDef.name;
+		elementDef.name = namespaceDefinition.prefix? namespaceDefinition.prefix + ":" : "" + elementDef.localName;
+	}
 	
 	// Add this definition to the list matching its element name, in case of overlapping names
 	var definitionList = this.nameToDef[elementName];
@@ -45,11 +48,16 @@ SchemaTree.prototype.build = function(elementName, elementDef, parentDef) {
 	var self = this;
 	if (elementDef.attributes)
 		$.each(elementDef.attributes, function() {
-			this.namespace = self.namespaceIndexes[this.ns].uri;
+			if (this.localName)
+				return true;
+			this.localName = this.name;
+			var namespaceDefinition = self.namespaceIndexes[this.ns];
+			this.namespace = namespaceDefinition.uri;
+			this.name = (namespaceDefinition.prefix? namespaceDefinition.prefix + ":" : "") + this.localName;
 		});
 	// Call build on all the child elements of this element.
 	$.each(elementDef.elements, function() {
-		self.build(this.ns + ":" + this.localName, this, elementDef);
+		self.build(this.ns + ":" + this.name, this, elementDef);
 	});
 };
 

@@ -2106,7 +2106,10 @@ SchemaTree.prototype.build = function(elementName, elementDef, parentDef) {
 	var namespaceDefinition = this.namespaceIndexes[elementDef.ns];
 	//Resolve namespace index into actual namespace uri
 	elementDef.namespace = namespaceDefinition.uri;
-	elementDef.name = namespaceDefinition.prefix? namespaceDefinition.prefix + ":" : "" + elementDef.localName;
+	if (!elementDef.schema) {
+		elementDef.localName = elementDef.name;
+		elementDef.name = namespaceDefinition.prefix? namespaceDefinition.prefix + ":" : "" + elementDef.localName;
+	}
 	
 	// Add this definition to the list matching its element name, in case of overlapping names
 	var definitionList = this.nameToDef[elementName];
@@ -2119,11 +2122,16 @@ SchemaTree.prototype.build = function(elementName, elementDef, parentDef) {
 	var self = this;
 	if (elementDef.attributes)
 		$.each(elementDef.attributes, function() {
-			this.namespace = self.namespaceIndexes[this.ns].uri;
+			if (this.localName)
+				return true;
+			this.localName = this.name;
+			var namespaceDefinition = self.namespaceIndexes[this.ns];
+			this.namespace = namespaceDefinition.uri;
+			this.name = (namespaceDefinition.prefix? namespaceDefinition.prefix + ":" : "") + this.localName;
 		});
 	// Call build on all the child elements of this element.
 	$.each(elementDef.elements, function() {
-		self.build(this.ns + ":" + this.localName, this, elementDef);
+		self.build(this.ns + ":" + this.name, this, elementDef);
 	});
 };
 
@@ -2724,17 +2732,16 @@ XMLElement.prototype.addChildrenCount = function(childElement) {
 XMLElement.prototype.updateChildrenCount = function(childElement, delta) {
 	var self = this;
 	this.childCount += delta;
-	var index = childElement.objectType.localName;
+	var childName = childElement.objectType.ns + ":" + childElement.objectType.localName;
 	var choiceList = self.objectType.choices;
-	var localName = childElement.objectType.localName;
 	// Update child type counts
-	if (self.presentChildren[index])
-		self.presentChildren[index] += delta;
+	if (self.presentChildren[childName])
+		self.presentChildren[childName] += delta;
 	else
-		self.presentChildren[index] = delta > 0? delta : 0;
+		self.presentChildren[childName] = delta > 0? delta : 0;
 	if (choiceList) {
 		for (var i = 0; i < choiceList.length; i++) {
-			if ($.inArray(localName, choiceList[i].elements) > -1) {
+			if ($.inArray(childName, choiceList[i].elements) > -1) {
 				if (self.choiceCount[i])
 					self.choiceCount[i] += delta;
 				else
@@ -2747,18 +2754,19 @@ XMLElement.prototype.updateChildrenCount = function(childElement, delta) {
 };
 
 XMLElement.prototype.childCanBeAdded = function(childType) {
-	var presentCount = this.presentChildren[childType.localName] || 0;
+	var childName = childType.ns + ":" + childType.localName;
+	var presentCount = this.presentChildren[childName] || 0;
 	// For the moment, if occur is not set, then pretend its unbound until the other limits are implemented
 	// Normally, this should be defaulting to 1
-	var maxOccurs = this.objectType.occurs && childType.localName in this.objectType.occurs? 
-			this.objectType.occurs[childType.localName].max : "unbounded";
+	var maxOccurs = this.objectType.occurs && childName in this.objectType.occurs? 
+			this.objectType.occurs[childName].max : "unbounded";
 	if (maxOccurs != null && maxOccurs != 'unbounded' && presentCount >= maxOccurs)
 		return false;
 	
 	var choiceList = this.objectType.choices;
 	if (choiceList) {
 		for (var i = 0; i < choiceList.length; i++) {
-			if ($.inArray(childType.localName, choiceList[i].elements) > -1) {
+			if ($.inArray(childName, choiceList[i].elements) > -1) {
 				var choiceCount = this.choiceCount[i] || 0;
 				if (choiceList[i].maxOccurs && choiceCount >= choiceList[i].maxOccurs)
 					return false;
@@ -2771,9 +2779,9 @@ XMLElement.prototype.childCanBeAdded = function(childType) {
 
 XMLElement.prototype.childCanBeRemoved = function(childType) {
 	// Not checking min for groups or choices to avoid irreplaceable children
-	var index = childType.localName;
-	if (this.presentChildren[index] && this.objectType.occurs && index in this.objectType.occurs)
-		return (this.presentChildren[index] > this.objectType.occurs[index].min);
+	var childName = childType.ns + ":" + childType.localName;
+	if (this.presentChildren[childName] && this.objectType.occurs && childName in this.objectType.occurs)
+		return (this.presentChildren[childName] > this.objectType.occurs[childName].min);
 	return true;
 };
 
@@ -2784,8 +2792,9 @@ XMLElement.prototype.childRemoved = function(childElement) {
 XMLElement.prototype.populateChildren = function() {
 	var self = this;
 	$.each(this.objectType.elements, function(){
-		if (self.objectType.occurs && this.localName in self.objectType.occurs) {
-			var minOccurs = self.objectType.occurs[this.localName].min;
+		var childName = this.ns + ":" + this.localName;
+		if (self.objectType.occurs && childName in self.objectType.occurs) {
+			var minOccurs = self.objectType.occurs[childName].min;
 			if (minOccurs) {
 				for (var i = 0; i < minOccurs; i++) {
 					var childElement = self.addElement(this);

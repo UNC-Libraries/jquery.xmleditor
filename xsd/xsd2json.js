@@ -277,7 +277,7 @@ Xsd2Json.prototype.buildElement = function(node, parentObject) {
 			var nameOrRefParts = nameParts? nameParts : this.extractName(node.getAttribute("ref"));
 			if (!("occurs" in parentObject))
 				parentObject.occurs = {};
-			parentObject.occurs[nameOrRefParts.name] = {
+			parentObject.occurs[nameOrRefParts.indexedName] = {
 					'min' : minOccurs,
 					'max' : maxOccurs
 			};
@@ -289,7 +289,7 @@ Xsd2Json.prototype.buildElement = function(node, parentObject) {
 	if (hasSubGroup || hasRef){
 		definition = this.execute(node, 'buildElement', parentObject);
 		if (hasSubGroup) {
-			definition = $.extend({}, definition, {'localName' : nameParts.localName});
+			definition = $.extend({}, definition, {'name' : nameParts.localName});
 			if (node.parentNode === this.xsd && !hasRef) {
 				this.rootDefinitions[nameParts.indexedName] = definition;
 			}
@@ -297,7 +297,7 @@ Xsd2Json.prototype.buildElement = function(node, parentObject) {
 	} else {
 		// Element has a name, means its a new element
 		definition = {
-				"localName" : nameParts.localName,
+				"name" : nameParts.localName,
 				"elements": [],
 				"attributes": [],
 				"values": [],
@@ -336,7 +336,7 @@ Xsd2Json.prototype.buildElement = function(node, parentObject) {
 Xsd2Json.prototype.containsChild = function(object, child) {
 	if (object.elements) {
 		for (var index in object.elements) {
-			if (object.elements[index].localName == child.localName
+			if (object.elements[index].name == child.name
 					&& object.elements[index].ns == child.ns)
 				return true;
 		}
@@ -355,7 +355,7 @@ Xsd2Json.prototype.buildAttribute = function(node, parentObject) {
 	} else {
 		nameParts = this.extractName(name);
 		definition = {
-				"localName" : nameParts.localName,
+				"name" : nameParts.localName,
 				"values": [],
 				"ns": this.targetNSIndex,
 				"attribute": true
@@ -530,7 +530,7 @@ Xsd2Json.prototype.buildChoice = function(node, object) {
 		var child = children[i];
 		if (child.localName == "element") {
 			var element = self.buildElement(child, object);
-			choice.elements.push(element.localName);
+			choice.elements.push(element.ns + ":" + element.name);
 		} else if (child.localName == "group") {
 			self.execute(child, 'buildGroup', object);
 		} else if (child.localName == "choice") {
