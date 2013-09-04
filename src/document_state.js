@@ -69,7 +69,7 @@ DocumentState.prototype.addNamespace = function(prefixOrType, namespace) {
 	if (typeof prefixOrType === "object"){
 		// When adding a ns from a schema definition, use schema prefix
 		namespace = prefixOrType.namespace;
-		prefix = this.editor.xmlTree.namespaces.getNamespacePrefix(namespace);
+		prefix = this.editor.schemaTree.namespaces.getNamespacePrefix(namespace);
 	} else {
 		prefix = prefixOrType;
 	}

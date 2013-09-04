@@ -211,9 +211,9 @@ TextEditor.prototype.selectTagAtCursor = function() {
 			return this;
 		
 		// Retrieve the schema definition for the selected node
-		var elementDef = this.editor.xmlTree.getElementDefinition(elementNode);
+		var elementDef = this.editor.schemaTree.getElementDefinition(elementNode);
 		// Clear the menu if there was no definition or it was the root node
-		if (elementDef == null || elementDef === this.editor.xmlTree.rootElement) {
+		if (elementDef == null || elementDef === this.editor.schemaTree.rootElement) {
 			this.editor.modifyMenu.clearContextualMenus();
 			return this;
 		}

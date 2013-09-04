@@ -25,9 +25,9 @@ GUIEditor.prototype.initialize = function(parentContainer) {
 };
 
 GUIEditor.prototype.setRootElement = function(node) {
-	var objectType = this.editor.xmlTree.getElementDefinition(node);
+	var objectType = this.editor.schemaTree.getElementDefinition(node);
 	if (objectType == null)
-		objectType = this.editor.xmlTree.rootElement;
+		objectType = this.editor.schemaTree.rootElement;
 	this.rootElement = new XMLElement(node, objectType, this.editor);
 	this.rootElement.guiElement = this.xmlContent;
 	this.rootElement.guiElement.data("xmlElement", this.rootElement);

@@ -42,7 +42,7 @@ AttributeMenu.prototype.populate = function (xmlElement) {
 		var nsPrefix = self.editor.xmlState.namespaces.getNamespacePrefix(attribute.namespace);
 		// Namespace not present in XML, so use prefix from schema
 		if (nsPrefix === undefined)
-			nsPrefix = self.editor.xmlTree.namespaces.getNamespacePrefix(attribute.namespace);
+			nsPrefix = self.editor.schemaTree.namespaces.getNamespacePrefix(attribute.namespace);
 			
 		var attrName = nsPrefix + attribute.localName;
 		var addButton = $("<li/>").attr({

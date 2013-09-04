@@ -118,7 +118,7 @@ $.widget( "xml.xmlEditor", {
 		this.instanceNumber = $("xml-xmlEditor").length;
 		
 		// Tree of xml element types
-		this.xmlTree = null;
+		this.schemaTree = null;
 		// State of the XML document
 		this.xmlState = null;
 		// Container for the entire editor
@@ -314,17 +314,17 @@ $.widget( "xml.xmlEditor", {
 		if (!this.options.targetNS) {
 			this.targetNS = this.schema.namespace;
 		}
-		this.xmlTree = new SchemaTree(this.schema);
-		this.xmlTree.build();
+		this.schemaTree = new SchemaTree(this.schema);
+		this.schemaTree.build();
 		this._documentAndSchemaReady();
 	},
 	
 	_documentAndSchemaReady : function() {
 		// Join back up asynchronous loading of document and schema
-		if (!this.xmlTree || !this.xmlState)
+		if (!this.schemaTree || !this.xmlState)
 			return;
-		this.xmlState.namespaces.namespaceURIs = $.extend({}, this.xmlTree.namespaces.namespaceURIs, this.xmlState.namespaces.namespaceURIs);
-		this.xmlState.namespaces.namespaceToPrefix = $.extend({}, this.xmlTree.namespaces.namespaceToPrefix, this.xmlState.namespaces.namespaceToPrefix);
+		this.xmlState.namespaces.namespaceURIs = $.extend({}, this.schemaTree.namespaces.namespaceURIs, this.xmlState.namespaces.namespaceURIs);
+		this.xmlState.namespaces.namespaceToPrefix = $.extend({}, this.schemaTree.namespaces.namespaceToPrefix, this.xmlState.namespaces.namespaceToPrefix);
 		this.targetPrefix = this.xmlState.namespaces.getNamespacePrefix(this.options.targetNS);
 		
 		this.constructEditor();
@@ -900,7 +900,7 @@ AttributeMenu.prototype.populate = function (xmlElement) {
 		var nsPrefix = self.editor.xmlState.namespaces.getNamespacePrefix(attribute.namespace);
 		// Namespace not present in XML, so use prefix from schema
 		if (nsPrefix === undefined)
-			nsPrefix = self.editor.xmlTree.namespaces.getNamespacePrefix(attribute.namespace);
+			nsPrefix = self.editor.schemaTree.namespaces.getNamespacePrefix(attribute.namespace);
 			
 		var attrName = nsPrefix + attribute.localName;
 		var addButton = $("<li/>").attr({
@@ -1007,7 +1007,7 @@ DocumentState.prototype.addNamespace = function(prefixOrType, namespace) {
 	if (typeof prefixOrType === "object"){
 		// When adding a ns from a schema definition, use schema prefix
 		namespace = prefixOrType.namespace;
-		prefix = this.editor.xmlTree.namespaces.getNamespacePrefix(namespace);
+		prefix = this.editor.schemaTree.namespaces.getNamespacePrefix(namespace);
 	} else {
 		prefix = prefixOrType;
 	}
@@ -1121,9 +1121,9 @@ GUIEditor.prototype.initialize = function(parentContainer) {
 };
 
 GUIEditor.prototype.setRootElement = function(node) {
-	var objectType = this.editor.xmlTree.getElementDefinition(node);
+	var objectType = this.editor.schemaTree.getElementDefinition(node);
 	if (objectType == null)
-		objectType = this.editor.xmlTree.rootElement;
+		objectType = this.editor.schemaTree.rootElement;
 	this.rootElement = new XMLElement(node, objectType, this.editor);
 	this.rootElement.guiElement = this.xmlContent;
 	this.rootElement.guiElement.data("xmlElement", this.rootElement);
@@ -2396,9 +2396,9 @@ TextEditor.prototype.selectTagAtCursor = function() {
 			return this;
 		
 		// Retrieve the schema definition for the selected node
-		var elementDef = this.editor.xmlTree.getElementDefinition(elementNode);
+		var elementDef = this.editor.schemaTree.getElementDefinition(elementNode);
 		// Clear the menu if there was no definition or it was the root node
-		if (elementDef == null || elementDef === this.editor.xmlTree.rootElement) {
+		if (elementDef == null || elementDef === this.editor.schemaTree.rootElement) {
 			this.editor.modifyMenu.clearContextualMenus();
 			return this;
 		}
