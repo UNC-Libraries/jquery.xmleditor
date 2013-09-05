@@ -1,13 +1,17 @@
 /**
- * Header MenuBar object
+ * Header bar with dropdown menus.  In addition to the default menu options, user provided
+ * menus or options may be added as well.  Supports refreshing of menu items states via externally
+ * defined updateFunctions
  */
 function MenuBar(editor) {
 	this.editor = editor;
 	this.menuBarContainer = null;
 	this.parentElement = null;
+	// Functions which are executed when the menu is activated for updating the menu state
 	this.updateFunctions = [];
 	
 	var self = this;
+	// Default menu entries
 	this.headerMenuData = [ {
 		label : 'File',
 		enabled : true,
@@ -177,6 +181,7 @@ function MenuBar(editor) {
 	} ];
 }
 
+// Causes the targeted menu to be displayed, as well as triggering update functions
 MenuBar.prototype.activateMenu = function(event) {
 	if (this.menuBarContainer.hasClass("active")) {
 		this.menuBarContainer.removeClass("active");
@@ -196,6 +201,7 @@ MenuBar.prototype.activateMenu = function(event) {
 	event.stopPropagation();
 };
 
+// Builds the menu and attaches it to the editor
 MenuBar.prototype.render = function(parentElement) {
 	this.parentElement = parentElement;
 	this.menuBarContainer = $("<div/>").attr('class', xmlMenuBarClass).appendTo(parentElement);
@@ -209,6 +215,7 @@ MenuBar.prototype.render = function(parentElement) {
 	});
 };
 
+// Generates an individual menu entry
 MenuBar.prototype.generateMenuItem = function(menuItemData, parentMenu) {
 	var menuItem = $("<li/>").appendTo(parentMenu);
 	var menuItemLink = $("<a/>").appendTo(menuItem).html("<span>" + menuItemData.label + "</span>");
@@ -239,6 +246,8 @@ MenuBar.prototype.generateMenuItem = function(menuItemData, parentMenu) {
 	}
 };
 
+// Adds an additional menu entry to the menu.  An insertion path must be included in the entry
+// if you wish to add to an existing menu, where the path is the label of the menu to add to
 MenuBar.prototype.addEntry = function(entry) {
 	var currentTier = this.headerMenuData;
 	if (entry.insertPath) {

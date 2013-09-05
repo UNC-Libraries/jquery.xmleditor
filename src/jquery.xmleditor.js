@@ -63,6 +63,7 @@ var guiContentClass = "gui_content";
 var textContentClass = "text_content";
 var editorHeaderClass = "xml_editor_header";
 
+// Returns the local name of a node.  Needed for older versions of ie
 var localName = function(node) {
 	var localName = node.localName;
 	if (localName) return localName;
@@ -440,6 +441,16 @@ $.widget( "xml.xmlEditor", {
 		data.target.addAttribute(data.objectType);
 		// Inform the active editor of the newly added attribute
 		this.activeEditor.addAttributeEvent(data.target, data.objectType, $(instigator));
+	},
+	
+	// Triggered when a document has been loaded or reloaded
+	documentLoadedEvent : function(newDocument) {
+		if (this.guiEditor != null && this.guiEditor.rootElement != null)
+			this.guiEditor.rootElement.xmlNode = newDocument.children().first();
+		if (this.guiEditor.xmlContent != null)
+			this.guiEditor.xmlContent.data("xml").elementNode = newDocument.children().first();
+		if (this.problemsPanel != null)
+			this.clearProblemPanel();
 	},
 	
 	// Switch the currently active editor to the editor identified

@@ -1,10 +1,13 @@
 /**
- * Stores a traversible tree of element types
- * @param rootElement
+ * Unpacks the elements of the schema object into structures to accomodate lookup
+ * of definitions by name and position within the schema hierarchy.
  */
 function SchemaTree(rootElement) {
+	// Map of elements stored by name.  If there are name collisions, then elements are stored in a list
 	this.nameToDef = {};
+	// Root of the schema tree
 	this.rootElement = rootElement;
+	// Store namespaces from the schema in a schema specific namespace list
 	this.namespaceIndexes = this.rootElement.namespaces;
 	this.namespaces = new NamespaceList();
 	for (var index in this.namespaceIndexes) {
@@ -13,6 +16,7 @@ function SchemaTree(rootElement) {
 	}
 }
 
+// Recursively walk the provided schema to construct necessary representations of the tree for the editord
 SchemaTree.prototype.build = function(elementName, elementDef, parentDef) {
 	// Default to the root element if no element is given.
 	if (arguments.length == 0) {
@@ -21,8 +25,10 @@ SchemaTree.prototype.build = function(elementName, elementDef, parentDef) {
 		parentDef = null;
 	}
 	
+	// Store a reference from this instance of an element back to the current parent.
+	// These are needed to assist in disambiguating when multiple definitions share a name in a namespace
 	if ("parents" in elementDef) {
-		// Definition already has a parent, so this is a circular definition
+		// Definition already has a parent, so add parent reference and return to avoid loop
 		elementDef.parents.push(parentDef);
 		return;
 	} else {
@@ -32,12 +38,14 @@ SchemaTree.prototype.build = function(elementName, elementDef, parentDef) {
 	var namespaceDefinition = this.namespaceIndexes[elementDef.ns];
 	//Resolve namespace index into actual namespace uri
 	elementDef.namespace = namespaceDefinition.uri;
+	// Split element name into localName and prefixed name
 	if (!elementDef.schema) {
 		elementDef.localName = elementDef.name;
 		elementDef.name = namespaceDefinition.prefix? namespaceDefinition.prefix + ":" : "" + elementDef.localName;
 	}
 	
-	// Add this definition to the list matching its element name, in case of overlapping names
+	// Add this definition to the map of elements.  If there is a name collision, store the 
+	// elements with overlapping names together in a list
 	var definitionList = this.nameToDef[elementName];
 	if (definitionList == null) {
 		this.nameToDef[elementName] = [elementDef];
@@ -46,6 +54,7 @@ SchemaTree.prototype.build = function(elementName, elementDef, parentDef) {
 	}
 	
 	var self = this;
+	// Expand namespaces and names of attributes available to this element
 	if (elementDef.attributes)
 		$.each(elementDef.attributes, function() {
 			if (this.localName)
@@ -55,18 +64,14 @@ SchemaTree.prototype.build = function(elementName, elementDef, parentDef) {
 			this.namespace = namespaceDefinition.uri;
 			this.name = (namespaceDefinition.prefix? namespaceDefinition.prefix + ":" : "") + this.localName;
 		});
-	// Call build on all the child elements of this element.
+	// Call build on all the child elements of this element to continue the walk.
 	$.each(elementDef.elements, function() {
 		self.build(this.ns + ":" + this.name, this, elementDef);
 	});
 };
 
-
-
-/**
- * Retrieves the schema definition for the provided element, attempting to 
- * disambiguate when the name is not unique.
- */
+// Retrieves the schema definition the provided element node.  If more than one definition is
+// found for the element by name and namespace, then attempts to disambiguate by parents
 SchemaTree.prototype.getElementDefinition = function(elementNode) {
 	var namespaceIndex = 0;
 	$.each(this.namespaceIndexes, function(){
@@ -87,6 +92,8 @@ SchemaTree.prototype.getElementDefinition = function(elementNode) {
 	}
 };
 
+// Returns true if all the ancestors of the provided element match all the ancestors
+// defined for this element in the schema
 SchemaTree.prototype.pathMatches = function(elementNode, definition) {
 	var isRootNode = elementNode.parentNode instanceof Document;
 	var parentNode = elementNode.parentNode;
