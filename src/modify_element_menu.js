@@ -9,10 +9,15 @@
 function ModifyElementMenu(menuID, label, expanded, enabled, owner, editor) {
 	this.menuID = menuID;
 	this.label = label;
+	// Header jquery element for this menu 
 	this.menuHeader = null;
+	// Refence to jquery object which contains the menu options
 	this.menuContent = null;
+	// Indicates if the menu can be interacted with
 	this.enabled = enabled;
+	// Indicates if the menu is collapsed or expanded
 	this.expanded = expanded;
+	// XMLElement object which will be modified by this menu
 	this.target = null;
 	this.owner = owner;
 	this.editor = editor;
@@ -25,6 +30,7 @@ ModifyElementMenu.prototype.destroy = function() {
 		this.menuContent.remove();
 };
 
+// Creates the structure for the menu, including headers and content areas.
 ModifyElementMenu.prototype.render = function(parentContainer) {
 	this.menuHeader = $("<div class='" + menuHeaderClass + "'/>").appendTo(parentContainer);
 	if (this.expanded) {
@@ -38,11 +44,10 @@ ModifyElementMenu.prototype.render = function(parentContainer) {
 	
 	this.menuContent = $("<ul id='" + this.menuID + "' class='" + menuContentClass + "'/>").data('menuData', this).appendTo(parentContainer);
 	var self = this;
+	// Click handler for hiding/show the contents of the menu
 	this.menuHeader.click(function(){
-		if (!self.enabled) {
+		if (!self.enabled) 
 			return;
-		}
-		
 		if (self.expanded) {
 			self.menuContent.animate({height: 'hide'}, menuExpandDuration, null, function(){
 				self.menuContent.hide();
@@ -61,11 +66,13 @@ ModifyElementMenu.prototype.render = function(parentContainer) {
 
 ModifyElementMenu.prototype.initEventHandlers = function() {
 	var self = this;
+	// Add new child element click event
 	this.menuContent.on('click', 'li', function(event){
 		self.owner.editor.addChildElementCallback(this);
 	});
 };
 
+// Empty out the menu and collapse it
 ModifyElementMenu.prototype.clear = function() {
 	var startingHeight = this.menuContent.height();
 	this.menuContent.empty();
@@ -76,6 +83,7 @@ ModifyElementMenu.prototype.clear = function() {
 	return this;
 };
 
+// Populate the menu with entries for adding child elements of from the definition of the given XMLElement 
 ModifyElementMenu.prototype.populate = function(xmlElement) {
 	if (xmlElement == null || (this.target != null && xmlElement.guiElement != null 
 			&& this.target[0] === xmlElement.guiElement[0]))
@@ -83,14 +91,18 @@ ModifyElementMenu.prototype.populate = function(xmlElement) {
 	
 	if (this.expanded)
 		this.menuContent.css("height", "auto");
+	// Store the current height of the menu for use animating the height changes
 	var startingHeight = this.menuContent.outerHeight();
+	// Clear the previous menu contents
 	this.menuContent.empty();
 	
+	// Store new target element for this menu
 	this.target = xmlElement;
 	var self = this;
 	var parent = this.target;
 	var choiceList = parent.objectType.choices;
 	
+	// Iterate through the child element definitions and generate entries for each
 	$.each(this.target.objectType.elements, function(){
 		var xmlElement = this;
 		var elName = self.editor.xmlState.namespaces.getNamespacePrefix(xmlElement.namespace) + xmlElement.localName;
@@ -112,6 +124,7 @@ ModifyElementMenu.prototype.populate = function(xmlElement) {
 		this.menuContent.css({height: startingHeight + "px"}).stop().animate({height: endingHeight + "px"}, menuExpandDuration).show();
 	}
 
+	// Disable or enable the menu depending on if it had any options added to it
 	if (this.menuContent.children().length == 0) {
 		this.menuHeader.addClass("disabled");
 		this.enabled = false;

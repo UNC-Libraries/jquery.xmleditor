@@ -198,7 +198,7 @@ $.widget( "xml.xmlEditor", {
 		this.activeEditor = this.guiEditor;
 		
 		var self = this;
-		this.undoHistory = new UndoHistory(this);
+		this.undoHistory = new UndoHistory(xmlState, this);
 		this.undoHistory.setStateChangeEvent(function() {
 			self.refreshDisplay();
 		});
