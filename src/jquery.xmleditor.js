@@ -198,11 +198,7 @@ $.widget( "xml.xmlEditor", {
 		this.activeEditor = this.guiEditor;
 		
 		var self = this;
-		this.undoHistory = new UndoHistory(xmlState, this);
-		this.undoHistory.setStateChangeEvent(function() {
-			self.refreshDisplay();
-		});
-
+		
 		this.menuBar = new MenuBar(this);
 		this.menuBar.updateFunctions.push(this.refreshMenuUndo);
 		this.menuBar.updateFunctions.push(this.refreshMenuSelected);
@@ -312,6 +308,10 @@ $.widget( "xml.xmlEditor", {
 	_documentReady : function(xmlString) {
 		this.xmlState = new DocumentState(xmlString, this);
 		this.xmlState.extractNamespacePrefixes();
+		this.undoHistory = new UndoHistory(this.xmlState, this);
+		this.undoHistory.setStateChangeEvent(function() {
+			self.refreshDisplay();
+		});
 		this._documentAndSchemaReady();
 	},
 	

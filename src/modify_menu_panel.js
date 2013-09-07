@@ -33,6 +33,12 @@ ModifyMenuPanel.prototype.initialize = function (parentContainer) {
 	return this;
 };
 
+// Add an additional menu for adding new elements to the panel
+// menuID - id attribute for the menu
+// label - display name for the menu
+// expanded - whether to show the contents of the menu by default
+// enabled - boolean indicating the menu can be interacted with
+// contextual - Boolean indicating if this menu needs to be updated when selection changes
 ModifyMenuPanel.prototype.addMenu = function(menuID, label, expanded, enabled, contextual) {
 	if (arguments.length == 4)
 		contextual = false;
@@ -46,6 +52,7 @@ ModifyMenuPanel.prototype.addMenu = function(menuID, label, expanded, enabled, c
 	return menu;
 };
 
+// Add a menu for adding new attributes
 ModifyMenuPanel.prototype.addAttributeMenu = function(menuID, label, expanded, enabled, contextual) {
 	if (arguments.length == 4)
 		contextual = false;
@@ -59,6 +66,7 @@ ModifyMenuPanel.prototype.addAttributeMenu = function(menuID, label, expanded, e
 	return menu;
 };
 
+// Empty entries from all contextual menus
 ModifyMenuPanel.prototype.clearContextualMenus = function() {
 	$.each(this.menus, function(){
 		if (this.contextual) {
@@ -69,6 +77,7 @@ ModifyMenuPanel.prototype.clearContextualMenus = function() {
 	return this;
 };
 
+// Refresh entries for all contextual menus
 ModifyMenuPanel.prototype.refreshContextualMenus = function(targetElement) {
 	$.each(this.menus, function(){
 		if (this.contextual) {
@@ -79,6 +88,7 @@ ModifyMenuPanel.prototype.refreshContextualMenus = function(targetElement) {
 	return this;
 };
 
+// Update the position of the menu
 ModifyMenuPanel.prototype.setMenuPosition = function(){
 	if (this.menuColumn == null || this.menuColumn.offset() == null)
 		return;

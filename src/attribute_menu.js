@@ -13,8 +13,8 @@ AttributeMenu.prototype.initEventHandlers = function() {
 };
 
 AttributeMenu.prototype.populate = function (xmlElement) {
-	if (xmlElement == null || (this.target != null && xmlElement.guiElement != null 
-			&& this.target[0] === xmlElement.guiElement[0]))
+	if (xmlElement == null || (this.target != null && xmlElement.domNode != null 
+			&& this.target[0] === xmlElement.domNode[0]))
 		return;
 	
 	if (this.expanded)
@@ -30,7 +30,7 @@ AttributeMenu.prototype.populate = function (xmlElement) {
 		var targetAttribute = this;
 		$.each(attributesArray, function(){
 			if (this.name == targetAttribute.nodeName) {
-				attributesPresent[this.name] = $("#" + xmlElement.guiElementID + "_" + targetAttribute.nodeName.replace(':', '-'));
+				attributesPresent[this.name] = $("#" + xmlElement.domNodeID + "_" + targetAttribute.nodeName.replace(':', '-'));
 			}
 		});
 	});
@@ -47,7 +47,7 @@ AttributeMenu.prototype.populate = function (xmlElement) {
 		var attrName = nsPrefix + attribute.localName;
 		var addButton = $("<li/>").attr({
 				title : 'Add ' + attrName,
-				'id' : xmlElement.guiElementID + "_" + attrName.replace(":", "_") + "_add"
+				'id' : xmlElement.domNodeID + "_" + attrName.replace(":", "_") + "_add"
 			}).html(attrName)
 			.data('xml', {
 				"objectType": attribute,

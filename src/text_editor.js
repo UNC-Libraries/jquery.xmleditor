@@ -92,13 +92,14 @@ TextEditor.prototype.setModified = function() {
 	return this;
 };
 
+// Determine if the position given is inside of the boundries of the currently selected tag
 TextEditor.prototype.inSelectedTag = function(row, startColumn, endColumn) {
 	return !this.editor.xmlState.changesNotSynced() && row == this.selectedTagRange.row 
 		&& startColumn == this.selectedTagRange.startColumn 
 		&& endColumn == this.selectedTagRange.endColumn;
 };
 
-
+// Reload the contents of the editor from the XML document and reset the editor
 TextEditor.prototype.reload = function() {
 	this.setInitialized();
 	this.selectedTagRange = {'row': 0, 'startColumn': 0, 'endColumn': 0};
@@ -110,6 +111,7 @@ TextEditor.prototype.reload = function() {
 	return this;
 };
 
+// Refresh the display of this editor
 TextEditor.prototype.refreshDisplay = function() {
 	this.editor.guiEditor.rootElement.xmlNode = this.editor.xmlState.xml.children().first();
 	var markers = this.aceEditor.session.getMarkers();
@@ -133,6 +135,7 @@ TextEditor.prototype.refreshDisplay = function() {
 	return this;
 };
 
+// Adjust the size of the editor to reflect its environment
 TextEditor.prototype.resize = function() {
 	var xmlEditorHeight = ($(window).height() - this.xmlEditorDiv.offset().top);
 	this.xmlContent.css({'height': xmlEditorHeight + 'px'});
@@ -148,6 +151,7 @@ TextEditor.prototype.resize = function() {
 	return this;
 };
 
+// Count how many times tags named tagTitle occur in the xml document
 TextEditor.prototype.tagOccurrences = function(string, tagTitle) {
 	if (string == null || tagTitle == null)
 		return 0;
@@ -155,6 +159,7 @@ TextEditor.prototype.tagOccurrences = function(string, tagTitle) {
 	return matches ? matches.length : 0;
 };
 
+// Select the tag currently encapsulating the cursor and refresh the editor to indicate this
 TextEditor.prototype.selectTagAtCursor = function() {
 	if (!this.isInitialized())
 		return this;
@@ -226,6 +231,7 @@ TextEditor.prototype.selectTagAtCursor = function() {
 			return this;
 		}
 		
+		// Refresh the menus to indicate the newly selected tag
 		this.editor.modifyMenu.refreshContextualMenus(dummyTarget).setMenuPosition();
 		
 		this.selectedTagRange.row = currentRow;
@@ -246,6 +252,8 @@ TextEditor.prototype.selectTagAtCursor = function() {
 	return this;
 };
 
+// Inform the editor that an element was added into the XML document, causing it to refresh the 
+// text in the editor and select the new tag
 TextEditor.prototype.addElementEvent = function(parentElement, newElement) {
 	this.reload();
 	// Move cursor to the newly added element
@@ -271,6 +279,7 @@ TextEditor.prototype.addElementEvent = function(parentElement, newElement) {
 	this.editor.xmlState.syncedChangeEvent();
 };
 
+// Inform the editor that a new attribute was added to the document
 TextEditor.prototype.addAttributeEvent = function() {
 	this.reload();
 	this.editor.xmlState.syncedChangeEvent();

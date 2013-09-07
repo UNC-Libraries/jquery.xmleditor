@@ -68,10 +68,10 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 
 // Change the editors focus to this xml object
 AbstractXMLObject.prototype.focus = function() {
-	if (this.getDomElement() != null)
-		this.guiEditor.focusObject(this.getDomElement());
+	if (this.getDomNode() != null)
+		this.guiEditor.focusObject(this.getDomNode());
 };
 
-AbstractXMLObject.prototype.getDomElement = function () {
+AbstractXMLObject.prototype.getDomNode = function () {
 	return null;
 };

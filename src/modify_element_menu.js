@@ -85,8 +85,8 @@ ModifyElementMenu.prototype.clear = function() {
 
 // Populate the menu with entries for adding child elements of from the definition of the given XMLElement 
 ModifyElementMenu.prototype.populate = function(xmlElement) {
-	if (xmlElement == null || (this.target != null && xmlElement.guiElement != null 
-			&& this.target[0] === xmlElement.guiElement[0]))
+	if (xmlElement == null || (this.target != null && xmlElement.domNode != null 
+			&& this.target[0] === xmlElement.domNode[0]))
 		return;
 	
 	if (this.expanded)
