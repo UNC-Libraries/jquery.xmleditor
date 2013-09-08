@@ -52,12 +52,32 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 			if (this.value == " ")
 				this.value = "";
 		});
-	} // Until there is better browser support for inputs like date and datetime, treat definitions with types as text
-	else if (this.objectType.type){
+	} else if (this.objectType.type == 'date'){
+		// Some browsers support the date input type at this point.  If not, it just behaves as text
 		input = document.createElement('input');
-		input.type = 'text';
+		input.type = 'date';
 		input.id = inputID;
-		input.className = 'xml_input';
+		input.className = 'xml_date';
+		input.value = startingValue? startingValue : "";
+		appendTarget.appendChild(input);
+		
+		$input = $(input);
+	} else if (this.objectType.type){
+		input = document.createElement('input');
+		if (this.objectType.type == 'date') {
+			// Some browsers support the date input type.  If not, it should behaves as text
+			input.type = 'date';
+			input.className = 'xml_date';
+		} else if (this.objectType.type == 'dateTime') {
+			// May not be supported by browsers yet
+			input.type = 'datetime';
+			input.className = 'xml_datetime';
+		} else {
+			// All other types as text for now
+			input.type = 'text';
+			input.className = 'xml_input';
+		}
+		input.id = inputID;
 		input.value = startingValue? startingValue : "";
 		appendTarget.appendChild(input);
 		

@@ -88,8 +88,6 @@ $.widget( "xml.xmlEditor", {
 		},
 		// Function triggered after uploading XML document, to interpret if the response was successful or not.  If upload failed, an error message should be returned.
 		submitResponseHandler : null,
-		// Selector to the XML to be used as the starting document, if it is embedded in the current page
-		localXMLContentSelector: this.element,
 		// Event function trigger after an xml element is update via the gui
 		elementUpdated : undefined,
 		// Title for the document, displayed in the header
@@ -98,6 +96,8 @@ $.widget( "xml.xmlEditor", {
 		addAttrMenuHeaderText : 'Add Attribute',
 		addElementMenuHeaderText : 'Add Subelement',
 		
+		// Set to false to get rid of the 
+		enableDocumentStatusPanel : true,
 		confirmExitWhenUnsubmitted : true,
 		enableGUIKeybindings : true,
 		floatingMenu : true,
@@ -144,6 +144,8 @@ $.widget( "xml.xmlEditor", {
 		this.menuBar = null;
 		// Element modification object
 		this.modifyMenu = null;
+		// Flag indicating if the editor was initialized on a text area that will need to be updated
+		this.isTextAreaEditor = false;
 		
 		var url = document.location.href;
 		var index = url.lastIndexOf("/");
@@ -177,16 +179,23 @@ $.widget( "xml.xmlEditor", {
 		
 		// Retrieve the local xml content before we start populating the editor.
 		var localXMLContent = null;
-		if ($(this.options.localXMLContentSelector).is("textarea")) {
-			localXMLContent = $(this.options.localXMLContentSelector).val(); 
+		if (this.element.is("textarea")) {
+			// Editor initialized on a text area.  Move text area out of the way and hide it
+			// so that it can be updated with document changes.
+			this.isTextAreaEditor = true;
+			// Capture the existing value in the text area in case we are using a local document
+			// Retrieving text instead of val because of firefox inconsistencies
+			localXMLContent = this.element.text();
+			this.xmlEditorContainer = $("<div/>").attr('class', xmlEditorContainerClass);
+			$(this.element)
+				.before(this.xmlEditorContainer)
+				.hide();
 		} else {
 			localXMLContent = this.element.html();
+			// Add the editor into the dom
+			this.xmlEditorContainer = $("<div/>").attr('class', xmlEditorContainerClass).appendTo(this.element);
 		}
-		this.element.empty();
-		
 		this.xmlState = null;
-		
-		this.xmlEditorContainer = $("<div/>").attr('class', xmlEditorContainerClass).appendTo(this.element);
 		this.xmlWorkAreaContainer = null;
 		this.xmlTabContainer = null;
 		
@@ -499,6 +508,11 @@ $.widget( "xml.xmlEditor", {
 			this.modifyMenu.setMenuPosition();
 		}
 		this.xmlWorkAreaContainer.width(this.xmlEditorContainer.outerWidth() - this.modifyMenu.menuColumn.outerWidth());
+	},
+	
+	setTextArea : function(xmlString) {
+		if (this.isTextAreaEditor)
+			this.element.val(xmlString);
 	},
 	
 	// Refresh the state of the XML document from the contents of text editor 

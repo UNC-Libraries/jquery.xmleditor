@@ -41,7 +41,7 @@ SchemaTree.prototype.build = function(elementName, elementDef, parentDef) {
 	// Split element name into localName and prefixed name
 	if (!elementDef.schema) {
 		elementDef.localName = elementDef.name;
-		elementDef.name = namespaceDefinition.prefix? namespaceDefinition.prefix + ":" : "" + elementDef.localName;
+		elementDef.name = (namespaceDefinition.prefix? namespaceDefinition.prefix + ":" : "") + elementDef.localName;
 	}
 	
 	// Add this definition to the map of elements.  If there is a name collision, store the 

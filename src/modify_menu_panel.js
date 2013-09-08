@@ -11,21 +11,27 @@ function ModifyMenuPanel(editor) {
 
 ModifyMenuPanel.prototype.initialize = function (parentContainer) {
 	this.menuColumn = $("<div/>").attr('class', menuColumnClass).appendTo(parentContainer);
-	$("<span/>").attr('class', submissionStatusClass).html("Document is unchanged").appendTo(this.menuColumn);
 	
-	var submitButton = $("<input/>").attr({
-		'id' : submitButtonClass,
-		'type' : 'button',
-		'class' : 'send_xml',
-		'name' : 'submit',
-		'value' : 'Submit Changes'
-	}).appendTo(this.menuColumn);
-	if (this.editor.options.ajaxOptions.xmlUploadPath == null) {
-		if (typeof(Blob) !== undefined){
-			submitButton.attr("value", "Export");
-		} else {
-			submitButton.attr("disabled", "disabled");
+	// Generate the document status panel, which shows a save/export button as well as if there are changes to the document
+	if (this.editor.options.enableDocumentStatusPanel) {
+		var documentStatusPanel = $("<div>");
+		$("<span/>").addClass(submissionStatusClass).html("Document is unchanged")
+			.appendTo(documentStatusPanel);
+		var submitButton = $("<input/>").attr({
+			'id' : submitButtonClass,
+			'type' : 'button',
+			'class' : 'send_xml',
+			'name' : 'submit',
+			'value' : 'Submit Changes'
+		}).appendTo(documentStatusPanel);
+		if (this.editor.options.ajaxOptions.xmlUploadPath == null) {
+			if (typeof(Blob) !== undefined){
+				submitButton.attr("value", "Export");
+			} else {
+				submitButton.attr("disabled", "disabled");
+			}
 		}
+		documentStatusPanel.appendTo(this.menuColumn);
 	}
 	
 	this.menuContainer = $("<div class='" + menuContainerClass + "'/>").appendTo(this.menuColumn);

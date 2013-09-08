@@ -29,6 +29,10 @@ TextEditor.prototype.initialize = function(parentContainer) {
 	
 	var self = this;
 	this.aceEditor.getSession().on('change', function(){
+		// if the editor is backed by a text area, then keep the value up to date
+		if (self.editor.isTextAreaEditor)
+			self.editor.setTextArea(self.aceEditor.getSession().getValue());
+		// Inform the document if there are changes which need to be synched
 		if (!self.editor.xmlState.changesNotSynced() && self.isPopulated()){
 			self.editor.xmlState.unsyncedChangeEvent();
 			self.setModified();

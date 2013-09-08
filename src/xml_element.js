@@ -70,22 +70,22 @@ XMLElement.prototype.render = function(parentElement, recursive) {
 	elementNameContainer.className = 'element_name';
 	this.elementHeader.appendChild(elementNameContainer);
 
+	this.elementName = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace) 
+		+ this.objectType.localName;
 	// set up element title and entry field if appropriate
 	var titleElement = document.createElement('span');
-	titleElement.appendChild(document.createTextNode(this.objectType.name));
+	titleElement.appendChild(document.createTextNode(this.elementName));
 	elementNameContainer.appendChild(titleElement);
 	
 	// Switch gui element over to a jquery object
 	this.domNode = $(this.domNode);
 	this.domNode.data("xmlElement", this);
 
-	// Add the subsections fopresentChildrenr the elements content next.
+	// Add the subsections for the elements content next.
 	this.addContentContainers(recursive);
 
 	// Action buttons
 	this.elementHeader.appendChild(this.addTopActions(this.domNodeID));
-	
-	var self = this;
 	
 	this.initializeGUI();
 	this.updated({action : 'render'});
@@ -350,12 +350,10 @@ XMLElement.prototype.addElement = function(objectType) {
 	var newElement;
 	if (xmlDocument.createElementNS) {
 		newElement = xmlDocument.createElementNS(objectType.namespace, prefix + objectType.localName);
-		newElement.appendChild(xmlDocument.createTextNode(" "));
 		this.xmlNode[0].appendChild(newElement);
 	} else if (typeof(xmlDocument.createNode) != "undefined") {
 		// Older IE versions
 		newElement = xmlDocument.createNode(1, prefix + objectType.localName, objectType.namespace);
-		newElement.appendChild(xmlDocument.createTextNode(" "));
 		this.xmlNode[0].appendChild(newElement);
 	} else {
 		throw new Exception("Unable to add child due to incompatible browser");

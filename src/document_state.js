@@ -36,6 +36,11 @@ DocumentState.prototype.documentChangedEvent = function() {
 	this.changeState = 2;
 	this.editor.undoHistory.captureSnapshot();
 	this.updateStateMessage();
+	// Update the backing textarea if the editor was initialized on one
+	if (this.editor.isTextAreaEditor) {
+		var xmlString = this.editor.xml2Str(this.xml);
+		this.editor.setTextArea(xmlString);
+	}
 };
 // Notify the document that changes have been saved
 DocumentState.prototype.changesCommittedEvent = function() {

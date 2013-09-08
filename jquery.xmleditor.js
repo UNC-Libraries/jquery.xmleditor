@@ -88,8 +88,6 @@ $.widget( "xml.xmlEditor", {
 		},
 		// Function triggered after uploading XML document, to interpret if the response was successful or not.  If upload failed, an error message should be returned.
 		submitResponseHandler : null,
-		// Selector to the XML to be used as the starting document, if it is embedded in the current page
-		localXMLContentSelector: this.element,
 		// Event function trigger after an xml element is update via the gui
 		elementUpdated : undefined,
 		// Title for the document, displayed in the header
@@ -98,6 +96,8 @@ $.widget( "xml.xmlEditor", {
 		addAttrMenuHeaderText : 'Add Attribute',
 		addElementMenuHeaderText : 'Add Subelement',
 		
+		// Set to false to get rid of the 
+		enableDocumentStatusPanel : true,
 		confirmExitWhenUnsubmitted : true,
 		enableGUIKeybindings : true,
 		floatingMenu : true,
@@ -144,6 +144,8 @@ $.widget( "xml.xmlEditor", {
 		this.menuBar = null;
 		// Element modification object
 		this.modifyMenu = null;
+		// Flag indicating if the editor was initialized on a text area that will need to be updated
+		this.isTextAreaEditor = false;
 		
 		var url = document.location.href;
 		var index = url.lastIndexOf("/");
@@ -177,16 +179,23 @@ $.widget( "xml.xmlEditor", {
 		
 		// Retrieve the local xml content before we start populating the editor.
 		var localXMLContent = null;
-		if ($(this.options.localXMLContentSelector).is("textarea")) {
-			localXMLContent = $(this.options.localXMLContentSelector).val(); 
+		if (this.element.is("textarea")) {
+			// Editor initialized on a text area.  Move text area out of the way and hide it
+			// so that it can be updated with document changes.
+			this.isTextAreaEditor = true;
+			// Capture the existing value in the text area in case we are using a local document
+			// Retrieving text instead of val because of firefox inconsistencies
+			localXMLContent = this.element.text();
+			this.xmlEditorContainer = $("<div/>").attr('class', xmlEditorContainerClass);
+			$(this.element)
+				.before(this.xmlEditorContainer)
+				.hide();
 		} else {
 			localXMLContent = this.element.html();
+			// Add the editor into the dom
+			this.xmlEditorContainer = $("<div/>").attr('class', xmlEditorContainerClass).appendTo(this.element);
 		}
-		this.element.empty();
-		
 		this.xmlState = null;
-		
-		this.xmlEditorContainer = $("<div/>").attr('class', xmlEditorContainerClass).appendTo(this.element);
 		this.xmlWorkAreaContainer = null;
 		this.xmlTabContainer = null;
 		
@@ -499,6 +508,11 @@ $.widget( "xml.xmlEditor", {
 			this.modifyMenu.setMenuPosition();
 		}
 		this.xmlWorkAreaContainer.width(this.xmlEditorContainer.outerWidth() - this.modifyMenu.menuColumn.outerWidth());
+	},
+	
+	setTextArea : function(xmlString) {
+		if (this.isTextAreaEditor)
+			this.element.val(xmlString);
 	},
 	
 	// Refresh the state of the XML document from the contents of text editor 
@@ -861,12 +875,32 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 			if (this.value == " ")
 				this.value = "";
 		});
-	} // Until there is better browser support for inputs like date and datetime, treat definitions with types as text
-	else if (this.objectType.type){
+	} else if (this.objectType.type == 'date'){
+		// Some browsers support the date input type at this point.  If not, it just behaves as text
 		input = document.createElement('input');
-		input.type = 'text';
+		input.type = 'date';
 		input.id = inputID;
-		input.className = 'xml_input';
+		input.className = 'xml_date';
+		input.value = startingValue? startingValue : "";
+		appendTarget.appendChild(input);
+		
+		$input = $(input);
+	} else if (this.objectType.type){
+		input = document.createElement('input');
+		if (this.objectType.type == 'date') {
+			// Some browsers support the date input type.  If not, it should behaves as text
+			input.type = 'date';
+			input.className = 'xml_date';
+		} else if (this.objectType.type == 'dateTime') {
+			// May not be supported by browsers yet
+			input.type = 'datetime';
+			input.className = 'xml_datetime';
+		} else {
+			// All other types as text for now
+			input.type = 'text';
+			input.className = 'xml_input';
+		}
+		input.id = inputID;
 		input.value = startingValue? startingValue : "";
 		appendTarget.appendChild(input);
 		
@@ -1002,6 +1036,11 @@ DocumentState.prototype.documentChangedEvent = function() {
 	this.changeState = 2;
 	this.editor.undoHistory.captureSnapshot();
 	this.updateStateMessage();
+	// Update the backing textarea if the editor was initialized on one
+	if (this.editor.isTextAreaEditor) {
+		var xmlString = this.editor.xml2Str(this.xml);
+		this.editor.setTextArea(xmlString);
+	}
 };
 // Notify the document that changes have been saved
 DocumentState.prototype.changesCommittedEvent = function() {
@@ -2006,21 +2045,27 @@ function ModifyMenuPanel(editor) {
 
 ModifyMenuPanel.prototype.initialize = function (parentContainer) {
 	this.menuColumn = $("<div/>").attr('class', menuColumnClass).appendTo(parentContainer);
-	$("<span/>").attr('class', submissionStatusClass).html("Document is unchanged").appendTo(this.menuColumn);
 	
-	var submitButton = $("<input/>").attr({
-		'id' : submitButtonClass,
-		'type' : 'button',
-		'class' : 'send_xml',
-		'name' : 'submit',
-		'value' : 'Submit Changes'
-	}).appendTo(this.menuColumn);
-	if (this.editor.options.ajaxOptions.xmlUploadPath == null) {
-		if (typeof(Blob) !== undefined){
-			submitButton.attr("value", "Export");
-		} else {
-			submitButton.attr("disabled", "disabled");
+	// Generate the document status panel, which shows a save/export button as well as if there are changes to the document
+	if (this.editor.options.enableDocumentStatusPanel) {
+		var documentStatusPanel = $("<div>");
+		$("<span/>").addClass(submissionStatusClass).html("Document is unchanged")
+			.appendTo(documentStatusPanel);
+		var submitButton = $("<input/>").attr({
+			'id' : submitButtonClass,
+			'type' : 'button',
+			'class' : 'send_xml',
+			'name' : 'submit',
+			'value' : 'Submit Changes'
+		}).appendTo(documentStatusPanel);
+		if (this.editor.options.ajaxOptions.xmlUploadPath == null) {
+			if (typeof(Blob) !== undefined){
+				submitButton.attr("value", "Export");
+			} else {
+				submitButton.attr("disabled", "disabled");
+			}
 		}
+		documentStatusPanel.appendTo(this.menuColumn);
 	}
 	
 	this.menuContainer = $("<div class='" + menuContainerClass + "'/>").appendTo(this.menuColumn);
@@ -2211,7 +2256,7 @@ SchemaTree.prototype.build = function(elementName, elementDef, parentDef) {
 	// Split element name into localName and prefixed name
 	if (!elementDef.schema) {
 		elementDef.localName = elementDef.name;
-		elementDef.name = namespaceDefinition.prefix? namespaceDefinition.prefix + ":" : "" + elementDef.localName;
+		elementDef.name = (namespaceDefinition.prefix? namespaceDefinition.prefix + ":" : "") + elementDef.localName;
 	}
 	
 	// Add this definition to the map of elements.  If there is a name collision, store the 
@@ -2317,6 +2362,10 @@ TextEditor.prototype.initialize = function(parentContainer) {
 	
 	var self = this;
 	this.aceEditor.getSession().on('change', function(){
+		// if the editor is backed by a text area, then keep the value up to date
+		if (self.editor.isTextAreaEditor)
+			self.editor.setTextArea(self.aceEditor.getSession().getValue());
+		// Inform the document if there are changes which need to be synched
 		if (!self.editor.xmlState.changesNotSynced() && self.isPopulated()){
 			self.editor.xmlState.unsyncedChangeEvent();
 			self.setModified();
@@ -2818,22 +2867,22 @@ XMLElement.prototype.render = function(parentElement, recursive) {
 	elementNameContainer.className = 'element_name';
 	this.elementHeader.appendChild(elementNameContainer);
 
+	this.elementName = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace) 
+		+ this.objectType.localName;
 	// set up element title and entry field if appropriate
 	var titleElement = document.createElement('span');
-	titleElement.appendChild(document.createTextNode(this.objectType.name));
+	titleElement.appendChild(document.createTextNode(this.elementName));
 	elementNameContainer.appendChild(titleElement);
 	
 	// Switch gui element over to a jquery object
 	this.domNode = $(this.domNode);
 	this.domNode.data("xmlElement", this);
 
-	// Add the subsections fopresentChildrenr the elements content next.
+	// Add the subsections for the elements content next.
 	this.addContentContainers(recursive);
 
 	// Action buttons
 	this.elementHeader.appendChild(this.addTopActions(this.domNodeID));
-	
-	var self = this;
 	
 	this.initializeGUI();
 	this.updated({action : 'render'});
@@ -3098,12 +3147,10 @@ XMLElement.prototype.addElement = function(objectType) {
 	var newElement;
 	if (xmlDocument.createElementNS) {
 		newElement = xmlDocument.createElementNS(objectType.namespace, prefix + objectType.localName);
-		newElement.appendChild(xmlDocument.createTextNode(" "));
 		this.xmlNode[0].appendChild(newElement);
 	} else if (typeof(xmlDocument.createNode) != "undefined") {
 		// Older IE versions
 		newElement = xmlDocument.createNode(1, prefix + objectType.localName, objectType.namespace);
-		newElement.appendChild(xmlDocument.createTextNode(" "));
 		this.xmlNode[0].appendChild(newElement);
 	} else {
 		throw new Exception("Unable to add child due to incompatible browser");
