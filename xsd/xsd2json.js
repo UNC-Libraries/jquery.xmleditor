@@ -42,17 +42,20 @@ function Xsd2Json(xsd, options, imports, namespaceIndexes) {
 	if (imports)
 		this.imports = imports;
 	else this.imports = {};
+	// Object definitions defined at the root level of the schema
 	this.rootDefinitions = {};
 	this.types = {};
-	// Shared namespace index registry
+	// Shared namespace index registry, used by all schemas being processed
 	this.namespaceIndexes = namespaceIndexes? namespaceIndexes : [];
 	// Local namespace prefix registry
 	this.namespaces = {};
+	// Registering the "special" namespaces that are automatically added by web browsers
 	this.registerNamespace("http://www.w3.org/XML/1998/namespace", "xml");
 	this.registerNamespace("http://www.w3.org/2000/xmlns/", "xmlns");
 	this.registerNamespace("http://www.w3.org/1999/xhtml/", "html");
-	
+	// The target namespace for this schema
 	this.targetNS = null;
+	// The index of the target namespace in namespaceIndexes
 	this.targetNSIndex = null;
 	this.root = null;
 	
@@ -95,6 +98,10 @@ Xsd2Json.prototype.importAjax = function(url, originalAttempt) {
 	});
 };
 
+// Retrieve all the children of node which belong to the schema namespace.  
+// If they are specified, then the results will be filtered to only include children which
+// match the given element name and/or have a name attribute of the given value
+// filtered to
 Xsd2Json.prototype.getChildren = function(node, childName, nameAttribute) {
 	var children = [];
 	if (!node)
@@ -112,6 +119,19 @@ Xsd2Json.prototype.getChildren = function(node, childName, nameAttribute) {
 	return children;
 }
 
+// Namespace aware check to see if a definition already contains parent child element
+Xsd2Json.prototype.containsChild = function(object, child) {
+	if (object.elements) {
+		for (var index in object.elements) {
+			if (object.elements[index].name == child.name
+					&& object.elements[index].ns == child.ns)
+				return true;
+		}
+	}
+	return false;
+};
+
+// Register a namespace, and optionally its prefix, to the schema
 Xsd2Json.prototype.registerNamespace = function(namespaceUri, prefix) {
 	if ($.inArray(namespaceUri, this.namespaceIndexes) == -1)
 		this.namespaceIndexes.push(namespaceUri);
@@ -119,6 +139,7 @@ Xsd2Json.prototype.registerNamespace = function(namespaceUri, prefix) {
 		this.namespaces[prefix] = namespaceUri;
 };
 
+// Process the schema file
 Xsd2Json.prototype.processSchema = function() {
 	var self = this;
 	// Extract all the namespaces in use by this schema
@@ -170,8 +191,11 @@ Xsd2Json.prototype.processSchema = function() {
 		else this.root = this.buildSchema(selected);
 		// Resolve dangling type references
 		this.resolveTypeReferences(this.root, []);
+		// Only do this block for the root schema
 		if (!this.options.isImported) {
-			this.resolveDefinitions(this.root, []);
+			// Resolve dangling external schema types from circular includes
+			this.resolveCrossSchemaTypeReferences(this.root, []);
+			// Add all the namespaces from imported schemas into the registry of namespaces for the root schema
 			var namespaceRegistry = [];
 			for (var index in this.namespaceIndexes) {
 				var namespaceUri = this.namespaceIndexes[index];
@@ -189,10 +213,11 @@ Xsd2Json.prototype.processSchema = function() {
 	}
 };
 
-
+// Post processing step which recursively walks the schema tree and merges type definitions
+// into elements that reference them.
 Xsd2Json.prototype.resolveTypeReferences = function(object, objectStack) {
 	if (object.typeRef == null) {
-		// Adjust all the children
+		// Since this object did not have a type reference, continue to walk its children
 		if (object.element || object.schema) {
 			var self = this;
 			if (object.elements) {
@@ -210,41 +235,51 @@ Xsd2Json.prototype.resolveTypeReferences = function(object, objectStack) {
 			}
 		}
 	} else {
-		// If there was a type definition on this object, merge it in and stop
+		// If there was a type definition on this object, merge it in and stop to avoid infinite loops
 		var typeDef = object.typeRef;
 		delete object.typeRef;
 		this.mergeType(object, typeDef);
 	}
 };
 
-Xsd2Json.prototype.resolveDefinition = function(object) {
+// Detect if the given object referenced a type from a schema which was not available at the time
+// it was originally being processed.  If so, then merge the definition with the definition from
+// the external schema.
+Xsd2Json.prototype.mergeCrossSchemaType = function(object) {
 	if (object.schemaObject) {
 		var schemas = object.schemaObject;
 		var references = object.reference;
+		// Clean up the cross schema references
 		delete object.schemaObject;
 		delete object.reference;
+		// Merge in the external schema types, recursively merging together the external schema types
 		for (var i = 0; i < schemas.length; i++){
-			this.mergeType(object, this.resolveDefinition(schemas[i].rootDefinitions[references[i]]));
+			this.mergeType(object, this.mergeCrossSchemaType(schemas[i].rootDefinitions[references[i]]));
 		}
 	}
 	return object;
 };
 
-Xsd2Json.prototype.resolveDefinitions = function(object, objectStack) {
-	this.resolveDefinition(object);
+// Walk the schema tree to resolve dangling cross schema definitions, which are created as stubs 
+// when circular schema includes are detected.
+// This is only performed once ALL schemas have been processed and local types resolved
+Xsd2Json.prototype.resolveCrossSchemaTypeReferences = function(object, objectStack) {
+	this.mergeCrossSchemaType(object);
 	if (object.element || object.schema) {
 		if (object.elements) {
 			objectStack.push(object);
 			for (var i in object.elements) 
 				if ($.inArray(object.elements[i], objectStack) == -1)
-					this.resolveDefinitions(object.elements[i], objectStack);
+					this.resolveCrossSchemaTypeReferences(object.elements[i], objectStack);
 			objectStack.pop();
 		}
+		// Resolve attribute definitions
 		for (var i in object.attributes) 
-			this.resolveDefinitions(object.attributes[i]);
+			this.resolveCrossSchemaTypeReferences(object.attributes[i]);
 	}
 };
 
+// Build the schema tag
 Xsd2Json.prototype.buildSchema = function(node) {
 	var object = {
 		"elements": [],
@@ -261,6 +296,9 @@ Xsd2Json.prototype.buildSchema = function(node) {
 	return object;
 };
 
+// Build an element definition
+// node - element schema node
+// parentObject - definition of the parent this element will be added to
 Xsd2Json.prototype.buildElement = function(node, parentObject) {
 	var definition = null;
 	var name = node.getAttribute("name");
@@ -268,9 +306,12 @@ Xsd2Json.prototype.buildElement = function(node, parentObject) {
 	var parentIsSchema = node.parentNode === this.xsd;
 	
 	if (parentIsSchema) {
+		// Detect if this element is already defined in the list of root definitions, if so use that
 		if (nameParts && nameParts.indexedName in this.rootDefinitions)
 			return this.rootDefinitions[nameParts.indexedName];
 	} else {
+		// Store min/max occurs on the the elements parent, as they only apply to this particular relationship
+		// Root level elements can't have min/max occurs attributes
 		var minOccurs = node.getAttribute("minOccurs");
 		var maxOccurs = node.getAttribute("maxOccurs");
 		if (parentObject && (minOccurs || maxOccurs)) {
@@ -287,6 +328,7 @@ Xsd2Json.prototype.buildElement = function(node, parentObject) {
 	var hasSubGroup = node.getAttribute("substitutionGroup") != null;
 	var hasRef = node.getAttribute("ref") != null;
 	if (hasSubGroup || hasRef){
+		// Resolve reference to get the actual definition for this element
 		definition = this.execute(node, 'buildElement', parentObject);
 		if (hasSubGroup) {
 			definition = $.extend({}, definition, {'name' : nameParts.localName});
@@ -306,10 +348,12 @@ Xsd2Json.prototype.buildElement = function(node, parentObject) {
 				"element": true
 		};
 		
+		// If this is a root level element, store it in rootDefinition
 		if (parentIsSchema) {
 			this.rootDefinitions[nameParts.indexedName] = definition;
 		}
 		
+		// Build or retrieve the type definition
 		var type = node.getAttribute("type");
 		if (type == null) {
 			this.buildType(this.getChildren(node)[0], definition);
@@ -333,17 +377,6 @@ Xsd2Json.prototype.buildElement = function(node, parentObject) {
 	return definition;
 }
 
-Xsd2Json.prototype.containsChild = function(object, child) {
-	if (object.elements) {
-		for (var index in object.elements) {
-			if (object.elements[index].name == child.name
-					&& object.elements[index].ns == child.ns)
-				return true;
-		}
-	}
-	return false;
-};
-
 Xsd2Json.prototype.buildAttribute = function(node, parentObject) {
 	var definition = null;
 	var name = node.getAttribute("name");
@@ -351,8 +384,10 @@ Xsd2Json.prototype.buildAttribute = function(node, parentObject) {
 	
 	var hasRef = node.getAttribute("ref") != null;
 	if (hasRef){
+		// Follow reference to get the actual type definition
 		definition = this.execute(node, 'buildAttribute');
 	} else {
+		// Actual attribute definition, build new definition
 		nameParts = this.extractName(name);
 		definition = {
 				"name" : nameParts.localName,
@@ -376,16 +411,19 @@ Xsd2Json.prototype.buildAttribute = function(node, parentObject) {
 		}
 	}
 	
+	// Store the definition to rootDefinitions if it was defined at the root of the schema
 	if (node.parentNode === this.xsd && !hasRef) {
 		this.rootDefinitions[nameParts.indexedName] = definition;
 	}
 	
+	// Add the definition to its parents attributes array
 	if (parentObject != null)
 		parentObject.attributes.push(definition);
 	
 	return definition;
 };
 
+// Build a type definition
 Xsd2Json.prototype.buildType = function(node, object) {
 	if (node == null)
 		return;
@@ -413,6 +451,7 @@ Xsd2Json.prototype.buildType = function(node, object) {
 		needsMerge = true;
 	}
 	
+	// Determine what kind of type this is
 	if (node.localName == "complexType") {
 		this.buildComplexType(node, extendingObject);
 	} else if (node.localName == "simpleType") {
@@ -421,11 +460,13 @@ Xsd2Json.prototype.buildType = function(node, object) {
 		this.buildRestriction(node, extendingObject);
 	}
 	
+	// Only need to merge if creating a new named type definition
 	if (needsMerge) {
 		this.mergeType(object, extendingObject);
 	}
 };
 
+// Process a complexType tag
 Xsd2Json.prototype.buildComplexType = function(node, object) {
 	var self = this;
 	if (node.getAttribute("mixed") == "true") {
@@ -454,6 +495,7 @@ Xsd2Json.prototype.buildComplexType = function(node, object) {
 	}
 };
 
+// Process a simpleType tag
 Xsd2Json.prototype.buildSimpleType = function(node, object) {
 	var child = this.getChildren(node)[0];
 	if (child.localName == "restriction") {
@@ -465,6 +507,7 @@ Xsd2Json.prototype.buildSimpleType = function(node, object) {
 	}
 };
 
+// Process a list tag
 Xsd2Json.prototype.buildList = function(node, object) {
 	var itemType = node.getAttribute('itemType');
 	object.type = this.resolveType(itemType, object);
@@ -474,6 +517,7 @@ Xsd2Json.prototype.buildList = function(node, object) {
 	object.multivalued = true;
 };
 
+// Process a union tag
 Xsd2Json.prototype.buildUnion = function(node, object) {
 	var memberTypes = node.getAttribute('memberTypes');
 	if (memberTypes) {
@@ -492,6 +536,7 @@ Xsd2Json.prototype.buildUnion = function(node, object) {
 		self.buildSimpleType(children[i], object);
 };
 
+// Process a group tag
 Xsd2Json.prototype.buildGroup = function(node, object) {
 	var self = this;
 	var children = this.getChildren(node);
@@ -507,6 +552,7 @@ Xsd2Json.prototype.buildGroup = function(node, object) {
 	}
 };
 
+// Process an all tag
 Xsd2Json.prototype.buildAll = function(node, object) {
 	var self = this;
 	var children = this.getChildren(node);
@@ -518,6 +564,7 @@ Xsd2Json.prototype.buildAll = function(node, object) {
 	}
 };
 
+// Process a choice tag
 Xsd2Json.prototype.buildChoice = function(node, object) {
 	var self = this;
 	var choice = {
@@ -546,6 +593,7 @@ Xsd2Json.prototype.buildChoice = function(node, object) {
 	object.choices.push(choice);
 };
 
+// Process a sequence tag
 Xsd2Json.prototype.buildSequence = function(node, object) {
 	var self = this;
 	var children = this.getChildren(node);
@@ -565,10 +613,12 @@ Xsd2Json.prototype.buildSequence = function(node, object) {
 	}
 };
 
+// Process an any tag
 Xsd2Json.prototype.buildAny = function(node, object) {
 	object.any = !(node.getAttribute("minOccurs") == "0" && node.getAttribute("maxOccurs") == "0");
 };
 
+// Process a complexContent tag
 Xsd2Json.prototype.buildComplexContent = function(node, object) {
 	if (node.getAttribute("mixed") == "true") {
 		object.type = "mixed";
@@ -582,6 +632,7 @@ Xsd2Json.prototype.buildComplexContent = function(node, object) {
 	}
 };
 
+// Process a simpleContent tag
 Xsd2Json.prototype.buildSimpleContent = function(node, object) {
 	var child = this.getChildren(node)[0];
 	if (child.localName == "extension") {
@@ -591,6 +642,7 @@ Xsd2Json.prototype.buildSimpleContent = function(node, object) {
 	}
 };
 
+// Process a restriction tag
 Xsd2Json.prototype.buildRestriction = function(node, object) {
 	var base = node.getAttribute("base");
 	
@@ -624,6 +676,7 @@ Xsd2Json.prototype.buildRestriction = function(node, object) {
 	}
 };
 
+// Process an extension tag
 Xsd2Json.prototype.buildExtension = function(node, object) {
 	var base = node.getAttribute("base");
 	
@@ -653,6 +706,7 @@ Xsd2Json.prototype.buildExtension = function(node, object) {
 	}
 };
 
+// Process an attributeGroup tag
 Xsd2Json.prototype.buildAttributeGroup = function(node, object) {
 	var children = this.getChildren(node);
 	for (var i in children) {
@@ -665,14 +719,21 @@ Xsd2Json.prototype.buildAttributeGroup = function(node, object) {
 	}
 };
 
+// Process a node with tag processing functin fnName.  Follows references on the node,
+// determining which schema object will be responsible for generating the definition.
+// node - the node being processed
+// fnName - the function to be called to process the node
+// object - definition object the node belongs to
 Xsd2Json.prototype.execute = function(node, fnName, object) {
 	var resolveName = node.getAttribute("ref") || node.getAttribute("substitutionGroup") 
 			|| node.getAttribute("type") || node.getAttribute("base");
 	var targetNode = node;
 	var xsdObj = this;
 	var name = resolveName;
+	// Determine if the node requires resolution to another definition node
 	if (resolveName != null && (this.xsPrefix == "" && resolveName.indexOf(":") != -1) 
 			|| (this.xsPrefix != "" && resolveName.indexOf(this.xsPrefix) == -1)) {
+		// Determine which schema the reference belongs to
 		xsdObj = this.resolveXSD(resolveName);
 		var nameParts = this.extractName(name);
 		//Check for cached version of the definition
@@ -682,13 +743,15 @@ Xsd2Json.prototype.execute = function(node, fnName, object) {
 				return definition;
 			}
 		}
-		// Schema reference is not initialized yet, therefore it is a circular reference
+		// Schema reference is not initialized yet, therefore it is a circular reference, store stub
 		if (!xsdObj.processingStarted && xsdObj !== this)
 			return {name: nameParts.indexedName, schemaObject : [xsdObj], reference : [nameParts.indexedName]};
+		// Grab the node the reference was referring to
 		targetNode = xsdObj.getChildren(xsdObj.xsd, undefined, nameParts.localName)[0];
 	} 
 	
 	try {
+		// Call the processing function on the referenced node
 		return xsdObj[fnName](targetNode, object);
 	} catch (error) {
 		$("body").append("<br/>" + name + ": " + error + " ");
