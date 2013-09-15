@@ -147,6 +147,15 @@
 	border-radius: 6px;
 }
 
+.xml_element.xml_root_element {
+	margin-top: 10px;
+	border: 1px solid #bbbbcc;
+}
+
+/*.xml_root_element > .content_block.xml_children {
+	padding: 0;
+}*/
+
 .xml_children > .xml_element {
 	margin-bottom: 20px;
 }
@@ -170,6 +179,12 @@
 	margin-bottom: 12px;
 }
 
+.xml_root_element > .element_header {
+	background-color: #eeeeee;
+	background: -webkit-gradient(linear, left top, left bottom, from(#FFFFFF), to(#eeeeee));
+	background: -moz-linear-gradient(top,  #FFFFFF,  #eeeeee);
+	background: linear-gradient(to bottom,  #FFFFFF,  #eeeeee);
+}
 
 .top_level_element_group > .element_header {
 	background-color: #dddddd;
@@ -204,11 +219,20 @@
 	box-shadow: 0px 0px 6px 1px #FBD850;
 }
 
+.xml_root_element.selected {
+	box-shadow: 3px 3px 6px 0 #F9E59A;
+}
+
 .xml_element.selected > .element_header {
 	background-color: #A4CABB !important;
 	background: -webkit-gradient(linear, left top, left bottom, from(#C4E9EE), color-stop(0.5, #5ECFE6), to(#76B6E1)) !important;
 	background: -moz-linear-gradient(top,  #C4E9EE, #5ECFE6, #76B6E1) !important;
 	background: linear-gradient(to bottom,  #C4E9EE,  #5ECFE6, #76B6E1) !important;
+}
+
+.xml_root_element > .element_header > .element_name {
+	font-size: 16px;
+	color: #666677;
 }
 
 .top_level_element_group.xml_element > .element_header > .element_name {
@@ -339,6 +363,7 @@
 	width: 170px;
 	padding-left: 15px;
 	height: 100%;
+	z-index: 1000;
 }
 
 .xml_menu_container {
@@ -386,6 +411,7 @@
 }
 
 .menu_header {
+	font-size: 14px;
 	padding: 5px;
 	background-repeat: repeat-x;
 	background-position: left 0px;
@@ -409,9 +435,9 @@
 	float: right;
 }
 
-.xml_content {
+/*.xml_content {
 	padding: 5px 0px 5px 5px;
-}
+}*/
 
 /* Head tabs */
 
@@ -431,7 +457,7 @@
 }
 
 .xml_tab_area .gui_content { 
-	padding: 3px 5px 0 0px;
+	padding: 3px 0 0 0;
 	background-color: #fafafa;
 	min-height: 600px;
 }
@@ -467,6 +493,14 @@
 	font-size: 18px;
 	white-space: nowrap;
 	margin-bottom: 10px;	
+}
+
+.xml_editor_header_backing {
+	position: absolute;
+	background-color: #ffffff;
+	z-index: 999;
+	width: 100%;
+	background-color: #ffffff;
 }
 
 .xml_menu_bar {

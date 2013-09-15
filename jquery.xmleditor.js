@@ -356,10 +356,14 @@ $.widget( "xml.xmlEditor", {
 		this.xmlWorkAreaContainer = $("<div/>").attr('class', xmlWorkAreaContainerClass).appendTo(this.xmlEditorContainer);
 		
 		// Menu bar
+		var editorHeaderBacking = $("<div/>").addClass(editorHeaderClass + "_backing").appendTo(this.xmlWorkAreaContainer);
 		this.editorHeader = $("<div/>").attr('class', editorHeaderClass).appendTo(this.xmlWorkAreaContainer);
 		if (this.options.documentTitle != null)
 			$("<h2/>").html("Editing Description: " + this.options.documentTitle).appendTo(this.editorHeader);
 		this.menuBar.render(this.editorHeader);
+		editorHeaderBacking.height(this.editorHeader.outerHeight());
+		// Create grouping of header elements that need to be positioned together
+		this.editorHeaderGroup = this.editorHeader.add(editorHeaderBacking);
 		
 		this.xmlTabContainer = $("<div/>").attr("class", editorTabAreaClass).css("padding-top", this.editorHeader.height() + "px").appendTo(this.xmlWorkAreaContainer);
 		this.problemsPanel = $("<pre/>").attr('class', problemsPanelClass).hide().appendTo(this.xmlTabContainer);
@@ -456,8 +460,8 @@ $.widget( "xml.xmlEditor", {
 	documentLoadedEvent : function(newDocument) {
 		if (this.guiEditor != null && this.guiEditor.rootElement != null)
 			this.guiEditor.rootElement.xmlNode = newDocument.children().first();
-		if (this.guiEditor.xmlContent != null)
-			this.guiEditor.xmlContent.data("xml").elementNode = newDocument.children().first();
+		/*if (this.guiEditor.xmlContent != null)
+			this.guiEditor.xmlContent.data("xml").elementNode = newDocument.children().first();*/
 		if (this.problemsPanel != null)
 			this.clearProblemPanel();
 	},
@@ -916,7 +920,7 @@ AbstractXMLObject.prototype.focus = function() {
 };
 
 AbstractXMLObject.prototype.getDomNode = function () {
-	return null;
+	return this.domNode;
 };
 function AttributeMenu(menuID, label, expanded, enabled, owner, editor) {
 	ModifyElementMenu.call(this, menuID, label, expanded, enabled, owner, editor);
@@ -1189,7 +1193,12 @@ GUIEditor.prototype.initialize = function(parentContainer) {
 	
 	this.guiContent.append(this.xmlContent);
 	
-	this.setRootElement(this.editor.xmlState.xml.children()[0]);
+	this.documentElement = new AbstractXMLObject(this.editor, null);
+	this.documentElement.domNode = this.xmlContent;
+	this.documentElement.childContainer = this.xmlContent;
+	this.documentElement.placeholder = this.placeholder;
+	
+	this.setRootElement(this.editor.xmlState.xml.children()[0], false);
 	
 	this._initEventBindings();
 	return this;
@@ -1197,16 +1206,14 @@ GUIEditor.prototype.initialize = function(parentContainer) {
 
 // Set the root element for this editor 
 // node - xml node from an xml document to be used as the root node for this editor
-GUIEditor.prototype.setRootElement = function(node) {
+GUIEditor.prototype.setRootElement = function(node, render) {
 	var objectType = this.editor.schemaTree.getElementDefinition(node);
 	if (objectType == null)
 		objectType = this.editor.schemaTree.rootElement;
 	this.rootElement = new XMLElement(node, objectType, this.editor);
-	this.rootElement.domNode = this.xmlContent;
-	this.rootElement.domNode.data("xmlElement", this.rootElement);
-	this.rootElement.childContainer = this.xmlContent;
-	this.rootElement.placeholder = this.placeholder;
-	this.rootElement.initializeGUI();
+	if (render || arguments.length == 1)
+		this.rootElement.render(this.documentElement, true);
+	console.log("end");
 };
 
 // Initialize editor wide event bindings
@@ -1251,7 +1258,6 @@ GUIEditor.prototype._initEventBindings = function() {
 
 // Make this editor the active editor and show it
 GUIEditor.prototype.activate = function() {
-	this.guiContent.show();
 	this.active = true;
 	this.deselect();
 	
@@ -1260,7 +1266,7 @@ GUIEditor.prototype.activate = function() {
 		this.editor.refreshDisplay();
 		this.editor.textEditor.setInitialized();
 	}
-	
+	this.guiContent.show();
 	return this;
 };
 
@@ -1298,12 +1304,15 @@ GUIEditor.prototype.refreshDisplay = function() {
 
 // Refresh the display of all elements
 GUIEditor.prototype.refreshElements = function() {
-	var node = this.rootElement.getDomNode()[0];
+	var node = this.documentElement.getDomNode();
+	node.empty();
+	node = node[0];
 	var originalParent = node.parentNode;
 	var fragment = document.createDocumentFragment();
 	fragment.appendChild(node);
 	
-	this.rootElement.renderChildren(true);
+	// Clear out the previous contents and then rebuild it
+	this.rootElement.render(this.documentElement, true);
 	this.editor.addTopLevelMenu.populate(this.rootElement);
 	
 	originalParent.appendChild(fragment);
@@ -1832,7 +1841,7 @@ MenuBar.prototype.activateMenu = function(event) {
 // Builds the menu and attaches it to the editor
 MenuBar.prototype.render = function(parentElement) {
 	this.parentElement = parentElement;
-	this.menuBarContainer = $("<div/>").attr('class', xmlMenuBarClass).appendTo(parentElement);
+	this.menuBarContainer = $("<div/>").addClass(xmlMenuBarClass).appendTo(parentElement);
 	
 	this.headerMenu = $("<ul/>");
 	this.menuBarContainer.append(this.headerMenu);
@@ -2142,7 +2151,7 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 			left : xmlEditorContainer.offset().left + xmlEditorContainer.outerWidth() - this.menuColumn.innerWidth(),
 			top : 0
 		});
-		this.editor.editorHeader.css({
+		this.editor.editorHeaderGroup.css({
 			position : 'fixed',
 			top : 0
 		});
@@ -2152,7 +2161,7 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 			left : xmlEditorContainer.outerWidth() - this.menuColumn.innerWidth(),
 			top : 0
 		});
-		this.editor.editorHeader.css({
+		this.editor.editorHeaderGroup.css({
 			position : 'absolute',
 			top : 0
 		});
@@ -2803,6 +2812,7 @@ function XMLElement(xmlNode, objectType, editor) {
 	AbstractXMLObject.call(this, editor, objectType);
 	// jquery object reference to the xml node represented by this object in the active xml document
 	this.xmlNode = $(xmlNode);
+	this.isRootElement = this.xmlNode[0].parentNode === this.xmlNode[0].ownerDocument;
 	// Flag indicating if this element is a child of the root node
 	this.isTopLevel = this.xmlNode[0].parentNode.parentNode === this.xmlNode[0].ownerDocument;
 	// Flag indicating if any children nodes can be added to this element
@@ -2857,7 +2867,10 @@ XMLElement.prototype.render = function(parentElement, recursive) {
 	this.domNode.className = this.objectType.ns + "_" + this.objectType.localName + 'Instance ' + xmlElementClass;
 	if (this.isTopLevel)
 		this.domNode.className += ' ' + topLevelContainerClass;
-	this.parentElement.childContainer[0].appendChild(this.domNode);
+	if (this.isRootElement)
+		this.domNode.className += ' xml_root_element';
+	if (this.parentElement)
+		this.parentElement.childContainer[0].appendChild(this.domNode);
 	
 	// Begin building contents
 	this.elementHeader = document.createElement('ul');
@@ -2882,7 +2895,8 @@ XMLElement.prototype.render = function(parentElement, recursive) {
 	this.addContentContainers(recursive);
 
 	// Action buttons
-	this.elementHeader.appendChild(this.addTopActions(this.domNodeID));
+	if (!this.isRootElement)
+		this.elementHeader.appendChild(this.addTopActions(this.domNodeID));
 	
 	this.initializeGUI();
 	this.updated({action : 'render'});

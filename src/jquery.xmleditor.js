@@ -356,10 +356,14 @@ $.widget( "xml.xmlEditor", {
 		this.xmlWorkAreaContainer = $("<div/>").attr('class', xmlWorkAreaContainerClass).appendTo(this.xmlEditorContainer);
 		
 		// Menu bar
+		var editorHeaderBacking = $("<div/>").addClass(editorHeaderClass + "_backing").appendTo(this.xmlWorkAreaContainer);
 		this.editorHeader = $("<div/>").attr('class', editorHeaderClass).appendTo(this.xmlWorkAreaContainer);
 		if (this.options.documentTitle != null)
 			$("<h2/>").html("Editing Description: " + this.options.documentTitle).appendTo(this.editorHeader);
 		this.menuBar.render(this.editorHeader);
+		editorHeaderBacking.height(this.editorHeader.outerHeight());
+		// Create grouping of header elements that need to be positioned together
+		this.editorHeaderGroup = this.editorHeader.add(editorHeaderBacking);
 		
 		this.xmlTabContainer = $("<div/>").attr("class", editorTabAreaClass).css("padding-top", this.editorHeader.height() + "px").appendTo(this.xmlWorkAreaContainer);
 		this.problemsPanel = $("<pre/>").attr('class', problemsPanelClass).hide().appendTo(this.xmlTabContainer);
@@ -456,8 +460,6 @@ $.widget( "xml.xmlEditor", {
 	documentLoadedEvent : function(newDocument) {
 		if (this.guiEditor != null && this.guiEditor.rootElement != null)
 			this.guiEditor.rootElement.xmlNode = newDocument.children().first();
-		if (this.guiEditor.xmlContent != null)
-			this.guiEditor.xmlContent.data("xml").elementNode = newDocument.children().first();
 		if (this.problemsPanel != null)
 			this.clearProblemPanel();
 	},

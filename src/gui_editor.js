@@ -21,7 +21,12 @@ GUIEditor.prototype.initialize = function(parentContainer) {
 	
 	this.guiContent.append(this.xmlContent);
 	
-	this.setRootElement(this.editor.xmlState.xml.children()[0]);
+	this.documentElement = new AbstractXMLObject(this.editor, null);
+	this.documentElement.domNode = this.xmlContent;
+	this.documentElement.childContainer = this.xmlContent;
+	this.documentElement.placeholder = this.placeholder;
+	
+	this.setRootElement(this.editor.xmlState.xml.children()[0], false);
 	
 	this._initEventBindings();
 	return this;
@@ -29,16 +34,13 @@ GUIEditor.prototype.initialize = function(parentContainer) {
 
 // Set the root element for this editor 
 // node - xml node from an xml document to be used as the root node for this editor
-GUIEditor.prototype.setRootElement = function(node) {
+GUIEditor.prototype.setRootElement = function(node, render) {
 	var objectType = this.editor.schemaTree.getElementDefinition(node);
 	if (objectType == null)
 		objectType = this.editor.schemaTree.rootElement;
 	this.rootElement = new XMLElement(node, objectType, this.editor);
-	this.rootElement.domNode = this.xmlContent;
-	this.rootElement.domNode.data("xmlElement", this.rootElement);
-	this.rootElement.childContainer = this.xmlContent;
-	this.rootElement.placeholder = this.placeholder;
-	this.rootElement.initializeGUI();
+	if (render || arguments.length == 1)
+		this.rootElement.render(this.documentElement, true);
 };
 
 // Initialize editor wide event bindings
@@ -83,7 +85,6 @@ GUIEditor.prototype._initEventBindings = function() {
 
 // Make this editor the active editor and show it
 GUIEditor.prototype.activate = function() {
-	this.guiContent.show();
 	this.active = true;
 	this.deselect();
 	
@@ -92,7 +93,7 @@ GUIEditor.prototype.activate = function() {
 		this.editor.refreshDisplay();
 		this.editor.textEditor.setInitialized();
 	}
-	
+	this.guiContent.show();
 	return this;
 };
 
@@ -130,12 +131,15 @@ GUIEditor.prototype.refreshDisplay = function() {
 
 // Refresh the display of all elements
 GUIEditor.prototype.refreshElements = function() {
-	var node = this.rootElement.getDomNode()[0];
+	var node = this.documentElement.getDomNode();
+	node.empty();
+	node = node[0];
 	var originalParent = node.parentNode;
 	var fragment = document.createDocumentFragment();
 	fragment.appendChild(node);
 	
-	this.rootElement.renderChildren(true);
+	// Clear out the previous contents and then rebuild it
+	this.rootElement.render(this.documentElement, true);
 	this.editor.addTopLevelMenu.populate(this.rootElement);
 	
 	originalParent.appendChild(fragment);

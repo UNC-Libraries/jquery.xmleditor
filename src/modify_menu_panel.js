@@ -108,7 +108,7 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 			left : xmlEditorContainer.offset().left + xmlEditorContainer.outerWidth() - this.menuColumn.innerWidth(),
 			top : 0
 		});
-		this.editor.editorHeader.css({
+		this.editor.editorHeaderGroup.css({
 			position : 'fixed',
 			top : 0
 		});
@@ -118,7 +118,7 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 			left : xmlEditorContainer.outerWidth() - this.menuColumn.innerWidth(),
 			top : 0
 		});
-		this.editor.editorHeader.css({
+		this.editor.editorHeaderGroup.css({
 			position : 'absolute',
 			top : 0
 		});

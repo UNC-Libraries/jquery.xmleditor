@@ -93,5 +93,5 @@ AbstractXMLObject.prototype.focus = function() {
 };
 
 AbstractXMLObject.prototype.getDomNode = function () {
-	return null;
+	return this.domNode;
 };
