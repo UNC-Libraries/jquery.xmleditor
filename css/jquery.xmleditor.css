@@ -39,9 +39,7 @@
 }
 .xml_dialog .ui-dialog-titlebar-close {
 	position: absolute;
-	right: 1em;
 	top: 50%;
-	width: 21px;
 	margin: -10px 0 0 0;
 	padding: 1px;
 	height: 20px;
@@ -52,6 +50,7 @@
 	padding: .5em 1em;
 	background: none;
 	overflow: auto;
+	clear: both;
 }
 .xml_dialog .ui-dialog-buttonpane {
 	text-align: left;
@@ -66,6 +65,10 @@
 .xml_dialog .ui-dialog-buttonpane button {
 	margin: .5em .4em .5em 0;
 	cursor: pointer;
+}
+.xml_dialog .ui-icon {
+	display: block;
+	padding: .4em .3em;
 }
 .xml_dialog .ui-resizable-se {
 	width: 12px;
