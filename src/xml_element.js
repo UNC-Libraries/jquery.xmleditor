@@ -224,15 +224,18 @@ XMLElement.prototype.addElement = function(objectType) {
 	
 	// Create the new element in the target namespace with the matching prefix
 	var xmlDocument = this.editor.xmlState.xml[0];
+	var defaultValue = " ";
+	if (objectType.values && objectType.values.length > 0)
+		defaultValue = objectType.values[0];
 	var newElement;
 	if (xmlDocument.createElementNS) {
 		newElement = xmlDocument.createElementNS(objectType.namespace, prefix + objectType.localName);
-		newElement.appendChild(xmlDocument.createTextNode(" "));
+		newElement.appendChild(xmlDocument.createTextNode(defaultValue));
 		this.xmlNode[0].appendChild(newElement);
 	} else if (typeof(xmlDocument.createNode) != "undefined") {
 		// Older IE versions
 		newElement = xmlDocument.createNode(1, prefix + objectType.localName, objectType.namespace);
-		newElement.appendChild(xmlDocument.createTextNode(" "));
+		newElement.appendChild(xmlDocument.createTextNode(defaultValue));
 		this.xmlNode[0].appendChild(newElement);
 	} else {
 		throw new Exception("Unable to add child due to incompatible browser");
@@ -301,6 +304,9 @@ XMLElement.prototype.addAttribute = function (objectType) {
 	var attributeValue = "";
 	if (objectType.defaultValue) {
 		attributeValue = objectType.defaultValue;
+	} else if (objectType.values && objectType.values.length > 0) {
+		// With enumerated attributes without a default, default to the first value
+		attributeValue = objectType.values[0];
 	}
 	var node = this.xmlNode[0];
 	var prefix;
