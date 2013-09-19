@@ -1229,7 +1229,8 @@ GUIEditor.prototype._initEventBindings = function() {
 		attribute.xmlElement.updated({action : 'attributeRemoved', target : attribute});
 		self.editor.xmlState.documentChangedEvent();
 		event.stopPropagation();
-	}).on('change', '.' + attributeContainerClass + ' > input,.' + attributeContainerClass + ' > textarea', function(event){
+	}).on('change', '.' + attributeContainerClass + ' > input,.' + attributeContainerClass + ' > textarea,'
+			+ '.' + attributeContainerClass + ' > select', function(event){
 		var attribute = $(this).parents('.' + attributeContainerClass).eq(0).data('xmlAttribute');
 		attribute.syncValue();
 		attribute.xmlElement.updated({action : 'attributeSynced', target : attribute});
@@ -3158,13 +3159,20 @@ XMLElement.prototype.addElement = function(objectType) {
 	
 	// Create the new element in the target namespace with the matching prefix
 	var xmlDocument = this.editor.xmlState.xml[0];
+	var defaultValue = null;
+	if (objectType.values && objectType.values.length > 0)
+		defaultValue = objectType.values[0];
 	var newElement;
 	if (xmlDocument.createElementNS) {
 		newElement = xmlDocument.createElementNS(objectType.namespace, prefix + objectType.localName);
+		if (defaultValue)
+			newElement.appendChild(xmlDocument.createTextNode(defaultValue));
 		this.xmlNode[0].appendChild(newElement);
 	} else if (typeof(xmlDocument.createNode) != "undefined") {
 		// Older IE versions
 		newElement = xmlDocument.createNode(1, prefix + objectType.localName, objectType.namespace);
+		if (defaultValue)
+			newElement.appendChild(xmlDocument.createTextNode(defaultValue));
 		this.xmlNode[0].appendChild(newElement);
 	} else {
 		throw new Exception("Unable to add child due to incompatible browser");
@@ -3240,6 +3248,9 @@ XMLElement.prototype.addAttribute = function (objectType) {
 	var attributeValue = "";
 	if (objectType.defaultValue) {
 		attributeValue = objectType.defaultValue;
+	} else if (objectType.values && objectType.values.length > 0) {
+		// With enumerated attributes without a default, default to the first value
+		attributeValue = objectType.values[0];
 	}
 	var node = this.xmlNode[0];
 	var prefix;

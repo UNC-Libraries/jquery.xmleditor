@@ -56,7 +56,8 @@ GUIEditor.prototype._initEventBindings = function() {
 		attribute.xmlElement.updated({action : 'attributeRemoved', target : attribute});
 		self.editor.xmlState.documentChangedEvent();
 		event.stopPropagation();
-	}).on('change', '.' + attributeContainerClass + ' > input,.' + attributeContainerClass + ' > textarea', function(event){
+	}).on('change', '.' + attributeContainerClass + ' > input,.' + attributeContainerClass + ' > textarea,'
+			+ '.' + attributeContainerClass + ' > select', function(event){
 		var attribute = $(this).parents('.' + attributeContainerClass).eq(0).data('xmlAttribute');
 		attribute.syncValue();
 		attribute.xmlElement.updated({action : 'attributeSynced', target : attribute});
