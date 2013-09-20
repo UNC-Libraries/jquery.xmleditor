@@ -218,10 +218,6 @@ $.widget( "xml.xmlEditor", {
 		}
 		this.modifyMenu = new ModifyMenuPanel(this);
 		
-		if (this.options.enableGUIKeybindings)
-			$(window).keydown(function(e){
-				self.keydownCallback(e);
-			});
 		if (this.options.confirmExitWhenUnsubmitted) {
 			$(window).bind('beforeunload', function(e) {
 				if (self.xmlState != null && self.xmlState.isChanged()) {
@@ -382,6 +378,7 @@ $.widget( "xml.xmlEditor", {
 		this.addTopLevelMenu = this.modifyMenu.addMenu(addTopMenuClass, this.options.addTopMenuHeaderText, 
 				true, true).populate(this.guiEditor.rootElement);
 		
+		this.setEnableKeybindings(this.options.enableGUIKeybindings);
 		if (this.options.floatingMenu) {
 			$(window).bind('scroll', $.proxy(this.modifyMenu.setMenuPosition, this.modifyMenu));
 		}
@@ -460,8 +457,6 @@ $.widget( "xml.xmlEditor", {
 	documentLoadedEvent : function(newDocument) {
 		if (this.guiEditor != null && this.guiEditor.rootElement != null)
 			this.guiEditor.rootElement.xmlNode = newDocument.children().first();
-		/*if (this.guiEditor.xmlContent != null)
-			this.guiEditor.xmlContent.data("xml").elementNode = newDocument.children().first();*/
 		if (this.problemsPanel != null)
 			this.clearProblemPanel();
 	},
@@ -703,6 +698,18 @@ $.widget( "xml.xmlEditor", {
 	stripPrefix: function(name) {
 		var index = name.indexOf(":");
 		return index == -1? name: name.substring(index + 1);
+	},
+	
+	setEnableKeybindings : function(enable) {
+		if (enable) {
+			this.options.enableGUIKeybindings = true;
+			this.menuBar.menuBarContainer.removeClass("xml_bindings_disabled");
+			$(window).on("keydown.xml_keybindings", $.proxy(this.keydownCallback, this));
+		} else {
+			this.options.enableGUIKeybindings = false;
+			this.menuBar.menuBarContainer.addClass("xml_bindings_disabled");
+			$(window).off("keydown.xml_keybindings");
+		}
 	},
 	
 	// Initialize key bindings
@@ -1213,7 +1220,6 @@ GUIEditor.prototype.setRootElement = function(node, render) {
 	this.rootElement = new XMLElement(node, objectType, this.editor);
 	if (render || arguments.length == 1)
 		this.rootElement.render(this.documentElement, true);
-	console.log("end");
 };
 
 // Initialize editor wide event bindings
@@ -1793,16 +1799,37 @@ function MenuBar(editor) {
 			}
 		} ]
 	}, {
+		label : 'Options',
+		enabled : true,
+		action : function(event) {self.activateMenu(event);}, 
+		items : [ {
+			label : 'Pretty XML Formatting',
+			enabled : (vkbeautify !== undefined),
+			checked : vkbeautify && self.editor.options.prettyXML,
+			action : function() {
+				self.editor.options.prettyXML = !self.editor.options.prettyXML;
+				self.checkEntry(this, self.editor.options.prettyXML);
+			}
+		}, {
+			label : 'Enable shortcut keys',
+			enabled : true,
+			checked : self.editor.options.enableGUIKeybindings,
+			action : function() {
+				self.editor.setEnableKeybindings(!self.editor.options.enableGUIKeybindings);
+				self.checkEntry(this, self.editor.options.enableGUIKeybindings);
+			}
+		} ]
+	}/*, {
 		label : 'Help',
 		enabled : true,
-		action : function(event) {self.activateMenu(event);}/*, 
+		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
 			label : 'MODS Outline of Elements',
 			enabled : true,
 			binding : null,
 			action : "http://www.loc.gov/standards/mods/mods-outline.html"
-		} ]*/
-	}, {
+		} ]
+	}*/, {
 		label : 'XML',
 		enabled : true, 
 		itemClass : 'header_mode_tab',
@@ -1830,9 +1857,6 @@ MenuBar.prototype.activateMenu = function(event) {
 		this(self.editor);
 	});
 	this.menuBarContainer.addClass("active");
-	this.menuBarContainer.children("ul").children("li").click(function (event) {
-		event.stopPropagation();
-	});
 	$('html').one("click" ,function() {
 		self.menuBarContainer.removeClass("active");
 	});
@@ -1846,6 +1870,7 @@ MenuBar.prototype.render = function(parentElement) {
 	
 	this.headerMenu = $("<ul/>");
 	this.menuBarContainer.append(this.headerMenu);
+	this.initEventHandlers();
 	
 	var menuBar = this;
 	$.each(this.headerMenuData, function() {
@@ -1853,19 +1878,27 @@ MenuBar.prototype.render = function(parentElement) {
 	});
 };
 
+MenuBar.prototype.initEventHandlers = function() {
+	this.headerMenu.on("click", "li", { "menuBar" : this}, function(event) {
+		var menuItem = $(this).data("menuItemData");
+		if (Object.prototype.toString.call(menuItem.action) == '[object Function]'){
+			menuItem.action.call(this, event);
+		}
+	});
+};
+
 // Generates an individual menu entry
 MenuBar.prototype.generateMenuItem = function(menuItemData, parentMenu) {
 	var menuItem = $("<li/>").appendTo(parentMenu);
+	var checkArea = $("<span/>").addClass("xml_menu_check").appendTo(menuItem);
+		
 	var menuItemLink = $("<a/>").appendTo(menuItem).html("<span>" + menuItemData.label + "</span>");
 	if (menuItemData.binding) {
 		menuItemLink.append("<span class='binding'>" + menuItemData.binding + "</span>");
 	}
-	if (menuItemData.action != null) {
-		if (Object.prototype.toString.call(menuItemData.action) == '[object Function]'){
-			menuItem.click(menuItemData.action);
-		} else {
-			menuItemLink.attr({"href": menuItemData.action, "target" : "_blank"});
-		}
+	// Entries with string actions are treated as hrefs
+	if (menuItemData.action != null && Object.prototype.toString.call(menuItemData.action) != '[object Function]'){
+		menuItemLink.attr({"href": menuItemData.action, "target" : "_blank"});
 	}
 	if (!menuItemData.enabled) {
 		menuItem.addClass("disabled");
@@ -1882,6 +1915,9 @@ MenuBar.prototype.generateMenuItem = function(menuItemData, parentMenu) {
 			menuBar.generateMenuItem(this, subMenu);
 		});
 	}
+	
+	if (menuItemData.checked)
+		this.checkEntry(menuItem, true);
 };
 
 // Adds an additional menu entry to the menu.  An insertion path must be included in the entry
@@ -1902,6 +1938,18 @@ MenuBar.prototype.addEntry = function(entry) {
 	if (currentTier) {
 		delete entry.insertPath;
 		currentTier.push(entry);
+	}
+};
+
+
+MenuBar.prototype.checkEntry = function(menuItem, checked) {
+	var menuItem = $(menuItem);
+	var menuItemData = menuItem.data("menuItemData");
+	menuItemData.checked = checked;
+	if (checked) {
+		menuItem.find(".xml_menu_check").html("&#x2713;");
+	} else {
+		menuItem.find(".xml_menu_check").html("");
 	}
 };
 /**

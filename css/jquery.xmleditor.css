@@ -595,6 +595,10 @@
 	font-style: italic;
 }
 
+.xml_menu_bar.xml_bindings_disabled .binding {
+	display: none;
+}
+
 .xml_menu_bar .header_mode_tab {
 	border: 1px solid #BBBBBB;
 	float: right;
@@ -607,4 +611,11 @@
 	border: 1px solid #FBD850;
 	color: #EB8F00;
 	box-shadow: 0 0 3px #E5E5E5 inset, 0 0 3px #FBD850;
+}
+
+.xml_menu_bar .sub_menu > li > .xml_menu_check {
+	display: inline-block;
+	*zoom: 1;
+	*display: inline;
+	width: 1em;
 }

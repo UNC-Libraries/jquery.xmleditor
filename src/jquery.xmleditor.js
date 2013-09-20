@@ -218,10 +218,6 @@ $.widget( "xml.xmlEditor", {
 		}
 		this.modifyMenu = new ModifyMenuPanel(this);
 		
-		if (this.options.enableGUIKeybindings)
-			$(window).keydown(function(e){
-				self.keydownCallback(e);
-			});
 		if (this.options.confirmExitWhenUnsubmitted) {
 			$(window).bind('beforeunload', function(e) {
 				if (self.xmlState != null && self.xmlState.isChanged()) {
@@ -382,6 +378,7 @@ $.widget( "xml.xmlEditor", {
 		this.addTopLevelMenu = this.modifyMenu.addMenu(addTopMenuClass, this.options.addTopMenuHeaderText, 
 				true, true).populate(this.guiEditor.rootElement);
 		
+		this.setEnableKeybindings(this.options.enableGUIKeybindings);
 		if (this.options.floatingMenu) {
 			$(window).bind('scroll', $.proxy(this.modifyMenu.setMenuPosition, this.modifyMenu));
 		}
@@ -701,6 +698,18 @@ $.widget( "xml.xmlEditor", {
 	stripPrefix: function(name) {
 		var index = name.indexOf(":");
 		return index == -1? name: name.substring(index + 1);
+	},
+	
+	setEnableKeybindings : function(enable) {
+		if (enable) {
+			this.options.enableGUIKeybindings = true;
+			this.menuBar.menuBarContainer.removeClass("xml_bindings_disabled");
+			$(window).on("keydown.xml_keybindings", $.proxy(this.keydownCallback, this));
+		} else {
+			this.options.enableGUIKeybindings = false;
+			this.menuBar.menuBarContainer.addClass("xml_bindings_disabled");
+			$(window).off("keydown.xml_keybindings");
+		}
 	},
 	
 	// Initialize key bindings
