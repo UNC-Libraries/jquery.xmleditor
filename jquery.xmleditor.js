@@ -218,10 +218,6 @@ $.widget( "xml.xmlEditor", {
 		}
 		this.modifyMenu = new ModifyMenuPanel(this);
 		
-		if (this.options.enableGUIKeybindings)
-			$(window).keydown(function(e){
-				self.keydownCallback(e);
-			});
 		if (this.options.confirmExitWhenUnsubmitted) {
 			$(window).bind('beforeunload', function(e) {
 				if (self.xmlState != null && self.xmlState.isChanged()) {
@@ -356,10 +352,14 @@ $.widget( "xml.xmlEditor", {
 		this.xmlWorkAreaContainer = $("<div/>").attr('class', xmlWorkAreaContainerClass).appendTo(this.xmlEditorContainer);
 		
 		// Menu bar
+		var editorHeaderBacking = $("<div/>").addClass(editorHeaderClass + "_backing").appendTo(this.xmlWorkAreaContainer);
 		this.editorHeader = $("<div/>").attr('class', editorHeaderClass).appendTo(this.xmlWorkAreaContainer);
 		if (this.options.documentTitle != null)
 			$("<h2/>").html("Editing Description: " + this.options.documentTitle).appendTo(this.editorHeader);
 		this.menuBar.render(this.editorHeader);
+		editorHeaderBacking.height(this.editorHeader.outerHeight());
+		// Create grouping of header elements that need to be positioned together
+		this.editorHeaderGroup = this.editorHeader.add(editorHeaderBacking);
 		
 		this.xmlTabContainer = $("<div/>").attr("class", editorTabAreaClass).css("padding-top", this.editorHeader.height() + "px").appendTo(this.xmlWorkAreaContainer);
 		this.problemsPanel = $("<pre/>").attr('class', problemsPanelClass).hide().appendTo(this.xmlTabContainer);
@@ -378,6 +378,7 @@ $.widget( "xml.xmlEditor", {
 		this.addTopLevelMenu = this.modifyMenu.addMenu(addTopMenuClass, this.options.addTopMenuHeaderText, 
 				true, true).populate(this.guiEditor.rootElement);
 		
+		this.setEnableKeybindings(this.options.enableGUIKeybindings);
 		if (this.options.floatingMenu) {
 			$(window).bind('scroll', $.proxy(this.modifyMenu.setMenuPosition, this.modifyMenu));
 		}
@@ -456,8 +457,6 @@ $.widget( "xml.xmlEditor", {
 	documentLoadedEvent : function(newDocument) {
 		if (this.guiEditor != null && this.guiEditor.rootElement != null)
 			this.guiEditor.rootElement.xmlNode = newDocument.children().first();
-		if (this.guiEditor.xmlContent != null)
-			this.guiEditor.xmlContent.data("xml").elementNode = newDocument.children().first();
 		if (this.problemsPanel != null)
 			this.clearProblemPanel();
 	},
@@ -701,6 +700,18 @@ $.widget( "xml.xmlEditor", {
 		return index == -1? name: name.substring(index + 1);
 	},
 	
+	setEnableKeybindings : function(enable) {
+		if (enable) {
+			this.options.enableGUIKeybindings = true;
+			this.menuBar.menuBarContainer.removeClass("xml_bindings_disabled");
+			$(window).on("keydown.xml_keybindings", $.proxy(this.keydownCallback, this));
+		} else {
+			this.options.enableGUIKeybindings = false;
+			this.menuBar.menuBarContainer.addClass("xml_bindings_disabled");
+			$(window).off("keydown.xml_keybindings");
+		}
+	},
+	
 	// Initialize key bindings
 	keydownCallback: function(e) {
 		if (this.guiEditor.active) {
@@ -916,7 +927,7 @@ AbstractXMLObject.prototype.focus = function() {
 };
 
 AbstractXMLObject.prototype.getDomNode = function () {
-	return null;
+	return this.domNode;
 };
 function AttributeMenu(menuID, label, expanded, enabled, owner, editor) {
 	ModifyElementMenu.call(this, menuID, label, expanded, enabled, owner, editor);
@@ -1189,7 +1200,12 @@ GUIEditor.prototype.initialize = function(parentContainer) {
 	
 	this.guiContent.append(this.xmlContent);
 	
-	this.setRootElement(this.editor.xmlState.xml.children()[0]);
+	this.documentElement = new AbstractXMLObject(this.editor, null);
+	this.documentElement.domNode = this.xmlContent;
+	this.documentElement.childContainer = this.xmlContent;
+	this.documentElement.placeholder = this.placeholder;
+	
+	this.setRootElement(this.editor.xmlState.xml.children()[0], false);
 	
 	this._initEventBindings();
 	return this;
@@ -1197,16 +1213,13 @@ GUIEditor.prototype.initialize = function(parentContainer) {
 
 // Set the root element for this editor 
 // node - xml node from an xml document to be used as the root node for this editor
-GUIEditor.prototype.setRootElement = function(node) {
+GUIEditor.prototype.setRootElement = function(node, render) {
 	var objectType = this.editor.schemaTree.getElementDefinition(node);
 	if (objectType == null)
 		objectType = this.editor.schemaTree.rootElement;
 	this.rootElement = new XMLElement(node, objectType, this.editor);
-	this.rootElement.domNode = this.xmlContent;
-	this.rootElement.domNode.data("xmlElement", this.rootElement);
-	this.rootElement.childContainer = this.xmlContent;
-	this.rootElement.placeholder = this.placeholder;
-	this.rootElement.initializeGUI();
+	if (render || arguments.length == 1)
+		this.rootElement.render(this.documentElement, true);
 };
 
 // Initialize editor wide event bindings
@@ -1252,7 +1265,6 @@ GUIEditor.prototype._initEventBindings = function() {
 
 // Make this editor the active editor and show it
 GUIEditor.prototype.activate = function() {
-	this.guiContent.show();
 	this.active = true;
 	this.deselect();
 	
@@ -1261,7 +1273,7 @@ GUIEditor.prototype.activate = function() {
 		this.editor.refreshDisplay();
 		this.editor.textEditor.setInitialized();
 	}
-	
+	this.guiContent.show();
 	return this;
 };
 
@@ -1299,12 +1311,15 @@ GUIEditor.prototype.refreshDisplay = function() {
 
 // Refresh the display of all elements
 GUIEditor.prototype.refreshElements = function() {
-	var node = this.rootElement.getDomNode()[0];
+	var node = this.documentElement.getDomNode();
+	node.empty();
+	node = node[0];
 	var originalParent = node.parentNode;
 	var fragment = document.createDocumentFragment();
 	fragment.appendChild(node);
 	
-	this.rootElement.renderChildren(true);
+	// Clear out the previous contents and then rebuild it
+	this.rootElement.render(this.documentElement, true);
 	this.editor.addTopLevelMenu.populate(this.rootElement);
 	
 	originalParent.appendChild(fragment);
@@ -1784,16 +1799,37 @@ function MenuBar(editor) {
 			}
 		} ]
 	}, {
+		label : 'Options',
+		enabled : true,
+		action : function(event) {self.activateMenu(event);}, 
+		items : [ {
+			label : 'Pretty XML Formatting',
+			enabled : (vkbeautify !== undefined),
+			checked : vkbeautify && self.editor.options.prettyXML,
+			action : function() {
+				self.editor.options.prettyXML = !self.editor.options.prettyXML;
+				self.checkEntry(this, self.editor.options.prettyXML);
+			}
+		}, {
+			label : 'Enable shortcut keys',
+			enabled : true,
+			checked : self.editor.options.enableGUIKeybindings,
+			action : function() {
+				self.editor.setEnableKeybindings(!self.editor.options.enableGUIKeybindings);
+				self.checkEntry(this, self.editor.options.enableGUIKeybindings);
+			}
+		} ]
+	}/*, {
 		label : 'Help',
 		enabled : true,
-		action : function(event) {self.activateMenu(event);}/*, 
+		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
 			label : 'MODS Outline of Elements',
 			enabled : true,
 			binding : null,
 			action : "http://www.loc.gov/standards/mods/mods-outline.html"
-		} ]*/
-	}, {
+		} ]
+	}*/, {
 		label : 'XML',
 		enabled : true, 
 		itemClass : 'header_mode_tab',
@@ -1821,9 +1857,6 @@ MenuBar.prototype.activateMenu = function(event) {
 		this(self.editor);
 	});
 	this.menuBarContainer.addClass("active");
-	this.menuBarContainer.children("ul").children("li").click(function (event) {
-		event.stopPropagation();
-	});
 	$('html').one("click" ,function() {
 		self.menuBarContainer.removeClass("active");
 	});
@@ -1833,10 +1866,11 @@ MenuBar.prototype.activateMenu = function(event) {
 // Builds the menu and attaches it to the editor
 MenuBar.prototype.render = function(parentElement) {
 	this.parentElement = parentElement;
-	this.menuBarContainer = $("<div/>").attr('class', xmlMenuBarClass).appendTo(parentElement);
+	this.menuBarContainer = $("<div/>").addClass(xmlMenuBarClass).appendTo(parentElement);
 	
 	this.headerMenu = $("<ul/>");
 	this.menuBarContainer.append(this.headerMenu);
+	this.initEventHandlers();
 	
 	var menuBar = this;
 	$.each(this.headerMenuData, function() {
@@ -1844,19 +1878,27 @@ MenuBar.prototype.render = function(parentElement) {
 	});
 };
 
+MenuBar.prototype.initEventHandlers = function() {
+	this.headerMenu.on("click", "li", { "menuBar" : this}, function(event) {
+		var menuItem = $(this).data("menuItemData");
+		if (Object.prototype.toString.call(menuItem.action) == '[object Function]'){
+			menuItem.action.call(this, event);
+		}
+	});
+};
+
 // Generates an individual menu entry
 MenuBar.prototype.generateMenuItem = function(menuItemData, parentMenu) {
 	var menuItem = $("<li/>").appendTo(parentMenu);
+	var checkArea = $("<span/>").addClass("xml_menu_check").appendTo(menuItem);
+		
 	var menuItemLink = $("<a/>").appendTo(menuItem).html("<span>" + menuItemData.label + "</span>");
 	if (menuItemData.binding) {
 		menuItemLink.append("<span class='binding'>" + menuItemData.binding + "</span>");
 	}
-	if (menuItemData.action != null) {
-		if (Object.prototype.toString.call(menuItemData.action) == '[object Function]'){
-			menuItem.click(menuItemData.action);
-		} else {
-			menuItemLink.attr({"href": menuItemData.action, "target" : "_blank"});
-		}
+	// Entries with string actions are treated as hrefs
+	if (menuItemData.action != null && Object.prototype.toString.call(menuItemData.action) != '[object Function]'){
+		menuItemLink.attr({"href": menuItemData.action, "target" : "_blank"});
 	}
 	if (!menuItemData.enabled) {
 		menuItem.addClass("disabled");
@@ -1873,6 +1915,9 @@ MenuBar.prototype.generateMenuItem = function(menuItemData, parentMenu) {
 			menuBar.generateMenuItem(this, subMenu);
 		});
 	}
+	
+	if (menuItemData.checked)
+		this.checkEntry(menuItem, true);
 };
 
 // Adds an additional menu entry to the menu.  An insertion path must be included in the entry
@@ -1893,6 +1938,18 @@ MenuBar.prototype.addEntry = function(entry) {
 	if (currentTier) {
 		delete entry.insertPath;
 		currentTier.push(entry);
+	}
+};
+
+
+MenuBar.prototype.checkEntry = function(menuItem, checked) {
+	var menuItem = $(menuItem);
+	var menuItemData = menuItem.data("menuItemData");
+	menuItemData.checked = checked;
+	if (checked) {
+		menuItem.find(".xml_menu_check").html("&#x2713;");
+	} else {
+		menuItem.find(".xml_menu_check").html("");
 	}
 };
 /**
@@ -2143,7 +2200,7 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 			left : xmlEditorContainer.offset().left + xmlEditorContainer.outerWidth() - this.menuColumn.innerWidth(),
 			top : 0
 		});
-		this.editor.editorHeader.css({
+		this.editor.editorHeaderGroup.css({
 			position : 'fixed',
 			top : 0
 		});
@@ -2153,7 +2210,7 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 			left : xmlEditorContainer.outerWidth() - this.menuColumn.innerWidth(),
 			top : 0
 		});
-		this.editor.editorHeader.css({
+		this.editor.editorHeaderGroup.css({
 			position : 'absolute',
 			top : 0
 		});
@@ -2804,6 +2861,7 @@ function XMLElement(xmlNode, objectType, editor) {
 	AbstractXMLObject.call(this, editor, objectType);
 	// jquery object reference to the xml node represented by this object in the active xml document
 	this.xmlNode = $(xmlNode);
+	this.isRootElement = this.xmlNode[0].parentNode === this.xmlNode[0].ownerDocument;
 	// Flag indicating if this element is a child of the root node
 	this.isTopLevel = this.xmlNode[0].parentNode.parentNode === this.xmlNode[0].ownerDocument;
 	// Flag indicating if any children nodes can be added to this element
@@ -2858,7 +2916,10 @@ XMLElement.prototype.render = function(parentElement, recursive) {
 	this.domNode.className = this.objectType.ns + "_" + this.objectType.localName + 'Instance ' + xmlElementClass;
 	if (this.isTopLevel)
 		this.domNode.className += ' ' + topLevelContainerClass;
-	this.parentElement.childContainer[0].appendChild(this.domNode);
+	if (this.isRootElement)
+		this.domNode.className += ' xml_root_element';
+	if (this.parentElement)
+		this.parentElement.childContainer[0].appendChild(this.domNode);
 	
 	// Begin building contents
 	this.elementHeader = document.createElement('ul');
@@ -2883,7 +2944,8 @@ XMLElement.prototype.render = function(parentElement, recursive) {
 	this.addContentContainers(recursive);
 
 	// Action buttons
-	this.elementHeader.appendChild(this.addTopActions(this.domNodeID));
+	if (!this.isRootElement)
+		this.elementHeader.appendChild(this.addTopActions(this.domNodeID));
 	
 	this.initializeGUI();
 	this.updated({action : 'render'});

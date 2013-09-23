@@ -6,6 +6,7 @@ function XMLElement(xmlNode, objectType, editor) {
 	AbstractXMLObject.call(this, editor, objectType);
 	// jquery object reference to the xml node represented by this object in the active xml document
 	this.xmlNode = $(xmlNode);
+	this.isRootElement = this.xmlNode[0].parentNode === this.xmlNode[0].ownerDocument;
 	// Flag indicating if this element is a child of the root node
 	this.isTopLevel = this.xmlNode[0].parentNode.parentNode === this.xmlNode[0].ownerDocument;
 	// Flag indicating if any children nodes can be added to this element
@@ -60,7 +61,10 @@ XMLElement.prototype.render = function(parentElement, recursive) {
 	this.domNode.className = this.objectType.ns + "_" + this.objectType.localName + 'Instance ' + xmlElementClass;
 	if (this.isTopLevel)
 		this.domNode.className += ' ' + topLevelContainerClass;
-	this.parentElement.childContainer[0].appendChild(this.domNode);
+	if (this.isRootElement)
+		this.domNode.className += ' xml_root_element';
+	if (this.parentElement)
+		this.parentElement.childContainer[0].appendChild(this.domNode);
 	
 	// Begin building contents
 	this.elementHeader = document.createElement('ul');
@@ -85,7 +89,8 @@ XMLElement.prototype.render = function(parentElement, recursive) {
 	this.addContentContainers(recursive);
 
 	// Action buttons
-	this.elementHeader.appendChild(this.addTopActions(this.domNodeID));
+	if (!this.isRootElement)
+		this.elementHeader.appendChild(this.addTopActions(this.domNodeID));
 	
 	this.initializeGUI();
 	this.updated({action : 'render'});
