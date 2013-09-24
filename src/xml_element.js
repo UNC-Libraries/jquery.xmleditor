@@ -176,6 +176,7 @@ XMLElement.prototype.updateChildrenCount = function(childElement, delta) {
 
 // Returns true if any more children of type childType can be added to this element
 XMLElement.prototype.childCanBeAdded = function(childType) {
+	if (!this.editor.options.enforceOccurs) return true;
 	var childName = childType.ns + ":" + childType.localName;
 	var presentCount = this.presentChildren[childName] || 0;
 	// For the moment, if occur is not set, then pretend its unbound until the other limits are implemented
@@ -203,6 +204,7 @@ XMLElement.prototype.childCanBeAdded = function(childType) {
 // Returns true if an element of definition childType can be removed from this element, according to
 // minimum occurrence restrictions
 XMLElement.prototype.childCanBeRemoved = function(childType) {
+	if (!this.editor.options.enforceOccurs) return true;
 	// Not checking min for groups or choices to avoid irreplaceable children
 	var childName = childType.ns + ":" + childType.localName;
 	if (this.presentChildren[childName] && this.objectType.occurs && childName in this.objectType.occurs)
@@ -212,6 +214,7 @@ XMLElement.prototype.childCanBeRemoved = function(childType) {
 
 // Populate the minimum number of children needed for this element to be valid
 XMLElement.prototype.populateChildren = function() {
+	if (!this.editor.options.enforceOccurs) return;
 	var self = this;
 	$.each(this.objectType.elements, function(){
 		var childName = this.ns + ":" + this.localName;

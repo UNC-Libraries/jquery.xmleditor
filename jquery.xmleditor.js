@@ -110,6 +110,7 @@ $.widget( "xml.xmlEditor", {
 		undoHistorySize: 20,
 		// Object containing additional entries to add to the header menu
 		menuEntries: undefined,
+		enforceOccurs: true,
 		
 		targetNS: null
 	},
@@ -1818,6 +1819,15 @@ function MenuBar(editor) {
 				self.editor.setEnableKeybindings(!self.editor.options.enableGUIKeybindings);
 				self.checkEntry(this, self.editor.options.enableGUIKeybindings);
 			}
+		}, {
+			label : 'Enforce min/max occurs',
+			enabled : true,
+			checked : self.editor.options.enforceOccurs,
+			action : function() {
+				self.editor.options.enforceOccurs = !self.editor.options.enforceOccurs;
+				self.editor.modifyMenu.refreshContextualMenus();
+				self.checkEntry(this, self.editor.options.enforceOccurs);
+			}
 		} ]
 	}/*, {
 		label : 'Help',
@@ -2177,6 +2187,11 @@ ModifyMenuPanel.prototype.clearContextualMenus = function() {
 
 // Refresh entries for all contextual menus
 ModifyMenuPanel.prototype.refreshContextualMenus = function(targetElement) {
+	if (targetElement === undefined) {
+		if (!this.targetElement)
+			return this;
+		targetElement = this.targetElement;
+	} else this.targetElement = targetElement;
 	$.each(this.menus, function(){
 		if (this.contextual) {
 			this.menu.populate(targetElement);
@@ -3031,6 +3046,7 @@ XMLElement.prototype.updateChildrenCount = function(childElement, delta) {
 
 // Returns true if any more children of type childType can be added to this element
 XMLElement.prototype.childCanBeAdded = function(childType) {
+	if (!this.editor.options.enforceOccurs) return true;
 	var childName = childType.ns + ":" + childType.localName;
 	var presentCount = this.presentChildren[childName] || 0;
 	// For the moment, if occur is not set, then pretend its unbound until the other limits are implemented
@@ -3058,6 +3074,7 @@ XMLElement.prototype.childCanBeAdded = function(childType) {
 // Returns true if an element of definition childType can be removed from this element, according to
 // minimum occurrence restrictions
 XMLElement.prototype.childCanBeRemoved = function(childType) {
+	if (!this.editor.options.enforceOccurs) return true;
 	// Not checking min for groups or choices to avoid irreplaceable children
 	var childName = childType.ns + ":" + childType.localName;
 	if (this.presentChildren[childName] && this.objectType.occurs && childName in this.objectType.occurs)
@@ -3067,6 +3084,7 @@ XMLElement.prototype.childCanBeRemoved = function(childType) {
 
 // Populate the minimum number of children needed for this element to be valid
 XMLElement.prototype.populateChildren = function() {
+	if (!this.editor.options.enforceOccurs) return;
 	var self = this;
 	$.each(this.objectType.elements, function(){
 		var childName = this.ns + ":" + this.localName;

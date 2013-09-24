@@ -85,6 +85,11 @@ ModifyMenuPanel.prototype.clearContextualMenus = function() {
 
 // Refresh entries for all contextual menus
 ModifyMenuPanel.prototype.refreshContextualMenus = function(targetElement) {
+	if (targetElement === undefined) {
+		if (!this.targetElement)
+			return this;
+		targetElement = this.targetElement;
+	} else this.targetElement = targetElement;
 	$.each(this.menus, function(){
 		if (this.contextual) {
 			this.menu.populate(targetElement);

@@ -174,6 +174,15 @@ function MenuBar(editor) {
 				self.editor.setEnableKeybindings(!self.editor.options.enableGUIKeybindings);
 				self.checkEntry(this, self.editor.options.enableGUIKeybindings);
 			}
+		}, {
+			label : 'Enforce min/max occurs',
+			enabled : true,
+			checked : self.editor.options.enforceOccurs,
+			action : function() {
+				self.editor.options.enforceOccurs = !self.editor.options.enforceOccurs;
+				self.editor.modifyMenu.refreshContextualMenus();
+				self.checkEntry(this, self.editor.options.enforceOccurs);
+			}
 		} ]
 	}/*, {
 		label : 'Help',
