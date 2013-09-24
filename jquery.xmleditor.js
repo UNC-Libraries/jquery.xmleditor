@@ -640,7 +640,7 @@ $.widget( "xml.xmlEditor", {
 	// Serializes the provided xml node into a string
 	xml2Str: function(xmlNodeObject) {
 		if (xmlNodeObject == null)
-			return;
+			xmlNodeObject = this.xmlState.xml;
 		var xmlNode = (xmlNodeObject instanceof jQuery? xmlNodeObject[0]: xmlNodeObject);
 		var xmlStr = "";
 		try {
