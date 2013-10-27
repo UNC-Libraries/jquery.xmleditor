@@ -45,10 +45,9 @@ ModifyMenuPanel.prototype.initialize = function (parentContainer) {
 // expanded - whether to show the contents of the menu by default
 // enabled - boolean indicating the menu can be interacted with
 // contextual - Boolean indicating if this menu needs to be updated when selection changes
-ModifyMenuPanel.prototype.addMenu = function(menuID, label, expanded, enabled, contextual) {
-	if (arguments.length == 4)
-		contextual = false;
-	var menu = new ModifyElementMenu(menuID, label, expanded, enabled, this, this.editor);
+ModifyMenuPanel.prototype.addMenu = function(menuID, label, expanded, enabled, contextual,
+		getRelativeToFunction) {
+	var menu = new ModifyElementMenu(menuID, label, expanded, enabled, this, this.editor, getRelativeToFunction);
 	this.menus[menuID] = {
 			"menu" : menu, 
 			"contextual": contextual

@@ -183,6 +183,14 @@ function MenuBar(editor) {
 				self.editor.modifyMenu.refreshContextualMenus();
 				self.checkEntry(this, self.editor.options.enforceOccurs);
 			}
+		}, {
+			label : 'Prepend new elements',
+			enabled : true,
+			checked : self.editor.options.prependNewElements,
+			action : function() {
+				self.editor.options.prependNewElements = !self.editor.options.prependNewElements;
+				self.checkEntry(this, self.editor.options.prependNewElements);
+			}
 		} ]
 	}/*, {
 		label : 'Help',

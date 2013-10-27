@@ -111,6 +111,7 @@ $.widget( "xml.xmlEditor", {
 		// Object containing additional entries to add to the header menu
 		menuEntries: undefined,
 		enforceOccurs: true,
+		prependNewElements: false,
 		
 		targetNS: null
 	},
@@ -377,7 +378,17 @@ $.widget( "xml.xmlEditor", {
 		this.modifyMenu.addAttributeMenu(addAttrMenuClass, this.options.addAttrMenuHeaderText, 
 				true, false, true);
 		this.addTopLevelMenu = this.modifyMenu.addMenu(addTopMenuClass, this.options.addTopMenuHeaderText, 
-				true, true).populate(this.guiEditor.rootElement);
+				true, true, false, function(target) {
+			var selectedElement = self.guiEditor.selectedElement;
+			if (!selectedElement || selectedElement.length == 0 || selectedElement.isRootElement) 
+				return null;
+			var currentElement = selectedElement;
+			while (!currentElement.isTopLevel)
+				currentElement = currentElement.parentElement;
+			if (currentElement != null)
+				return currentElement;
+			return null;
+		}).populate(this.guiEditor.rootElement);
 		
 		this.setEnableKeybindings(this.options.enableGUIKeybindings);
 		if (this.options.floatingMenu) {
@@ -403,7 +414,7 @@ $.widget( "xml.xmlEditor", {
 	},
 	
 	// Event which triggers the creation of a new child element, as defined by an instigator such as a menu
-	addChildElementCallback: function (instigator) {
+	addChildElementCallback: function (instigator, relativeTo, prepend) {
 		if ($(instigator).hasClass("disabled"))
 			return;
 		var xmlElement = $(instigator).data("xml").target;
@@ -428,7 +439,7 @@ $.widget( "xml.xmlEditor", {
 		// Add the namespace of the new element to the root if it is not already present
 		this.xmlState.addNamespace(objectType);
 		// Create the new element as a child of its parent
-		var newElement = xmlElement.addElement(objectType);
+		var newElement = xmlElement.addElement(objectType, relativeTo, prepend);
 		// Trigger post element creation event in the currently active editor to handle UI updates
 		this.activeEditor.addElementEvent(xmlElement, newElement);
 	},
@@ -1828,6 +1839,14 @@ function MenuBar(editor) {
 				self.editor.modifyMenu.refreshContextualMenus();
 				self.checkEntry(this, self.editor.options.enforceOccurs);
 			}
+		}, {
+			label : 'Prepend new elements',
+			enabled : true,
+			checked : self.editor.options.prependNewElements,
+			action : function() {
+				self.editor.options.prependNewElements = !self.editor.options.prependNewElements;
+				self.checkEntry(this, self.editor.options.prependNewElements);
+			}
 		} ]
 	}/*, {
 		label : 'Help',
@@ -1971,7 +1990,7 @@ MenuBar.prototype.checkEntry = function(menuItem, checked) {
  * @returns
  */
 
-function ModifyElementMenu(menuID, label, expanded, enabled, owner, editor) {
+function ModifyElementMenu(menuID, label, expanded, enabled, owner, editor, getRelativeToFunction) {
 	this.menuID = menuID;
 	this.label = label;
 	// Header jquery element for this menu 
@@ -1982,6 +2001,8 @@ function ModifyElementMenu(menuID, label, expanded, enabled, owner, editor) {
 	this.enabled = enabled;
 	// Indicates if the menu is collapsed or expanded
 	this.expanded = expanded;
+	// Optional function which determines what element to position newly added elements relative to
+	this.getRelativeToFunction = getRelativeToFunction;
 	// XMLElement object which will be modified by this menu
 	this.target = null;
 	this.owner = owner;
@@ -2033,7 +2054,11 @@ ModifyElementMenu.prototype.initEventHandlers = function() {
 	var self = this;
 	// Add new child element click event
 	this.menuContent.on('click', 'li', function(event){
-		self.owner.editor.addChildElementCallback(this);
+		var relativeTo = (self.getRelativeToFunction)? 
+				self.getRelativeToFunction($(this).data("xml").target) : null;
+		var prepend = self.editor.options.prependNewElements;
+		if (event.shiftKey) prepend = !prepend;
+		self.owner.editor.addChildElementCallback(this, relativeTo, prepend);
 	});
 };
 
@@ -2147,10 +2172,9 @@ ModifyMenuPanel.prototype.initialize = function (parentContainer) {
 // expanded - whether to show the contents of the menu by default
 // enabled - boolean indicating the menu can be interacted with
 // contextual - Boolean indicating if this menu needs to be updated when selection changes
-ModifyMenuPanel.prototype.addMenu = function(menuID, label, expanded, enabled, contextual) {
-	if (arguments.length == 4)
-		contextual = false;
-	var menu = new ModifyElementMenu(menuID, label, expanded, enabled, this, this.editor);
+ModifyMenuPanel.prototype.addMenu = function(menuID, label, expanded, enabled, contextual,
+		getRelativeToFunction) {
+	var menu = new ModifyElementMenu(menuID, label, expanded, enabled, this, this.editor, getRelativeToFunction);
 	this.menus[menuID] = {
 			"menu" : menu, 
 			"contextual": contextual
@@ -2921,20 +2945,32 @@ XMLElement.prototype.getDomNode = function () {
 // parentElement - the XMLElement parent of this element
 // recursive - Boolean which indicates whether to render this elements subelements
 // Returns the newly created GUI dom element
-XMLElement.prototype.render = function(parentElement, recursive) {
+XMLElement.prototype.render = function(parentElement, recursive, relativeToXMLElement, prepend) {
 	this.parentElement = parentElement;
 	this.domNodeID = this.guiEditor.nextIndex();
 	
 	// Create the element and add it to the container
 	this.domNode = document.createElement('div');
+	var $domNode = $(this.domNode);
 	this.domNode.id = this.domNodeID;
 	this.domNode.className = this.objectType.ns + "_" + this.objectType.localName + 'Instance ' + xmlElementClass;
 	if (this.isTopLevel)
 		this.domNode.className += ' ' + topLevelContainerClass;
 	if (this.isRootElement)
 		this.domNode.className += ' xml_root_element';
-	if (this.parentElement)
-		this.parentElement.childContainer[0].appendChild(this.domNode);
+	if (this.parentElement) {
+		if (relativeToXMLElement) {
+			if (prepend)
+				$domNode.insertBefore(relativeToXMLElement.domNode);
+			else
+				$domNode.insertAfter(relativeToXMLElement.domNode);
+		} else {
+			if (prepend)
+				this.parentElement.childContainer.prepend(this.domNode);
+			else
+				this.parentElement.childContainer[0].appendChild(this.domNode);
+		}
+	}
 	
 	// Begin building contents
 	this.elementHeader = document.createElement('ul');
@@ -2952,7 +2988,7 @@ XMLElement.prototype.render = function(parentElement, recursive) {
 	elementNameContainer.appendChild(titleElement);
 	
 	// Switch gui element over to a jquery object
-	this.domNode = $(this.domNode);
+	this.domNode = $domNode;
 	this.domNode.data("xmlElement", this);
 
 	// Add the subsections for the elements content next.
@@ -3217,7 +3253,7 @@ XMLElement.prototype.addAttributeContainer = function () {
 };
 
 // Add a child element of type objectType and update the interface
-XMLElement.prototype.addElement = function(objectType) {
+XMLElement.prototype.addElement = function(objectType, relativeToXMLElement, prepend) {
 	if (!this.allowChildren)
 		return null;
 	
@@ -3231,23 +3267,30 @@ XMLElement.prototype.addElement = function(objectType) {
 	var newElement;
 	if (xmlDocument.createElementNS) {
 		newElement = xmlDocument.createElementNS(objectType.namespace, prefix + objectType.localName);
-		if (defaultValue)
-			newElement.appendChild(xmlDocument.createTextNode(defaultValue));
-		this.xmlNode[0].appendChild(newElement);
 	} else if (typeof(xmlDocument.createNode) != "undefined") {
 		// Older IE versions
 		newElement = xmlDocument.createNode(1, prefix + objectType.localName, objectType.namespace);
-		if (defaultValue)
-			newElement.appendChild(xmlDocument.createTextNode(defaultValue));
-		this.xmlNode[0].appendChild(newElement);
 	} else {
 		throw new Exception("Unable to add child due to incompatible browser");
+	}
+	if (defaultValue)
+		newElement.appendChild(xmlDocument.createTextNode(defaultValue));
+	if (relativeToXMLElement) {
+		if (prepend)
+			$(newElement).insertBefore(relativeToXMLElement.xmlNode);
+		else
+			$(newElement).insertAfter(relativeToXMLElement.xmlNode);
+	} else {
+		if (prepend)
+			this.xmlNode.prepend(newElement);
+		else
+			this.xmlNode[0].appendChild(newElement);
 	}
 	
 	var childElement = new XMLElement(newElement, objectType, this.editor);
 	this.addChildrenCount(childElement);
 	if (this.domNode != null)
-		childElement.render(this, true);
+		childElement.render(this, true, relativeToXMLElement, prepend);
 	childElement.populateChildren();
 	
 	return childElement;

@@ -111,6 +111,7 @@ $.widget( "xml.xmlEditor", {
 		// Object containing additional entries to add to the header menu
 		menuEntries: undefined,
 		enforceOccurs: true,
+		prependNewElements: false,
 		
 		targetNS: null
 	},
@@ -377,7 +378,17 @@ $.widget( "xml.xmlEditor", {
 		this.modifyMenu.addAttributeMenu(addAttrMenuClass, this.options.addAttrMenuHeaderText, 
 				true, false, true);
 		this.addTopLevelMenu = this.modifyMenu.addMenu(addTopMenuClass, this.options.addTopMenuHeaderText, 
-				true, true).populate(this.guiEditor.rootElement);
+				true, true, false, function(target) {
+			var selectedElement = self.guiEditor.selectedElement;
+			if (!selectedElement || selectedElement.length == 0 || selectedElement.isRootElement) 
+				return null;
+			var currentElement = selectedElement;
+			while (!currentElement.isTopLevel)
+				currentElement = currentElement.parentElement;
+			if (currentElement != null)
+				return currentElement;
+			return null;
+		}).populate(this.guiEditor.rootElement);
 		
 		this.setEnableKeybindings(this.options.enableGUIKeybindings);
 		if (this.options.floatingMenu) {
@@ -403,7 +414,7 @@ $.widget( "xml.xmlEditor", {
 	},
 	
 	// Event which triggers the creation of a new child element, as defined by an instigator such as a menu
-	addChildElementCallback: function (instigator) {
+	addChildElementCallback: function (instigator, relativeTo, prepend) {
 		if ($(instigator).hasClass("disabled"))
 			return;
 		var xmlElement = $(instigator).data("xml").target;
@@ -428,7 +439,7 @@ $.widget( "xml.xmlEditor", {
 		// Add the namespace of the new element to the root if it is not already present
 		this.xmlState.addNamespace(objectType);
 		// Create the new element as a child of its parent
-		var newElement = xmlElement.addElement(objectType);
+		var newElement = xmlElement.addElement(objectType, relativeTo, prepend);
 		// Trigger post element creation event in the currently active editor to handle UI updates
 		this.activeEditor.addElementEvent(xmlElement, newElement);
 	},

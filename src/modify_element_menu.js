@@ -6,7 +6,7 @@
  * @param enabled
  * @returns
  */
-function ModifyElementMenu(menuID, label, expanded, enabled, owner, editor) {
+function ModifyElementMenu(menuID, label, expanded, enabled, owner, editor, getRelativeToFunction) {
 	this.menuID = menuID;
 	this.label = label;
 	// Header jquery element for this menu 
@@ -17,6 +17,8 @@ function ModifyElementMenu(menuID, label, expanded, enabled, owner, editor) {
 	this.enabled = enabled;
 	// Indicates if the menu is collapsed or expanded
 	this.expanded = expanded;
+	// Optional function which determines what element to position newly added elements relative to
+	this.getRelativeToFunction = getRelativeToFunction;
 	// XMLElement object which will be modified by this menu
 	this.target = null;
 	this.owner = owner;
@@ -68,7 +70,11 @@ ModifyElementMenu.prototype.initEventHandlers = function() {
 	var self = this;
 	// Add new child element click event
 	this.menuContent.on('click', 'li', function(event){
-		self.owner.editor.addChildElementCallback(this);
+		var relativeTo = (self.getRelativeToFunction)? 
+				self.getRelativeToFunction($(this).data("xml").target) : null;
+		var prepend = self.editor.options.prependNewElements;
+		if (event.shiftKey) prepend = !prepend;
+		self.owner.editor.addChildElementCallback(this, relativeTo, prepend);
 	});
 };
 

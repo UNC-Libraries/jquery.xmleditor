@@ -51,20 +51,32 @@ XMLElement.prototype.getDomNode = function () {
 // parentElement - the XMLElement parent of this element
 // recursive - Boolean which indicates whether to render this elements subelements
 // Returns the newly created GUI dom element
-XMLElement.prototype.render = function(parentElement, recursive) {
+XMLElement.prototype.render = function(parentElement, recursive, relativeToXMLElement, prepend) {
 	this.parentElement = parentElement;
 	this.domNodeID = this.guiEditor.nextIndex();
 	
 	// Create the element and add it to the container
 	this.domNode = document.createElement('div');
+	var $domNode = $(this.domNode);
 	this.domNode.id = this.domNodeID;
 	this.domNode.className = this.objectType.ns + "_" + this.objectType.localName + 'Instance ' + xmlElementClass;
 	if (this.isTopLevel)
 		this.domNode.className += ' ' + topLevelContainerClass;
 	if (this.isRootElement)
 		this.domNode.className += ' xml_root_element';
-	if (this.parentElement)
-		this.parentElement.childContainer[0].appendChild(this.domNode);
+	if (this.parentElement) {
+		if (relativeToXMLElement) {
+			if (prepend)
+				$domNode.insertBefore(relativeToXMLElement.domNode);
+			else
+				$domNode.insertAfter(relativeToXMLElement.domNode);
+		} else {
+			if (prepend)
+				this.parentElement.childContainer.prepend(this.domNode);
+			else
+				this.parentElement.childContainer[0].appendChild(this.domNode);
+		}
+	}
 	
 	// Begin building contents
 	this.elementHeader = document.createElement('ul');
@@ -82,7 +94,7 @@ XMLElement.prototype.render = function(parentElement, recursive) {
 	elementNameContainer.appendChild(titleElement);
 	
 	// Switch gui element over to a jquery object
-	this.domNode = $(this.domNode);
+	this.domNode = $domNode;
 	this.domNode.data("xmlElement", this);
 
 	// Add the subsections for the elements content next.
@@ -347,7 +359,7 @@ XMLElement.prototype.addAttributeContainer = function () {
 };
 
 // Add a child element of type objectType and update the interface
-XMLElement.prototype.addElement = function(objectType) {
+XMLElement.prototype.addElement = function(objectType, relativeToXMLElement, prepend) {
 	if (!this.allowChildren)
 		return null;
 	
@@ -361,23 +373,30 @@ XMLElement.prototype.addElement = function(objectType) {
 	var newElement;
 	if (xmlDocument.createElementNS) {
 		newElement = xmlDocument.createElementNS(objectType.namespace, prefix + objectType.localName);
-		if (defaultValue)
-			newElement.appendChild(xmlDocument.createTextNode(defaultValue));
-		this.xmlNode[0].appendChild(newElement);
 	} else if (typeof(xmlDocument.createNode) != "undefined") {
 		// Older IE versions
 		newElement = xmlDocument.createNode(1, prefix + objectType.localName, objectType.namespace);
-		if (defaultValue)
-			newElement.appendChild(xmlDocument.createTextNode(defaultValue));
-		this.xmlNode[0].appendChild(newElement);
 	} else {
 		throw new Exception("Unable to add child due to incompatible browser");
+	}
+	if (defaultValue)
+		newElement.appendChild(xmlDocument.createTextNode(defaultValue));
+	if (relativeToXMLElement) {
+		if (prepend)
+			$(newElement).insertBefore(relativeToXMLElement.xmlNode);
+		else
+			$(newElement).insertAfter(relativeToXMLElement.xmlNode);
+	} else {
+		if (prepend)
+			this.xmlNode.prepend(newElement);
+		else
+			this.xmlNode[0].appendChild(newElement);
 	}
 	
 	var childElement = new XMLElement(newElement, objectType, this.editor);
 	this.addChildrenCount(childElement);
 	if (this.domNode != null)
-		childElement.render(this, true);
+		childElement.render(this, true, relativeToXMLElement, prepend);
 	childElement.populateChildren();
 	
 	return childElement;
