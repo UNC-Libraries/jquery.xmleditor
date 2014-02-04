@@ -24,6 +24,8 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 				input.options[index].selected = true;
 			}
 		}
+		if ((startingValue == " ") || (startingValue == ""))
+			input.selectedIndex = -1;
 		$input = $(input);
 	} else if ((this.objectType.element && (this.objectType.type == 'string' || this.objectType.type == 'mixed')) 
 			|| this.objectType.attribute){

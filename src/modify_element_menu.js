@@ -87,10 +87,12 @@ ModifyElementMenu.prototype.populate = function(xmlElement) {
 	
 	this.target = xmlElement;
 	var self = this;
+	var parent = this.target;
+	var choiceList = parent.objectType.choices;
 	
 	$.each(this.target.objectType.elements, function(){
 		var xmlElement = this;
-		$("<li/>").attr({
+		var addButton = $("<li/>").attr({
 			title : 'Add ' + xmlElement.name
 		}).html(xmlElement.name)
 		.data('xml', {
@@ -98,6 +100,21 @@ ModifyElementMenu.prototype.populate = function(xmlElement) {
 				"target": self.target,
 				"objectType": xmlElement
 		}).appendTo(self.menuContent);
+		if (!parent.presentChildren)
+			parent.presentChildren = [];
+		if (!parent.choiceCount)
+			parent.choiceCount = [];
+		if (xmlElement.maxOccurs)
+		{
+			if (parent.presentChildren[xmlElement.name] >= xmlElement.maxOccurs)
+				addButton.addClass('disabled');
+		}
+		for (var i = 0; i < choiceList.length; i++) {
+			if ($.inArray(xmlElement.localName, choiceList[i].elements) > -1) {
+				if (parent.choiceCount[i] >= choiceList[i].maxOccurs)
+					addButton.addClass('disabled');
+			}
+		}
 	});
 	if (this.expanded) {
 		var endingHeight = this.menuContent.outerHeight() + 1;
