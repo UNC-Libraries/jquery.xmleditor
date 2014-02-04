@@ -122,6 +122,12 @@ XMLElement.prototype.addTopActions = function () {
 	var topActionSpan = document.createElement('li');
 	topActionSpan.className = 'top_actions';
 	
+	var toggleCollapse = document.createElement('span');
+	toggleCollapse.className = 'toggle_collapse';
+	toggleCollapse.id = this.guiElementID + '_toggle_collapse';
+	toggleCollapse.appendChild(document.createTextNode('_'));
+	topActionSpan.appendChild(toggleCollapse);
+	
 	var moveDown = document.createElement('span');
 	moveDown.className = 'move_down';
 	moveDown.id = this.guiElementID + '_down';

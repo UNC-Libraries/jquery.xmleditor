@@ -1153,6 +1153,17 @@ GUIEditor.prototype._initEventBindings = function() {
 	}).on('click', '.top_actions .delete', function(event){
 		self.deleteElement($(this).parents('.' + xmlElementClass).eq(0).data('xmlElement'));
 		event.stopPropagation();
+	}).on('click', '.toggle_collapse', function(event){
+		var $this = $(this);
+		var contentBlock = $this.closest('.' + xmlElementClass).find('.content_block');
+		if ($this.html() == "+") {
+			$this.html("_");
+			contentBlock.slideDown(200);
+		} else {
+			$this.html("+");
+			contentBlock.slideUp(200);
+		}
+		event.stopPropagation();
 	}).on('change', '.element_text', function(event){
 		var xmlElement = $(this).parents('.' + xmlElementClass).eq(0).data('xmlElement')
 		xmlElement.syncText();
@@ -2681,6 +2692,12 @@ XMLElement.prototype.addTopActions = function () {
 	var self = this;
 	var topActionSpan = document.createElement('li');
 	topActionSpan.className = 'top_actions';
+	
+	var toggleCollapse = document.createElement('span');
+	toggleCollapse.className = 'toggle_collapse';
+	toggleCollapse.id = this.guiElementID + '_toggle_collapse';
+	toggleCollapse.appendChild(document.createTextNode('_'));
+	topActionSpan.appendChild(toggleCollapse);
 	
 	var moveDown = document.createElement('span');
 	moveDown.className = 'move_down';
