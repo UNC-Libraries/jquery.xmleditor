@@ -4,10 +4,6 @@ This is a customization of the original xmleditor found up in the repository: [x
 All credits go to their authors.
 
 
-Authors
----------
-
-
 Attribution
 ------
 [xmleditor](https://github.com/UNC-Libraries/jquery.xmleditor)
