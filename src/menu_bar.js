@@ -1,13 +1,17 @@
 /**
- * Header MenuBar object
+ * Header bar with dropdown menus.  In addition to the default menu options, user provided
+ * menus or options may be added as well.  Supports refreshing of menu items states via externally
+ * defined updateFunctions
  */
 function MenuBar(editor) {
 	this.editor = editor;
 	this.menuBarContainer = null;
 	this.parentElement = null;
+	// Functions which are executed when the menu is activated for updating the menu state
 	this.updateFunctions = [];
 	
 	var self = this;
+	// Default menu entries
 	this.headerMenuData = [ {
 		label : 'File',
 		enabled : true,
@@ -151,16 +155,54 @@ function MenuBar(editor) {
 			}
 		} ]
 	}, {
+		label : 'Options',
+		enabled : true,
+		action : function(event) {self.activateMenu(event);}, 
+		items : [ {
+			label : 'Pretty XML Formatting',
+			enabled : (vkbeautify !== undefined),
+			checked : vkbeautify && self.editor.options.prettyXML,
+			action : function() {
+				self.editor.options.prettyXML = !self.editor.options.prettyXML;
+				self.checkEntry(this, self.editor.options.prettyXML);
+			}
+		}, {
+			label : 'Enable shortcut keys',
+			enabled : true,
+			checked : self.editor.options.enableGUIKeybindings,
+			action : function() {
+				self.editor.setEnableKeybindings(!self.editor.options.enableGUIKeybindings);
+				self.checkEntry(this, self.editor.options.enableGUIKeybindings);
+			}
+		}, {
+			label : 'Enforce min/max occurs',
+			enabled : true,
+			checked : self.editor.options.enforceOccurs,
+			action : function() {
+				self.editor.options.enforceOccurs = !self.editor.options.enforceOccurs;
+				self.editor.modifyMenu.refreshContextualMenus();
+				self.checkEntry(this, self.editor.options.enforceOccurs);
+			}
+		}, {
+			label : 'Prepend new elements',
+			enabled : true,
+			checked : self.editor.options.prependNewElements,
+			action : function() {
+				self.editor.options.prependNewElements = !self.editor.options.prependNewElements;
+				self.checkEntry(this, self.editor.options.prependNewElements);
+			}
+		} ]
+	}/*, {
 		label : 'Help',
 		enabled : true,
-		action : function(event) {self.activateMenu(event);}/*, 
+		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
 			label : 'MODS Outline of Elements',
 			enabled : true,
 			binding : null,
 			action : "http://www.loc.gov/standards/mods/mods-outline.html"
-		} ]*/
-	}, {
+		} ]
+	}*/, {
 		label : 'XML',
 		enabled : true, 
 		itemClass : 'header_mode_tab',
@@ -177,6 +219,7 @@ function MenuBar(editor) {
 	} ];
 }
 
+// Causes the targeted menu to be displayed, as well as triggering update functions
 MenuBar.prototype.activateMenu = function(event) {
 	if (this.menuBarContainer.hasClass("active")) {
 		this.menuBarContainer.removeClass("active");
@@ -187,21 +230,20 @@ MenuBar.prototype.activateMenu = function(event) {
 		this(self.editor);
 	});
 	this.menuBarContainer.addClass("active");
-	this.menuBarContainer.children("ul").children("li").click(function (event) {
-		event.stopPropagation();
-	});
 	$('html').one("click" ,function() {
 		self.menuBarContainer.removeClass("active");
 	});
 	event.stopPropagation();
 };
 
+// Builds the menu and attaches it to the editor
 MenuBar.prototype.render = function(parentElement) {
 	this.parentElement = parentElement;
-	this.menuBarContainer = $("<div/>").attr('class', xmlMenuBarClass).appendTo(parentElement);
+	this.menuBarContainer = $("<div/>").addClass(xmlMenuBarClass).appendTo(parentElement);
 	
 	this.headerMenu = $("<ul/>");
 	this.menuBarContainer.append(this.headerMenu);
+	this.initEventHandlers();
 	
 	var menuBar = this;
 	$.each(this.headerMenuData, function() {
@@ -209,18 +251,27 @@ MenuBar.prototype.render = function(parentElement) {
 	});
 };
 
+MenuBar.prototype.initEventHandlers = function() {
+	this.headerMenu.on("click", "li", { "menuBar" : this}, function(event) {
+		var menuItem = $(this).data("menuItemData");
+		if (Object.prototype.toString.call(menuItem.action) == '[object Function]'){
+			menuItem.action.call(this, event);
+		}
+	});
+};
+
+// Generates an individual menu entry
 MenuBar.prototype.generateMenuItem = function(menuItemData, parentMenu) {
 	var menuItem = $("<li/>").appendTo(parentMenu);
+	var checkArea = $("<span/>").addClass("xml_menu_check").appendTo(menuItem);
+		
 	var menuItemLink = $("<a/>").appendTo(menuItem).html("<span>" + menuItemData.label + "</span>");
 	if (menuItemData.binding) {
 		menuItemLink.append("<span class='binding'>" + menuItemData.binding + "</span>");
 	}
-	if (menuItemData.action != null) {
-		if (Object.prototype.toString.call(menuItemData.action) == '[object Function]'){
-			menuItem.click(menuItemData.action);
-		} else {
-			menuItemLink.attr({"href": menuItemData.action, "target" : "_blank"});
-		}
+	// Entries with string actions are treated as hrefs
+	if (menuItemData.action != null && Object.prototype.toString.call(menuItemData.action) != '[object Function]'){
+		menuItemLink.attr({"href": menuItemData.action, "target" : "_blank"});
 	}
 	if (!menuItemData.enabled) {
 		menuItem.addClass("disabled");
@@ -237,8 +288,13 @@ MenuBar.prototype.generateMenuItem = function(menuItemData, parentMenu) {
 			menuBar.generateMenuItem(this, subMenu);
 		});
 	}
+	
+	if (menuItemData.checked)
+		this.checkEntry(menuItem, true);
 };
 
+// Adds an additional menu entry to the menu.  An insertion path must be included in the entry
+// if you wish to add to an existing menu, where the path is the label of the menu to add to
 MenuBar.prototype.addEntry = function(entry) {
 	var currentTier = this.headerMenuData;
 	if (entry.insertPath) {
@@ -255,5 +311,17 @@ MenuBar.prototype.addEntry = function(entry) {
 	if (currentTier) {
 		delete entry.insertPath;
 		currentTier.push(entry);
+	}
+};
+
+
+MenuBar.prototype.checkEntry = function(menuItem, checked) {
+	var menuItem = $(menuItem);
+	var menuItemData = menuItem.data("menuItemData");
+	menuItemData.checked = checked;
+	if (checked) {
+		menuItem.find(".xml_menu_check").html("&#x2713;");
+	} else {
+		menuItem.find(".xml_menu_check").html("");
 	}
 };

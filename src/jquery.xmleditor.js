@@ -31,6 +31,7 @@
  * @author Ben Pennell
  */
  
+// Selector and class name constants
 var menuContainerClass = "xml_menu_container";
 var menuHeaderClass = "menu_header";
 var menuColumnClass = "xml_menu_column";
@@ -62,6 +63,7 @@ var guiContentClass = "gui_content";
 var textContentClass = "text_content";
 var editorHeaderClass = "xml_editor_header";
 
+// Returns the local name of a node.  Needed for older versions of ie
 var localName = function(node) {
 	var localName = node.localName;
 	if (localName) return localName;
@@ -86,8 +88,6 @@ $.widget( "xml.xmlEditor", {
 		},
 		// Function triggered after uploading XML document, to interpret if the response was successful or not.  If upload failed, an error message should be returned.
 		submitResponseHandler : null,
-		// Selector to the XML to be used as the starting document, if it is embedded in the current page
-		localXMLContentSelector: this.element,
 		// Event function trigger after an xml element is update via the gui
 		elementUpdated : undefined,
 		// Title for the document, displayed in the header
@@ -96,6 +96,8 @@ $.widget( "xml.xmlEditor", {
 		addAttrMenuHeaderText : 'Add Attribute',
 		addElementMenuHeaderText : 'Add Subelement',
 		
+		// Set to false to get rid of the 
+		enableDocumentStatusPanel : true,
 		confirmExitWhenUnsubmitted : true,
 		enableGUIKeybindings : true,
 		floatingMenu : true,
@@ -108,6 +110,8 @@ $.widget( "xml.xmlEditor", {
 		undoHistorySize: 20,
 		// Object containing additional entries to add to the header menu
 		menuEntries: undefined,
+		enforceOccurs: true,
+		prependNewElements: false,
 		
 		targetNS: null
 	},
@@ -117,7 +121,7 @@ $.widget( "xml.xmlEditor", {
 		this.instanceNumber = $("xml-xmlEditor").length;
 		
 		// Tree of xml element types
-		this.xmlTree = null;
+		this.schemaTree = null;
 		// State of the XML document
 		this.xmlState = null;
 		// Container for the entire editor
@@ -142,6 +146,8 @@ $.widget( "xml.xmlEditor", {
 		this.menuBar = null;
 		// Element modification object
 		this.modifyMenu = null;
+		// Flag indicating if the editor was initialized on a text area that will need to be updated
+		this.isTextAreaEditor = false;
 		
 		var url = document.location.href;
 		var index = url.lastIndexOf("/");
@@ -175,16 +181,23 @@ $.widget( "xml.xmlEditor", {
 		
 		// Retrieve the local xml content before we start populating the editor.
 		var localXMLContent = null;
-		if ($(this.options.localXMLContentSelector).is("textarea")) {
-			localXMLContent = $(this.options.localXMLContentSelector).val(); 
+		if (this.element.is("textarea")) {
+			// Editor initialized on a text area.  Move text area out of the way and hide it
+			// so that it can be updated with document changes.
+			this.isTextAreaEditor = true;
+			// Capture the existing value in the text area in case we are using a local document
+			// Retrieving text instead of val because of firefox inconsistencies
+			localXMLContent = this.element.text();
+			this.xmlEditorContainer = $("<div/>").attr('class', xmlEditorContainerClass);
+			$(this.element)
+				.before(this.xmlEditorContainer)
+				.hide();
 		} else {
 			localXMLContent = this.element.html();
+			// Add the editor into the dom
+			this.xmlEditorContainer = $("<div/>").attr('class', xmlEditorContainerClass).appendTo(this.element);
 		}
-		this.element.empty();
-		
 		this.xmlState = null;
-		
-		this.xmlEditorContainer = $("<div/>").attr('class', xmlEditorContainerClass).appendTo(this.element);
 		this.xmlWorkAreaContainer = null;
 		this.xmlTabContainer = null;
 		
@@ -196,11 +209,7 @@ $.widget( "xml.xmlEditor", {
 		this.activeEditor = this.guiEditor;
 		
 		var self = this;
-		this.undoHistory = new UndoHistory(this);
-		this.undoHistory.setStateChangeEvent(function() {
-			self.refreshDisplay();
-		});
-
+		
 		this.menuBar = new MenuBar(this);
 		this.menuBar.updateFunctions.push(this.refreshMenuUndo);
 		this.menuBar.updateFunctions.push(this.refreshMenuSelected);
@@ -211,10 +220,6 @@ $.widget( "xml.xmlEditor", {
 		}
 		this.modifyMenu = new ModifyMenuPanel(this);
 		
-		if (this.options.enableGUIKeybindings)
-			$(window).keydown(function(e){
-				self.keydownCallback(e);
-			});
 		if (this.options.confirmExitWhenUnsubmitted) {
 			$(window).bind('beforeunload', function(e) {
 				if (self.xmlState != null && self.xmlState.isChanged()) {
@@ -226,6 +231,7 @@ $.widget( "xml.xmlEditor", {
 		this.loadDocument(this.options.ajaxOptions, localXMLContent);
 	},
 	
+	// Load the schema object
 	loadSchema: function(schema) {
 		var self = this;
 		// If the schema is a function, execute it to get the schema from it.
@@ -268,6 +274,7 @@ $.widget( "xml.xmlEditor", {
 				};
 				worker.postMessage({'schema' : schema, 'libPath' : this.libPath});
 			} else {
+				// Fallback with synchronous retrocycling
 				if (typeof schema == 'string' || typeof schema instanceof String) {
 					$.ajax({
 						url : schema,
@@ -286,6 +293,7 @@ $.widget( "xml.xmlEditor", {
 		}
 	},
 	
+	// Load the XML document for editing
 	loadDocument: function(ajaxOptions, localXMLContent) {
 		if (ajaxOptions != null && ajaxOptions.xmlRetrievalPath != null) {
 			var self = this;
@@ -303,27 +311,36 @@ $.widget( "xml.xmlEditor", {
 		}
 	},
 	
+	// XML Document loaded event
 	_documentReady : function(xmlString) {
+		var self = this;
 		this.xmlState = new DocumentState(xmlString, this);
 		this.xmlState.extractNamespacePrefixes();
+		this.undoHistory = new UndoHistory(this.xmlState, this);
+		this.undoHistory.setStateChangeEvent(function() {
+			self.refreshDisplay();
+		});
 		this._documentAndSchemaReady();
 	},
 	
+	// Schema object loaded event
 	_schemaReady : function() {
 		if (!this.options.targetNS) {
 			this.targetNS = this.schema.namespace;
 		}
-		this.xmlTree = new SchemaTree(this.schema);
-		this.xmlTree.build();
+		this.schemaTree = new SchemaTree(this.schema);
+		this.schemaTree.build();
 		this._documentAndSchemaReady();
 	},
 	
+	// Performs initialization of editor after rejoining document and schema loading workflows
+	// to support asychronous/multithreaded loading 
 	_documentAndSchemaReady : function() {
 		// Join back up asynchronous loading of document and schema
-		if (!this.xmlTree || !this.xmlState)
+		if (!this.schemaTree || !this.xmlState)
 			return;
-		this.xmlState.namespaces.namespaceURIs = $.extend({}, this.xmlTree.namespaces.namespaceURIs, this.xmlState.namespaces.namespaceURIs);
-		this.xmlState.namespaces.namespaceToPrefix = $.extend({}, this.xmlTree.namespaces.namespaceToPrefix, this.xmlState.namespaces.namespaceToPrefix);
+		this.xmlState.namespaces.namespaceURIs = $.extend({}, this.schemaTree.namespaces.namespaceURIs, this.xmlState.namespaces.namespaceURIs);
+		this.xmlState.namespaces.namespaceToPrefix = $.extend({}, this.schemaTree.namespaces.namespaceToPrefix, this.xmlState.namespaces.namespaceToPrefix);
 		this.targetPrefix = this.xmlState.namespaces.getNamespacePrefix(this.options.targetNS);
 		
 		this.constructEditor();
@@ -332,15 +349,20 @@ $.widget( "xml.xmlEditor", {
 		this.undoHistory.captureSnapshot();
 	},
 	
+	// Construct user interface components of the editor
 	constructEditor: function() {
 		// Work Area
 		this.xmlWorkAreaContainer = $("<div/>").attr('class', xmlWorkAreaContainerClass).appendTo(this.xmlEditorContainer);
 		
 		// Menu bar
+		var editorHeaderBacking = $("<div/>").addClass(editorHeaderClass + "_backing").appendTo(this.xmlWorkAreaContainer);
 		this.editorHeader = $("<div/>").attr('class', editorHeaderClass).appendTo(this.xmlWorkAreaContainer);
 		if (this.options.documentTitle != null)
 			$("<h2/>").html("Editing Description: " + this.options.documentTitle).appendTo(this.editorHeader);
 		this.menuBar.render(this.editorHeader);
+		editorHeaderBacking.height(this.editorHeader.outerHeight());
+		// Create grouping of header elements that need to be positioned together
+		this.editorHeaderGroup = this.editorHeader.add(editorHeaderBacking);
 		
 		this.xmlTabContainer = $("<div/>").attr("class", editorTabAreaClass).css("padding-top", this.editorHeader.height() + "px").appendTo(this.xmlWorkAreaContainer);
 		this.problemsPanel = $("<pre/>").attr('class', problemsPanelClass).hide().appendTo(this.xmlTabContainer);
@@ -357,8 +379,19 @@ $.widget( "xml.xmlEditor", {
 		this.modifyMenu.addAttributeMenu(addAttrMenuClass, this.options.addAttrMenuHeaderText, 
 				true, false, true);
 		this.addTopLevelMenu = this.modifyMenu.addMenu(addTopMenuClass, this.options.addTopMenuHeaderText, 
-				true, true).populate(this.guiEditor.rootElement);
+				true, true, false, function(target) {
+			var selectedElement = self.guiEditor.selectedElement;
+			if (!selectedElement || selectedElement.length == 0 || selectedElement.isRootElement) 
+				return null;
+			var currentElement = selectedElement;
+			while (!currentElement.isTopLevel)
+				currentElement = currentElement.parentElement;
+			if (currentElement != null)
+				return currentElement;
+			return null;
+		}).populate(this.guiEditor.rootElement);
 		
+		this.setEnableKeybindings(this.options.enableGUIKeybindings);
 		if (this.options.floatingMenu) {
 			$(window).bind('scroll', $.proxy(this.modifyMenu.setMenuPosition, this.modifyMenu));
 		}
@@ -369,6 +402,7 @@ $.widget( "xml.xmlEditor", {
 		this.ready = true;
 	},
 	
+	// Resize event for refreshing menu and editor sizes
 	resize: function () {
 		this.xmlTabContainer.width(this.xmlEditorContainer.outerWidth() - this.modifyMenu.menuColumn.outerWidth());
 		if (this.activeEditor != null){
@@ -380,12 +414,15 @@ $.widget( "xml.xmlEditor", {
 		}
 	},
 	
-	addChildElementCallback: function (instigator) {
+	// Event which triggers the creation of a new child element, as defined by an instigator such as a menu
+	addChildElementCallback: function (instigator, relativeTo, prepend) {
+		if ($(instigator).hasClass("disabled"))
+			return;
 		var xmlElement = $(instigator).data("xml").target;
 		var objectType = $(instigator).data("xml").objectType;
 		
+		// If in the text editor view, synchronous the text to the xml model and ensure wellformedness
 		if (this.textEditor.active) {
-			// Refresh xml state
 			if (this.xmlState.changesNotSynced()) {
 				try {
 					this.setXMLFromEditor();
@@ -396,15 +433,23 @@ $.widget( "xml.xmlEditor", {
 			}
 		}
 		
-		this.xmlState.addNamespace(objectType);
-		var newElement = xmlElement.addElement(objectType);
+		// Determine if it is valid to add this child element to the given parent element
+		if (!xmlElement.childCanBeAdded(objectType))
+			return;
 		
+		// Add the namespace of the new element to the root if it is not already present
+		this.xmlState.addNamespace(objectType);
+		// Create the new element as a child of its parent
+		var newElement = xmlElement.addElement(objectType, relativeTo, prepend);
+		// Trigger post element creation event in the currently active editor to handle UI updates
 		this.activeEditor.addElementEvent(xmlElement, newElement);
 	},
 	
+	// Event which adds an attribute to an element, as defined by an instigator such as a menu
 	addAttributeButtonCallback: function(instigator) {
 		if ($(instigator).hasClass("disabled"))
 			return;
+		// Synchronize xml document if there are unsynchronized changes in the text editor
 		if (this.xmlState.changesNotSynced()) {
 			try {
 				this.setXMLFromEditor();
@@ -413,13 +458,23 @@ $.widget( "xml.xmlEditor", {
 				return;
 			}
 		}
+		// Create attribute on the targeted parent, and add its namespace if missing
 		var data = $(instigator).data('xml');
 		this.xmlState.addNamespace(data.objectType);
 		data.target.addAttribute(data.objectType);
-		
+		// Inform the active editor of the newly added attribute
 		this.activeEditor.addAttributeEvent(data.target, data.objectType, $(instigator));
 	},
 	
+	// Triggered when a document has been loaded or reloaded
+	documentLoadedEvent : function(newDocument) {
+		if (this.guiEditor != null && this.guiEditor.rootElement != null)
+			this.guiEditor.rootElement.xmlNode = newDocument.children().first();
+		if (this.problemsPanel != null)
+			this.clearProblemPanel();
+	},
+	
+	// Switch the currently active editor to the editor identified
 	modeChange: function(mode) {
 		// Can't change mode to current mode
 		if ((mode == 0 && this.guiEditor.active) || (mode == 1 && this.textEditor.active))
@@ -467,6 +522,12 @@ $.widget( "xml.xmlEditor", {
 		this.xmlWorkAreaContainer.width(this.xmlEditorContainer.outerWidth() - this.modifyMenu.menuColumn.outerWidth());
 	},
 	
+	setTextArea : function(xmlString) {
+		if (this.isTextAreaEditor)
+			this.element.val(xmlString);
+	},
+	
+	// Refresh the state of the XML document from the contents of text editor 
 	setXMLFromEditor: function() {
 		var xmlString = this.textEditor.aceEditor.getValue();
 		this.xmlState.setXMLFromString(xmlString);
@@ -474,6 +535,7 @@ $.widget( "xml.xmlEditor", {
 		this.addTopLevelMenu.populate(this.guiEditor.rootElement)
 	},
 	
+	// Performs the default action for "saving" the contents of the editor, either to server or file
 	saveXML: function() {
 		if (this.options.ajaxOptions.xmlUploadPath != null) {
 			this.submitXML();
@@ -483,6 +545,7 @@ $.widget( "xml.xmlEditor", {
 		}
 	},
 	
+	// Export the contents of the editor as text to a file, as supported by browsers
 	exportXML: function() {
 		if (typeof(Blob) === "undefined") {
 			this.addProblem("Browser does not support saving files via this editor.  To save, copy and paste the document from the Text view.");
@@ -518,6 +581,7 @@ $.widget( "xml.xmlEditor", {
 		});
 	},
 
+	// Upload the contents of the editor to a path
 	submitXML: function() {
 		if (this.textEditor.active) {
 			try {
@@ -542,9 +606,12 @@ $.widget( "xml.xmlEditor", {
 			'type' : "POST",
 			'data' : xmlString,
 			success : function(response) {
+				// Process the response from the server using the provided response handler
+				// If the result of the handler evaluates true, then it is assumed to be an error
 				var outcome = self.options.submitResponseHandler(response);
 				
 				if (!outcome) {
+					// 
 					self.xmlState.changesCommittedEvent();
 					self.clearProblemPanel();
 				} else {
@@ -573,6 +640,7 @@ $.widget( "xml.xmlEditor", {
 		});
 	},
 	
+	// Default server submission response parser, mostly for reference.  
 	swordSubmitResponseHandler: function(response) {
 		var responseObject = $(response);
 		if (responseObject.length > 0 && localName(responseObject[responseObject.length - 1]) == "sword:error") {
@@ -581,7 +649,7 @@ $.widget( "xml.xmlEditor", {
 		return false;
 	},
 
-	// convert xml DOM to string
+	// Serializes the provided xml node into a string
 	xml2Str: function(xmlNodeObject) {
 		if (xmlNodeObject == null)
 			xmlNodeObject = this.xmlState.xml;
@@ -599,22 +667,13 @@ $.widget( "xml.xmlEditor", {
 				return false;
 			}
 		}
+		// Format the text if enabled
 		if (this.options.prettyXML)
 			xmlStr = vkbeautify.xml(xmlStr);
 		return xmlStr;
 	},
 	
-	getParentObject: function(object, suffix) {
-		var objectId = $(object).attr('id');
-		var parentId = objectId.substring(0, objectId.indexOf(suffix));
-		
-		var parentObject = $("#" + parentId);
-		if (parentObject.length == 0)
-			return;
-		
-		return parentObject;
-	},
-	
+	// Add a error/problem message to the error display
 	addProblem: function(message, problem) {
 		this.problemsPanel.html(message + "<br/>");
 		if (problem !== undefined) {
@@ -627,10 +686,12 @@ $.widget( "xml.xmlEditor", {
 		this.refreshProblemPanel();
 	},
 	
+	// Clear the listing of errors
 	clearProblemPanel: function() {
 		this.problemsPanel.hide();
 	},
 	
+	// Update whether or not the error panel is displayed
 	refreshProblemPanel: function() {
 		if (this.problemsPanel.html() == "") {
 			this.problemsPanel.hide("fast");
@@ -639,29 +700,32 @@ $.widget( "xml.xmlEditor", {
 		}
 	},
 
+	// Performs an equality comparison between two nodes, returning true if they match namespace uri and element name
 	nsEquals: function(node, element, elementNS) {
 		if (element.substring)
 			return element == localName(node) && elementNS == node.namespaceURI;
 		return localName(element) == localName(node) && node.namespaceURI == element.namespace;
 	},
 	
+	// Strips the namespace prefix off an element name
 	stripPrefix: function(name) {
 		var index = name.indexOf(":");
 		return index == -1? name: name.substring(index + 1);
 	},
 	
-	getXPath: function(element) {
-		var xpath = '';
-		for ( ; element && element.nodeType == 1; element = element.parentNode ) {
-			var id = $(element.parentNode).children(element.tagName.replace(":", "\\:")).index(element) + 1;
-			id = ('[' + id + ']');
-			if (element.tagName.indexOf("xml:") == -1)
-				xpath = '/xml:' + element.tagName + id + xpath;
-			else xpath = '/' + element.tagName + id + xpath;
+	setEnableKeybindings : function(enable) {
+		if (enable) {
+			this.options.enableGUIKeybindings = true;
+			this.menuBar.menuBarContainer.removeClass("xml_bindings_disabled");
+			$(window).on("keydown.xml_keybindings", $.proxy(this.keydownCallback, this));
+		} else {
+			this.options.enableGUIKeybindings = false;
+			this.menuBar.menuBarContainer.addClass("xml_bindings_disabled");
+			$(window).off("keydown.xml_keybindings");
 		}
-		return xpath;
 	},
-				
+	
+	// Initialize key bindings
 	keydownCallback: function(e) {
 		if (this.guiEditor.active) {
 			var focused = $("input:focus, textarea:focus, select:focus");
@@ -739,11 +803,13 @@ $.widget( "xml.xmlEditor", {
 			return false;
 		}
 		
+		// Switch to the GUI editor
 		if (e.altKey && e.shiftKey && e.keyCode == 'X'.charCodeAt(0)) {
 			this.modeChange(0);
 			return false;
 		}
 		
+		// Switch to the text editor
 		if (e.altKey && e.shiftKey && e.keyCode == 'T'.charCodeAt(0)) {
 			this.modeChange(1);
 			return false;
@@ -752,9 +818,7 @@ $.widget( "xml.xmlEditor", {
 		return true;
 	},
 	
-	/**
-	 * Menu Update functions
-	 */
+	// Menu Update functions
 	refreshMenuUndo: function(self) {
 		if (self.undoHistory.headIndex > 0) {
 			$("#" + xmlMenuHeaderPrefix + "Undo").removeClass("disabled").data("menuItemData").enabled = true;
@@ -768,6 +832,7 @@ $.widget( "xml.xmlEditor", {
 		}
 	},
 	
+	// Performs updates to the menu for changing element/attribute selection
 	refreshMenuSelected: function(self) {
 		var suffixes = ['Deselect', 'Next_Element', 'Previous_Element', 'Parent', 'First_Child', 'Next_Sibling', 
 						'Previous_Sibling', 'Next_Attribute', 'Previous_Attribute', 'Delete', 'Move_Element_Up', 

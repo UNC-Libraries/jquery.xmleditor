@@ -11,21 +11,27 @@ function ModifyMenuPanel(editor) {
 
 ModifyMenuPanel.prototype.initialize = function (parentContainer) {
 	this.menuColumn = $("<div/>").attr('class', menuColumnClass).appendTo(parentContainer);
-	$("<span/>").attr('class', submissionStatusClass).html("Document is unchanged").appendTo(this.menuColumn);
 	
-	var submitButton = $("<input/>").attr({
-		'id' : submitButtonClass,
-		'type' : 'button',
-		'class' : 'send_xml',
-		'name' : 'submit',
-		'value' : 'Submit Changes'
-	}).appendTo(this.menuColumn);
-	if (this.editor.options.ajaxOptions.xmlUploadPath == null) {
-		if (typeof(Blob) !== undefined){
-			submitButton.attr("value", "Export");
-		} else {
-			submitButton.attr("disabled", "disabled");
+	// Generate the document status panel, which shows a save/export button as well as if there are changes to the document
+	if (this.editor.options.enableDocumentStatusPanel) {
+		var documentStatusPanel = $("<div>");
+		$("<span/>").addClass(submissionStatusClass).html("Document is unchanged")
+			.appendTo(documentStatusPanel);
+		var submitButton = $("<input/>").attr({
+			'id' : submitButtonClass,
+			'type' : 'button',
+			'class' : 'send_xml',
+			'name' : 'submit',
+			'value' : 'Submit Changes'
+		}).appendTo(documentStatusPanel);
+		if (this.editor.options.ajaxOptions.xmlUploadPath == null) {
+			if (typeof(Blob) !== undefined){
+				submitButton.attr("value", "Export");
+			} else {
+				submitButton.attr("disabled", "disabled");
+			}
 		}
+		documentStatusPanel.appendTo(this.menuColumn);
 	}
 	
 	this.menuContainer = $("<div class='" + menuContainerClass + "'/>").appendTo(this.menuColumn);
@@ -33,10 +39,15 @@ ModifyMenuPanel.prototype.initialize = function (parentContainer) {
 	return this;
 };
 
-ModifyMenuPanel.prototype.addMenu = function(menuID, label, expanded, enabled, contextual) {
-	if (arguments.length == 4)
-		contextual = false;
-	var menu = new ModifyElementMenu(menuID, label, expanded, enabled, this);
+// Add an additional menu for adding new elements to the panel
+// menuID - id attribute for the menu
+// label - display name for the menu
+// expanded - whether to show the contents of the menu by default
+// enabled - boolean indicating the menu can be interacted with
+// contextual - Boolean indicating if this menu needs to be updated when selection changes
+ModifyMenuPanel.prototype.addMenu = function(menuID, label, expanded, enabled, contextual,
+		getRelativeToFunction) {
+	var menu = new ModifyElementMenu(menuID, label, expanded, enabled, this, this.editor, getRelativeToFunction);
 	this.menus[menuID] = {
 			"menu" : menu, 
 			"contextual": contextual
@@ -46,10 +57,11 @@ ModifyMenuPanel.prototype.addMenu = function(menuID, label, expanded, enabled, c
 	return menu;
 };
 
+// Add a menu for adding new attributes
 ModifyMenuPanel.prototype.addAttributeMenu = function(menuID, label, expanded, enabled, contextual) {
 	if (arguments.length == 4)
 		contextual = false;
-	var menu = new AttributeMenu(menuID, label, expanded, enabled, this);
+	var menu = new AttributeMenu(menuID, label, expanded, enabled, this, this.editor);
 	this.menus[menuID] = {
 			"menu" : menu, 
 			"contextual": contextual
@@ -59,6 +71,7 @@ ModifyMenuPanel.prototype.addAttributeMenu = function(menuID, label, expanded, e
 	return menu;
 };
 
+// Empty entries from all contextual menus
 ModifyMenuPanel.prototype.clearContextualMenus = function() {
 	$.each(this.menus, function(){
 		if (this.contextual) {
@@ -69,7 +82,13 @@ ModifyMenuPanel.prototype.clearContextualMenus = function() {
 	return this;
 };
 
+// Refresh entries for all contextual menus
 ModifyMenuPanel.prototype.refreshContextualMenus = function(targetElement) {
+	if (targetElement === undefined) {
+		if (!this.targetElement)
+			return this;
+		targetElement = this.targetElement;
+	} else this.targetElement = targetElement;
 	$.each(this.menus, function(){
 		if (this.contextual) {
 			this.menu.populate(targetElement);
@@ -79,6 +98,7 @@ ModifyMenuPanel.prototype.refreshContextualMenus = function(targetElement) {
 	return this;
 };
 
+// Update the position of the menu
 ModifyMenuPanel.prototype.setMenuPosition = function(){
 	if (this.menuColumn == null || this.menuColumn.offset() == null)
 		return;
@@ -92,7 +112,7 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 			left : xmlEditorContainer.offset().left + xmlEditorContainer.outerWidth() - this.menuColumn.innerWidth(),
 			top : 0
 		});
-		this.editor.editorHeader.css({
+		this.editor.editorHeaderGroup.css({
 			position : 'fixed',
 			top : 0
 		});
@@ -102,7 +122,7 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 			left : xmlEditorContainer.outerWidth() - this.menuColumn.innerWidth(),
 			top : 0
 		});
-		this.editor.editorHeader.css({
+		this.editor.editorHeaderGroup.css({
 			position : 'absolute',
 			top : 0
 		});
