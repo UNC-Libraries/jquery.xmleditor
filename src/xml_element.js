@@ -4,89 +4,134 @@
  */
 function XMLElement(xmlNode, objectType, editor) {
 	AbstractXMLObject.call(this, editor, objectType);
+	// jquery object reference to the xml node represented by this object in the active xml document
 	this.xmlNode = $(xmlNode);
+	this.isRootElement = this.xmlNode[0].parentNode === this.xmlNode[0].ownerDocument;
+	// Flag indicating if this element is a child of the root node
 	this.isTopLevel = this.xmlNode[0].parentNode.parentNode === this.xmlNode[0].ownerDocument;
+	// Flag indicating if any children nodes can be added to this element
 	this.allowChildren = this.objectType.elements.length > 0;
+	// Flag indicating if any attributes can be added to this element
 	this.allowAttributes = this.objectType.attributes != null && this.objectType.attributes.length > 0;
+	// Should this element allow text nodes to be added
 	this.allowText = this.objectType.type != null;
-	this.guiElementID = null;
-	this.guiElement = null;
+	// ID of the dom node for this element
+	this.domNodeID = null;
+	// dom node for this element
+	this.domNode = null;
+	// XMLElement which is the parent of this element
 	this.parentElement = null;
+	// Main input for text node of this element
 	this.textInput = null;
+	// dom element header for this element
 	this.elementHeader = null;
+	// dom element which contains the display of child elements
 	this.childContainer = null;
+	// Counter for total number of immediate children of this element
 	this.childCount = 0;
+	// dom element for attributes
 	this.attributeContainer = null;
+	// Counter for number of attributes assigned to this element
 	this.attributeCount = 0;
+	// Map of child element type counts, used for constraining number of each type of child element
+	this.presentChildren = {};
+	// Array of element counts belonging to each choice block on this element definition
+	// Order of counts matches the order of choice blocks from the schema definition
+	this.choiceCount = [];
 }
 
 XMLElement.prototype.constructor = XMLElement;
 XMLElement.prototype = Object.create( AbstractXMLObject.prototype );
 
-XMLElement.prototype.getDomElement = function () {
-	return this.guiElement;
+XMLElement.prototype.getDomNode = function () {
+	return this.domNode;
 };
 
-XMLElement.prototype.render = function(parentElement, recursive) {
+// Render the GUI view of this element and all of its subelements/attributes
+// parentElement - the XMLElement parent of this element
+// recursive - Boolean which indicates whether to render this elements subelements
+// Returns the newly created GUI dom element
+XMLElement.prototype.render = function(parentElement, recursive, relativeToXMLElement, prepend) {
 	this.parentElement = parentElement;
-	this.guiElementID = this.guiEditor.nextIndex();
+	this.domNodeID = this.guiEditor.nextIndex();
 	
 	// Create the element and add it to the container
-	this.guiElement = document.createElement('div');
-	this.guiElement.id = this.guiElementID;
-	this.guiElement.className = this.objectType.name.replace(":", "_") + 'Instance ' + xmlElementClass;
+	this.domNode = document.createElement('div');
+	var $domNode = $(this.domNode);
+	this.domNode.id = this.domNodeID;
+	this.domNode.className = this.objectType.ns + "_" + this.objectType.localName + 'Instance ' + xmlElementClass;
 	if (this.isTopLevel)
-		this.guiElement.className += ' ' + topLevelContainerClass;
-	this.parentElement.childContainer[0].appendChild(this.guiElement);
+		this.domNode.className += ' ' + topLevelContainerClass;
+	if (this.isRootElement)
+		this.domNode.className += ' xml_root_element';
+	if (this.parentElement) {
+		if (relativeToXMLElement) {
+			if (prepend)
+				$domNode.insertBefore(relativeToXMLElement.domNode);
+			else
+				$domNode.insertAfter(relativeToXMLElement.domNode);
+		} else {
+			if (prepend)
+				this.parentElement.childContainer.prepend(this.domNode);
+			else
+				this.parentElement.childContainer[0].appendChild(this.domNode);
+		}
+	}
 	
 	// Begin building contents
 	this.elementHeader = document.createElement('ul');
 	this.elementHeader.className = 'element_header';
-	this.guiElement.appendChild(this.elementHeader);
+	this.domNode.appendChild(this.elementHeader);
 	var elementNameContainer = document.createElement('li');
 	elementNameContainer.className = 'element_name';
 	this.elementHeader.appendChild(elementNameContainer);
 
+	this.elementName = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace) 
+		+ this.objectType.localName;
 	// set up element title and entry field if appropriate
 	var titleElement = document.createElement('span');
-	titleElement.appendChild(document.createTextNode(this.objectType.name));
+	titleElement.appendChild(document.createTextNode(this.elementName));
 	elementNameContainer.appendChild(titleElement);
 	
 	// Switch gui element over to a jquery object
-	this.guiElement = $(this.guiElement);
-	this.guiElement.data("xmlElement", this);
+	this.domNode = $domNode;
+	this.domNode.data("xmlElement", this);
 
 	// Add the subsections for the elements content next.
 	this.addContentContainers(recursive);
 
 	// Action buttons
-	this.elementHeader.appendChild(this.addTopActions(this.guiElementID));
-	
-	var self = this;
+	if (!this.isRootElement)
+		this.elementHeader.appendChild(this.addTopActions(this.domNodeID));
 	
 	this.initializeGUI();
 	this.updated({action : 'render'});
 	
-	return this.guiElement;
+	return this.domNode;
 };
 
+// Render children elements
+// recursive - if false, then only the immediate children will be rendered
 XMLElement.prototype.renderChildren = function(recursive) {
 	this.childCount = 0;
-	this.guiElement.children("." + xmlElementClass).remove();
+	this.domNode.children("." + xmlElementClass).remove();
 	
 	var elementsArray = this.objectType.elements;
 	var self = this;
 	this.xmlNode.children().each(function() {
 		for ( var i = 0; i < elementsArray.length; i++) {
-			if (self.editor.nsEquals(this, elementsArray[i])) {
+			var prefix = self.editor.xmlState.namespaces.getNamespacePrefix(elementsArray[i].namespace);
+			if (prefix + elementsArray[i].localName == this.nodeName) {
 				var childElement = new XMLElement($(this), elementsArray[i], self.editor);
 				childElement.render(self, recursive);
+				self.addChildrenCount(childElement);
 				return;
 			}
 		}
 	});
 };
 
+// Render all present attributes for this elements
 XMLElement.prototype.renderAttributes = function () {
 	var self = this;
 	var attributesArray = this.objectType.attributes;
@@ -104,9 +149,103 @@ XMLElement.prototype.renderAttributes = function () {
 	});
 };
 
+// Updates child count tracking for the given element
+XMLElement.prototype.addChildrenCount = function(childElement) {
+	this.updateChildrenCount(childElement, 1);
+};
+
+// Inform element that a specific child element has been removed
+XMLElement.prototype.childRemoved = function(childElement) {
+	this.updateChildrenCount(childElement, -1);
+};
+
+/**
+ * Updates child occurrence counts in response to a newly added child element
+ */
+XMLElement.prototype.updateChildrenCount = function(childElement, delta) {
+	var self = this;
+	this.childCount += delta;
+	var childName = childElement.objectType.ns + ":" + childElement.objectType.localName;
+	var choiceList = self.objectType.choices;
+	// Update child type counts
+	if (self.presentChildren[childName])
+		self.presentChildren[childName] += delta;
+	else
+		self.presentChildren[childName] = delta > 0? delta : 0;
+	if (choiceList) {
+		for (var i = 0; i < choiceList.length; i++) {
+			if ($.inArray(childName, choiceList[i].elements) > -1) {
+				if (self.choiceCount[i])
+					self.choiceCount[i] += delta;
+				else
+					self.choiceCount[i] = delta > 0? delta : 0;
+			}
+		}
+	}
+	
+	return;
+};
+
+// Returns true if any more children of type childType can be added to this element
+XMLElement.prototype.childCanBeAdded = function(childType) {
+	if (!this.editor.options.enforceOccurs) return true;
+	var childName = childType.ns + ":" + childType.localName;
+	var presentCount = this.presentChildren[childName] || 0;
+	// For the moment, if occur is not set, then pretend its unbound until the other limits are implemented
+	// Normally, this should be defaulting to 1
+	var maxOccurs = this.objectType.occurs && childName in this.objectType.occurs? 
+			this.objectType.occurs[childName].max : "unbounded";
+	if (maxOccurs != null && maxOccurs != 'unbounded' && presentCount >= maxOccurs)
+		return false;
+	
+	// Check choices list to see if there are any choice restrictions on this type
+	var choiceList = this.objectType.choices;
+	if (choiceList) {
+		for (var i = 0; i < choiceList.length; i++) {
+			if ($.inArray(childName, choiceList[i].elements) > -1) {
+				var choiceCount = this.choiceCount[i] || 0;
+				if (choiceList[i].maxOccurs && choiceCount >= choiceList[i].maxOccurs)
+					return false;
+			}
+		}
+	}
+	
+	return true;
+};
+
+// Returns true if an element of definition childType can be removed from this element, according to
+// minimum occurrence restrictions
+XMLElement.prototype.childCanBeRemoved = function(childType) {
+	if (!this.editor.options.enforceOccurs) return true;
+	// Not checking min for groups or choices to avoid irreplaceable children
+	var childName = childType.ns + ":" + childType.localName;
+	if (this.presentChildren[childName] && this.objectType.occurs && childName in this.objectType.occurs)
+		return (this.presentChildren[childName] > this.objectType.occurs[childName].min);
+	return true;
+};
+
+// Populate the minimum number of children needed for this element to be valid
+XMLElement.prototype.populateChildren = function() {
+	if (!this.editor.options.enforceOccurs) return;
+	var self = this;
+	$.each(this.objectType.elements, function(){
+		var childName = this.ns + ":" + this.localName;
+		if (self.objectType.occurs && childName in self.objectType.occurs) {
+			var minOccurs = self.objectType.occurs[childName].min;
+			if (minOccurs) {
+				for (var i = 0; i < minOccurs; i++) {
+					var childElement = self.addElement(this);
+					self.editor.activeEditor.addElementEvent(self, childElement);
+				}
+			}
+		}
+	});
+};
+
 XMLElement.prototype.initializeGUI = function () {
 	var self = this;
 	if (this.childContainer != null) {
+		// Enable sorting of this element's child elements
 		this.childContainer.sortable({
 			distance: 10,
 			items: '> .' + xmlElementClass,
@@ -117,6 +256,7 @@ XMLElement.prototype.initializeGUI = function () {
 	}
 };
 
+// Generate buttons for performing move and delete actions on this element
 XMLElement.prototype.addTopActions = function () {
 	var self = this;
 	var topActionSpan = document.createElement('li');
@@ -124,25 +264,27 @@ XMLElement.prototype.addTopActions = function () {
 	
 	var moveDown = document.createElement('span');
 	moveDown.className = 'move_down';
-	moveDown.id = this.guiElementID + '_down';
+	moveDown.id = this.domNodeID + '_down';
 	moveDown.appendChild(document.createTextNode('\u2193'));
 	topActionSpan.appendChild(moveDown);
 	
 	var moveUp = document.createElement('span');
 	moveUp.className = 'move_up';
-	moveUp.id = this.guiElementID + '_up';
+	moveUp.id = this.domNodeID + '_up';
 	moveUp.appendChild(document.createTextNode('\u2191'));
 	topActionSpan.appendChild(moveUp);
 	
 	var deleteButton = document.createElement('span');
 	deleteButton.className = 'delete';
-	deleteButton.id = this.guiElementID + '_del';
+	deleteButton.id = this.domNodeID + '_del';
 	deleteButton.appendChild(document.createTextNode('X'));
 	topActionSpan.appendChild(deleteButton);
 	
 	return topActionSpan;
 };
 
+// Generates GUI containers for the content panels of this element, including children elements,
+// attributes and text
 XMLElement.prototype.addContentContainers = function (recursive) {
 	var attributesArray = this.objectType.attributes;
 	var elementsArray = this.objectType.elements;
@@ -157,7 +299,7 @@ XMLElement.prototype.addContentContainers = function (recursive) {
 	} else
 		placeholder.appendChild(document.createTextNode('Use the menu to add subelements.'));
 	this.placeholder = $(placeholder);
-	this.guiElement.append(this.placeholder);
+	this.domNode.append(this.placeholder);
 	
 	if (attributesArray.length > 0) {
 		this.addAttributeContainer();
@@ -174,9 +316,9 @@ XMLElement.prototype.addContentContainers = function (recursive) {
 
 XMLElement.prototype.addTextContainer = function () {
 	var container = document.createElement('div');
-	container.id = this.guiElementID + "_cont_text";
+	container.id = this.domNodeID + "_cont_text";
 	container.className = 'content_block';
-	this.guiElement.append(container);
+	this.domNode.append(container);
 	var textContainsChildren = this.xmlNode[0].children && this.xmlNode[0].children.length > 0;
 	
 	var textValue = "";
@@ -186,7 +328,7 @@ XMLElement.prototype.addTextContainer = function () {
 		textValue = this.xmlNode.text();
 	}
 	
-	this.textInput = this.createElementInput(this.guiElementID + "_text", 
+	this.textInput = this.createElementInput(this.domNodeID + "_text", 
 			textValue, container);
 	this.textInput.addClass('element_text');
 	if (textContainsChildren)
@@ -195,9 +337,9 @@ XMLElement.prototype.addTextContainer = function () {
 
 XMLElement.prototype.addSubelementContainer = function (recursive) {
 	var container = document.createElement('div');
-	container.id = this.guiElementID + "_cont_elements";
+	container.id = this.domNodeID + "_cont_elements";
 	container.className = "content_block " + childrenContainerClass;
-	this.guiElement[0].appendChild(container);
+	this.domNode[0].appendChild(container);
 	this.childContainer = $(container);
 	
 	// Add all the subchildren
@@ -208,15 +350,16 @@ XMLElement.prototype.addSubelementContainer = function (recursive) {
 
 XMLElement.prototype.addAttributeContainer = function () {
 	var container = document.createElement('div');
-	container.id = this.guiElementID + "_cont_attributes";
+	container.id = this.domNodeID + "_cont_attributes";
 	container.className = "content_block " + attributesContainerClass;
-	this.guiElement[0].appendChild(container);
+	this.domNode[0].appendChild(container);
 	this.attributeContainer = $(container);
 
 	this.renderAttributes();
 };
 
-XMLElement.prototype.addElement = function(objectType) {
+// Add a child element of type objectType and update the interface
+XMLElement.prototype.addElement = function(objectType, relativeToXMLElement, prepend) {
 	if (!this.allowChildren)
 		return null;
 	
@@ -224,31 +367,42 @@ XMLElement.prototype.addElement = function(objectType) {
 	
 	// Create the new element in the target namespace with the matching prefix
 	var xmlDocument = this.editor.xmlState.xml[0];
-	var defaultValue = " ";
+	var defaultValue = null;
 	if (objectType.values && objectType.values.length > 0)
 		defaultValue = objectType.values[0];
 	var newElement;
 	if (xmlDocument.createElementNS) {
 		newElement = xmlDocument.createElementNS(objectType.namespace, prefix + objectType.localName);
-		newElement.appendChild(xmlDocument.createTextNode(defaultValue));
-		this.xmlNode[0].appendChild(newElement);
 	} else if (typeof(xmlDocument.createNode) != "undefined") {
 		// Older IE versions
 		newElement = xmlDocument.createNode(1, prefix + objectType.localName, objectType.namespace);
-		newElement.appendChild(xmlDocument.createTextNode(defaultValue));
-		this.xmlNode[0].appendChild(newElement);
 	} else {
 		throw new Exception("Unable to add child due to incompatible browser");
 	}
+	if (defaultValue)
+		newElement.appendChild(xmlDocument.createTextNode(defaultValue));
+	if (relativeToXMLElement) {
+		if (prepend)
+			$(newElement).insertBefore(relativeToXMLElement.xmlNode);
+		else
+			$(newElement).insertAfter(relativeToXMLElement.xmlNode);
+	} else {
+		if (prepend)
+			this.xmlNode.prepend(newElement);
+		else
+			this.xmlNode[0].appendChild(newElement);
+	}
 	
 	var childElement = new XMLElement(newElement, objectType, this.editor);
-	this.childCount++;
-	if (this.guiElement != null)
-		childElement.render(this, true);
+	this.addChildrenCount(childElement);
+	if (this.domNode != null)
+		childElement.render(this, true, relativeToXMLElement, prepend);
+	childElement.populateChildren();
 	
 	return childElement;
 };
 
+// Synchronize the text input for this element to a text node in the xml document
 XMLElement.prototype.syncText = function() {
 	var newText = this.textInput.val();
 	if (this.xmlNode[0].childNodes.length > 0) {
@@ -258,15 +412,17 @@ XMLElement.prototype.syncText = function() {
 	}
 };
 
+// Remove this element from the xml document and editor
 XMLElement.prototype.remove = function() {
 	// Remove the element from the xml doc
 	this.xmlNode.remove();
 	
-	if (this.guiElement != null) {
-		this.guiElement.remove();
+	if (this.domNode != null) {
+		this.domNode.remove();
 	}
 };
 
+// Swap the gui representation of this element to the location of swapTarget
 XMLElement.prototype.swap = function (swapTarget) {
 	if (swapTarget == null) {
 		return;
@@ -274,14 +430,15 @@ XMLElement.prototype.swap = function (swapTarget) {
 	
 	// Swap the xml nodes
 	swapTarget.xmlNode.detach().insertAfter(this.xmlNode);
-	if (swapTarget.guiElement != null && this.guiElement != null) {
+	if (swapTarget.domNode != null && this.domNode != null) {
 		// Swap the gui nodes
-		swapTarget.guiElement.detach().insertAfter(this.guiElement);
+		swapTarget.domNode.detach().insertAfter(this.domNode);
 	}
 };
 
+// Move this element up one location in the gui.  Returns true if the swap was able to happen
 XMLElement.prototype.moveUp = function() {
-	var previousSibling = this.guiElement.prev("." + xmlElementClass);
+	var previousSibling = this.domNode.prev("." + xmlElementClass);
 	if (previousSibling.length > 0) {
 		this.swap(previousSibling.data("xmlElement"));
 		return true;
@@ -290,8 +447,9 @@ XMLElement.prototype.moveUp = function() {
 	}
 };
 
+// Move this element down one location in the gui.  Returns true if the swap was able to happen
 XMLElement.prototype.moveDown = function() {
-	var nextSibling = this.guiElement.next("." + xmlElementClass);
+	var nextSibling = this.domNode.next("." + xmlElementClass);
 	if (nextSibling.length > 0) {
 		nextSibling.data("xmlElement").swap(this);
 		return true;
@@ -300,6 +458,7 @@ XMLElement.prototype.moveDown = function() {
 	}
 };
 
+// Add a new attribute of type objectType to this element
 XMLElement.prototype.addAttribute = function (objectType) {
 	var attributeValue = "";
 	if (objectType.defaultValue) {
@@ -321,18 +480,19 @@ XMLElement.prototype.addAttribute = function (objectType) {
 	return attributeValue;
 };
 
+// Remove an attribute of type objectType from this element
 XMLElement.prototype.removeAttribute = function (objectType) {
 	this.xmlNode[0].removeAttribute(objectType.name);
 };
 
-
+// Get the dom node for the currently selected attribute in this element
 XMLElement.prototype.getSelectedAttribute = function () {
-	return this.attributeContainer.children(".selected");
+	return this.attributeContainer? this.attributeContainer.children(".selected") : [];
 };
 
-
+// Inform the element that its contents have been update, so that it can refresh itself
 XMLElement.prototype.updated = function (event) {
-	if (this.guiElement == null)
+	if (this.domNode == null)
 		return;
 	this.childCount = 0;
 	this.attributeCount = 0;
@@ -350,6 +510,7 @@ XMLElement.prototype.updated = function (event) {
 		else this.attributeContainer.hide();
 	}
 	
+	// Show or hide the instructional placeholder depending on if there are any contents in the element
 	if (!this.allowText && this.childCount == 0 && this.attributeCount == 0) {
 		this.placeholder.show();
 	} else {
@@ -361,11 +522,11 @@ XMLElement.prototype.updated = function (event) {
 };
 
 XMLElement.prototype.select = function() {
-	this.guiElement.addClass("selected");
+	this.domNode.addClass("selected");
 };
 
 XMLElement.prototype.isSelected = function() {
-	return this.guiElement.hasClass("selected");
+	return this.domNode.hasClass("selected");
 };
 
 XMLElement.prototype.getAttributeContainer = function() {

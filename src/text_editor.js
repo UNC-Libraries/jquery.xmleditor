@@ -29,6 +29,10 @@ TextEditor.prototype.initialize = function(parentContainer) {
 	
 	var self = this;
 	this.aceEditor.getSession().on('change', function(){
+		// if the editor is backed by a text area, then keep the value up to date
+		if (self.editor.isTextAreaEditor)
+			self.editor.setTextArea(self.aceEditor.getSession().getValue());
+		// Inform the document if there are changes which need to be synched
 		if (!self.editor.xmlState.changesNotSynced() && self.isPopulated()){
 			self.editor.xmlState.unsyncedChangeEvent();
 			self.setModified();
@@ -92,13 +96,14 @@ TextEditor.prototype.setModified = function() {
 	return this;
 };
 
+// Determine if the position given is inside of the boundries of the currently selected tag
 TextEditor.prototype.inSelectedTag = function(row, startColumn, endColumn) {
 	return !this.editor.xmlState.changesNotSynced() && row == this.selectedTagRange.row 
 		&& startColumn == this.selectedTagRange.startColumn 
 		&& endColumn == this.selectedTagRange.endColumn;
 };
 
-
+// Reload the contents of the editor from the XML document and reset the editor
 TextEditor.prototype.reload = function() {
 	this.setInitialized();
 	this.selectedTagRange = {'row': 0, 'startColumn': 0, 'endColumn': 0};
@@ -110,6 +115,7 @@ TextEditor.prototype.reload = function() {
 	return this;
 };
 
+// Refresh the display of this editor
 TextEditor.prototype.refreshDisplay = function() {
 	this.editor.guiEditor.rootElement.xmlNode = this.editor.xmlState.xml.children().first();
 	var markers = this.aceEditor.session.getMarkers();
@@ -133,6 +139,7 @@ TextEditor.prototype.refreshDisplay = function() {
 	return this;
 };
 
+// Adjust the size of the editor to reflect its environment
 TextEditor.prototype.resize = function() {
 	var xmlEditorHeight = ($(window).height() - this.xmlEditorDiv.offset().top);
 	this.xmlContent.css({'height': xmlEditorHeight + 'px'});
@@ -148,6 +155,7 @@ TextEditor.prototype.resize = function() {
 	return this;
 };
 
+// Count how many times tags named tagTitle occur in the xml document
 TextEditor.prototype.tagOccurrences = function(string, tagTitle) {
 	if (string == null || tagTitle == null)
 		return 0;
@@ -155,6 +163,7 @@ TextEditor.prototype.tagOccurrences = function(string, tagTitle) {
 	return matches ? matches.length : 0;
 };
 
+// Select the tag currently encapsulating the cursor and refresh the editor to indicate this
 TextEditor.prototype.selectTagAtCursor = function() {
 	if (!this.isInitialized())
 		return this;
@@ -185,9 +194,6 @@ TextEditor.prototype.selectTagAtCursor = function() {
 		// Get the schema's namespace prefix for the namespace of the node from the document
 		// Determine what namespace is bound in the document to the prefix on this node
 		var documentNS = this.editor.xmlState.namespaces.namespaceURIs[nsPrefix];
-		// Determine what prefix is used for that namespace in the schema tree
-		var schemaPrefix = this.editor.xmlTree.namespaces.getNamespacePrefix(documentNS);
-		var prefixedTitle = schemaPrefix + unprefixedTitle; 
 		
 		if (this.editor.xmlState.changesNotSynced()) {
 			//Refresh the xml if it has changed
@@ -207,16 +213,22 @@ TextEditor.prototype.selectTagAtCursor = function() {
 		var self = this;
 		var instanceNumber = this.tagOccurrences(preceedingLines, tagTitle);
 		// Find the element that matches this tag by occurrence number and tag name
-		var elementNode = $(unprefixedTitle, this.editor.xmlState.xml).filter(function() {
-			return this.namespaceURI == documentNS;
-		})[instanceNumber];
-		if (elementNode == null)
+		var elementNode = this.editor.xmlState.xml[0]
+				.getElementsByTagName(tagTitle)[instanceNumber];
+		if (!elementNode) {
+			elementNode = $(unprefixedTitle, this.editor.xmlState.xml)
+				.filter(function() {
+					return this.namespaceURI == documentNS;
+				})[instanceNumber];
+		}
+		
+		if (!elementNode)
 			return this;
 		
 		// Retrieve the schema definition for the selected node
-		var elementDef = this.editor.xmlTree.getElementDefinition(elementNode);
+		var elementDef = this.editor.schemaTree.getElementDefinition(elementNode);
 		// Clear the menu if there was no definition or it was the root node
-		if (elementDef == null || elementDef === this.editor.xmlTree.rootElement) {
+		if (elementDef == null || elementDef === this.editor.schemaTree.rootElement) {
 			this.editor.modifyMenu.clearContextualMenus();
 			return this;
 		}
@@ -229,6 +241,7 @@ TextEditor.prototype.selectTagAtCursor = function() {
 			return this;
 		}
 		
+		// Refresh the menus to indicate the newly selected tag
 		this.editor.modifyMenu.refreshContextualMenus(dummyTarget).setMenuPosition();
 		
 		this.selectedTagRange.row = currentRow;
@@ -249,6 +262,8 @@ TextEditor.prototype.selectTagAtCursor = function() {
 	return this;
 };
 
+// Inform the editor that an element was added into the XML document, causing it to refresh the 
+// text in the editor and select the new tag
 TextEditor.prototype.addElementEvent = function(parentElement, newElement) {
 	this.reload();
 	// Move cursor to the newly added element
@@ -274,6 +289,7 @@ TextEditor.prototype.addElementEvent = function(parentElement, newElement) {
 	this.editor.xmlState.syncedChangeEvent();
 };
 
+// Inform the editor that a new attribute was added to the document
 TextEditor.prototype.addAttributeEvent = function() {
 	this.reload();
 	this.editor.xmlState.syncedChangeEvent();

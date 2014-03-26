@@ -1,5 +1,5 @@
-function AttributeMenu(menuID, label, expanded, enabled, owner) {
-	ModifyElementMenu.call(this, menuID, label, expanded, enabled, owner);
+function AttributeMenu(menuID, label, expanded, enabled, owner, editor) {
+	ModifyElementMenu.call(this, menuID, label, expanded, enabled, owner, editor);
 }
 
 AttributeMenu.prototype.constructor = AttributeMenu;
@@ -13,8 +13,8 @@ AttributeMenu.prototype.initEventHandlers = function() {
 };
 
 AttributeMenu.prototype.populate = function (xmlElement) {
-	if (xmlElement == null || (this.target != null && xmlElement.guiElement != null 
-			&& this.target[0] === xmlElement.guiElement[0]))
+	if (xmlElement == null || (this.target != null && xmlElement.domNode != null 
+			&& this.target[0] === xmlElement.domNode[0]))
 		return;
 	
 	if (this.expanded)
@@ -30,7 +30,7 @@ AttributeMenu.prototype.populate = function (xmlElement) {
 		var targetAttribute = this;
 		$.each(attributesArray, function(){
 			if (this.name == targetAttribute.nodeName) {
-				attributesPresent[this.name] = $("#" + xmlElement.guiElementID + "_" + targetAttribute.nodeName.replace(':', '-'));
+				attributesPresent[this.name] = $("#" + xmlElement.domNodeID + "_" + targetAttribute.nodeName.replace(':', '-'));
 			}
 		});
 	});
@@ -38,10 +38,17 @@ AttributeMenu.prototype.populate = function (xmlElement) {
 	var self = this;
 	$.each(this.target.objectType.attributes, function(){
 		var attribute = this;
+		// Using prefix according to the xml document namespace prefixes
+		var nsPrefix = self.editor.xmlState.namespaces.getNamespacePrefix(attribute.namespace);
+		// Namespace not present in XML, so use prefix from schema
+		if (nsPrefix === undefined)
+			nsPrefix = self.editor.schemaTree.namespaces.getNamespacePrefix(attribute.namespace);
+			
+		var attrName = nsPrefix + attribute.localName;
 		var addButton = $("<li/>").attr({
-				title : 'Add ' + attribute.name,
-				'id' : xmlElement.guiElementID + "_" + attribute.nameEsc + "_add"
-			}).html(attribute.name)
+				title : 'Add ' + attrName,
+				'id' : xmlElement.domNodeID + "_" + attrName.replace(":", "_") + "_add"
+			}).html(attrName)
 			.data('xml', {
 				"objectType": attribute,
 				"target": xmlElement

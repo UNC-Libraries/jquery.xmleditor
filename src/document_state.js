@@ -1,5 +1,5 @@
 /**
- * Manages and tracks the state of the underlying document being edited.
+ * Manages and tracks the state of the underlying XML document being edited.
  */
 function DocumentState(baseXML, editor) {
 	this.baseXML = baseXML;
@@ -13,9 +13,11 @@ function DocumentState(baseXML, editor) {
 	this.namespaces = new NamespaceList();
 }
 
+// Indicates if the document has been modified from its original state
 DocumentState.prototype.isChanged = function() {
 	return this.changeState > 1;
 };
+// Indicates the document has not been modified since it was originally loaded.
 DocumentState.prototype.isBaseDocument = function() {
 	return this.changeState == 0;
 };
@@ -29,28 +31,34 @@ DocumentState.prototype.changesNotSynced = function() {
 	return this.changeState == 3;
 };
 
+// Notify the document state that the document was modified
 DocumentState.prototype.documentChangedEvent = function() {
 	this.changeState = 2;
 	this.editor.undoHistory.captureSnapshot();
 	this.updateStateMessage();
+	// Update the backing textarea if the editor was initialized on one
+	if (this.editor.isTextAreaEditor) {
+		var xmlString = this.editor.xml2Str(this.xml);
+		this.editor.setTextArea(xmlString);
+	}
 };
-
+// Notify the document that changes have been saved
 DocumentState.prototype.changesCommittedEvent = function() {
 	this.changeState = 1;
 	this.updateStateMessage();
 };
-
+//
 DocumentState.prototype.changeEvent = function() {
 	if (this.changeState < 2)
 		this.changeState = 2;
 	this.updateStateMessage();
 };
-
+// Document has been changed in a manner which does not require synching
 DocumentState.prototype.syncedChangeEvent = function() {
 	this.changeState = 2;
 	this.updateStateMessage();
 };
-
+// Document changed in a manner which requires synching
 DocumentState.prototype.unsyncedChangeEvent = function() {
 	this.changeState = 3;
 	this.updateStateMessage();
@@ -64,15 +72,14 @@ DocumentState.prototype.updateStateMessage = function () {
 	}
 };
 
+// Register a namespace and prefix to the document if it is not already present
+// The namespace will be recorded on the root element if possible
 DocumentState.prototype.addNamespace = function(prefixOrType, namespace) {
-	if (this.xml[0].setAttributeNS)
 	var prefix;
-	if (arguments.length == 1) {
-		var prefix = prefixOrType.name.split(':');
-		if (prefix.length > 1)
-			prefix = prefix[0];
-		else prefix = '';
+	if (typeof prefixOrType === "object"){
+		// When adding a ns from a schema definition, use schema prefix
 		namespace = prefixOrType.namespace;
+		prefix = this.editor.schemaTree.namespaces.getNamespacePrefix(namespace);
 	} else {
 		prefix = prefixOrType;
 	}
@@ -93,7 +100,8 @@ DocumentState.prototype.addNamespace = function(prefixOrType, namespace) {
 	this.namespaces.addNamespace(namespace, nsPrefix);
 }
 
-DocumentState.prototype.extractNamespacePrefixes = function(nsURI) {
+// Extract all namespace uri/prefixes present in the document and store them
+DocumentState.prototype.extractNamespacePrefixes = function() {
 	var prefix = null;
 	var attributes = this.xml.children()[0].attributes;
 	var self = this;
@@ -111,6 +119,7 @@ DocumentState.prototype.extractNamespacePrefixes = function(nsURI) {
 	});
 };
 
+// Since there are many versions of DOM parsers in IE, try them until one works.
 DocumentState.prototype.getIEXMLParser = function() {
 	var progIDs = [ 'Msxml2.DOMDocument.6.0', 'Msxml2.DOMDocument.3.0', 'Microsoft.XMLDOM' ];
 	for (var i = 0; i < progIDs.length; i++) {
@@ -122,6 +131,7 @@ DocumentState.prototype.getIEXMLParser = function() {
 	return null;
 };
 
+// Deserialize a string representation of XML into an XML document
 DocumentState.prototype.setXMLFromString = function(xmlString) {
 	// Strip out weird namespace header that IE adds to the document
 	var xmlDoc,
@@ -151,11 +161,7 @@ DocumentState.prototype.setXMLFromString = function(xmlString) {
 		}
 	}
 	
+	// Store the new document and inform editor it is dealing with a new document
 	this.xml = $(xmlDoc);
-	if (this.editor.guiEditor != null && this.editor.guiEditor.rootElement != null)
-		this.editor.guiEditor.rootElement.xmlNode = this.xml.children().first();
-	if (this.editor.guiEditor.xmlContent != null)
-		this.editor.guiEditor.xmlContent.data("xml").elementNode = this.xml.children().first();
-	if (this.editor.problemsPanel != null)
-		this.editor.clearProblemPanel();
+	this.editor.documentLoadedEvent(this.xml);
 };
