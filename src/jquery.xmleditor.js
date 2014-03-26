@@ -313,6 +313,7 @@ $.widget( "xml.xmlEditor", {
 	
 	// XML Document loaded event
 	_documentReady : function(xmlString) {
+		var self = this;
 		this.xmlState = new DocumentState(xmlString, this);
 		this.xmlState.extractNamespacePrefixes();
 		this.undoHistory = new UndoHistory(this.xmlState, this);
