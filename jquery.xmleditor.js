@@ -1431,7 +1431,7 @@ GUIEditor.prototype.deleteSelected = function() {
 GUIEditor.prototype.deleteElement = function(xmlElement) {
 	var parent = xmlElement.parentElement;
 	var index = xmlElement.objectType.localName;
-	if (!parent || !parent.childCanBeRemoved(xmlElement.objectType))
+	if (!parent || !(parent instanceof XMLElement) || !parent.childCanBeRemoved(xmlElement.objectType))
 		return;
 	parent.childRemoved(xmlElement);
 	var isSelected = xmlElement.isSelected();
@@ -2644,10 +2644,16 @@ TextEditor.prototype.selectTagAtCursor = function() {
 		var self = this;
 		var instanceNumber = this.tagOccurrences(preceedingLines, tagTitle);
 		// Find the element that matches this tag by occurrence number and tag name
-		var elementNode = $(unprefixedTitle, this.editor.xmlState.xml).filter(function() {
-			return this.namespaceURI == documentNS;
-		})[instanceNumber];
-		if (elementNode == null)
+		var elementNode = this.editor.xmlState.xml[0]
+				.getElementsByTagName(tagTitle)[instanceNumber];
+		if (!elementNode) {
+			elementNode = $(unprefixedTitle, this.editor.xmlState.xml)
+				.filter(function() {
+					return this.namespaceURI == documentNS;
+				})[instanceNumber];
+		}
+		
+		if (!elementNode)
 			return this;
 		
 		// Retrieve the schema definition for the selected node
