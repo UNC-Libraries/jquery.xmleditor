@@ -239,7 +239,7 @@ GUIEditor.prototype.deleteSelected = function() {
 GUIEditor.prototype.deleteElement = function(xmlElement) {
 	var parent = xmlElement.parentElement;
 	var index = xmlElement.objectType.localName;
-	if (!parent || !parent.childCanBeRemoved(xmlElement.objectType))
+	if (!parent || !(parent instanceof XMLElement) || !parent.childCanBeRemoved(xmlElement.objectType))
 		return;
 	parent.childRemoved(xmlElement);
 	var isSelected = xmlElement.isSelected();
