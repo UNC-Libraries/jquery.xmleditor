@@ -25,41 +25,44 @@ AttributeMenu.prototype.populate = function (xmlElement) {
 	this.target = xmlElement;
 	
 	var attributesArray = this.target.objectType.attributes;
-	var attributesPresent = {};
-	$(this.target.xmlNode[0].attributes).each(function() {
-		var targetAttribute = this;
-		$.each(attributesArray, function(){
-			if (this.name == targetAttribute.nodeName) {
-				attributesPresent[this.name] = $("#" + xmlElement.domNodeID + "_" + targetAttribute.nodeName.replace(':', '-'));
+	if (attributesArray) {
+		var attributesPresent = {};
+		$(this.target.xmlNode[0].attributes).each(function() {
+			var targetAttribute = this;
+			$.each(attributesArray, function(){
+				if (this.name == targetAttribute.nodeName) {
+					attributesPresent[this.name] = $("#" + xmlElement.domNodeID + "_" + targetAttribute.nodeName.replace(':', '-'));
+				}
+			});
+		});
+		
+		var self = this;
+		$.each(this.target.objectType.attributes, function(){
+			var attribute = this;
+			// Using prefix according to the xml document namespace prefixes
+			var nsPrefix = self.editor.xmlState.namespaces.getNamespacePrefix(attribute.namespace);
+			// Namespace not present in XML, so use prefix from schema
+			if (nsPrefix === undefined)
+				nsPrefix = self.editor.schemaTree.namespaces.getNamespacePrefix(attribute.namespace);
+				
+			var attrName = nsPrefix + attribute.localName;
+			var addButton = $("<li/>").attr({
+					title : 'Add ' + attrName,
+					'id' : xmlElement.domNodeID + "_" + attrName.replace(":", "_") + "_add"
+				}).html(attrName)
+				.data('xml', {
+					"objectType": attribute,
+					"target": xmlElement
+				}).appendTo(self.menuContent);
+			
+			if (attribute.name in attributesPresent) {
+				addButton.addClass("disabled");
+				if (attributesPresent[attribute.name].length > 0)
+					attributesPresent[attribute.name].data('xmlAttribute').addButton = addButton;
 			}
 		});
-	});
-	
-	var self = this;
-	$.each(this.target.objectType.attributes, function(){
-		var attribute = this;
-		// Using prefix according to the xml document namespace prefixes
-		var nsPrefix = self.editor.xmlState.namespaces.getNamespacePrefix(attribute.namespace);
-		// Namespace not present in XML, so use prefix from schema
-		if (nsPrefix === undefined)
-			nsPrefix = self.editor.schemaTree.namespaces.getNamespacePrefix(attribute.namespace);
-			
-		var attrName = nsPrefix + attribute.localName;
-		var addButton = $("<li/>").attr({
-				title : 'Add ' + attrName,
-				'id' : xmlElement.domNodeID + "_" + attrName.replace(":", "_") + "_add"
-			}).html(attrName)
-			.data('xml', {
-				"objectType": attribute,
-				"target": xmlElement
-			}).appendTo(self.menuContent);
+	}
 		
-		if (attribute.name in attributesPresent) {
-			addButton.addClass("disabled");
-			if (attributesPresent[attribute.name].length > 0)
-				attributesPresent[attribute.name].data('xmlAttribute').addButton = addButton;
-		}
-	});
 	if (this.expanded) {
 		var endingHeight = this.menuContent.outerHeight();
 		if (endingHeight == 0)
