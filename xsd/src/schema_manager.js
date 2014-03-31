@@ -51,10 +51,6 @@ function SchemaManager(originatingXsdName, options) {
 	
 	// Add namespace uris into the final schema object
 	this.exportNamespaces();
-	
-	// createSchema 
-	// importSchema - imports a schema with a namespace
-	// includeSchema - imports a schema into an existing schema with namespace
 };
 
 SchemaManager.prototype.retrieveSchema = function(url, callback) {
@@ -83,7 +79,16 @@ SchemaManager.prototype.importAjax = function(url, originalAttempt, callback) {
 	});
 };
 
+/**
+ * Only one schema per namespace will be imported.  All future namespaces imported into the 
+ * same schema are ignored.
+ * Provided namespaceUri is favored over the target namespace in the imported schema.
+ */
 SchemaManager.prototype.importSchema = function(schemaLocation, namespaceUri) {
+	
+	// Namespace already imported, circular import or already imported by another schema
+	if (namespaceUri in this.imports)
+		return;
 	
 	// Retrieve schema document
 	this.retrieveSchema(schemaLocation, function(xsdDocument) {
@@ -92,9 +97,13 @@ SchemaManager.prototype.importSchema = function(schemaLocation, namespaceUri) {
 		
 		// Register schema
 		if (namespaceUri)
-			this.imports[namespaceUri] = schema;
-		else
-			this.imports[schema.targetNS] = schema;
+			this.imports[namespaceUri] = [schema];
+		else {
+			// Discard schema if another schema was already imported in its target namespace
+			if (schema.targetNS in this.imports)
+				return;
+			this.imports[schema.targetNS] = [schema];
+		}
 		
 		// Store the first schema picked up as the originating schema
 		if (!this.originatingSchema)
@@ -102,6 +111,7 @@ SchemaManager.prototype.importSchema = function(schemaLocation, namespaceUri) {
 		
 		// Process imported schemas before processing this one
 		this.processImports(schema);
+		this.processIncludes(schema);
 		
 		// Process the target schema
 		schema.processSchema();
@@ -115,26 +125,95 @@ SchemaManager.prototype.processImports = function(schema) {
 	for (var index in imports) {
 		var importNode = imports[index];
 		var importNamespace = importNode.getAttribute('namespace');
-		if (importNamespace in this.imports) {
-			// Circular import or already imported by another schema
-		} else {
-			this.importSchema(importNode.getAttribute("schemaLocation"),
-					importNode.getAttribute("namespace"));
-		}
+		
+		this.importSchema(importNode.getAttribute("schemaLocation"),
+				importNode.getAttribute("namespace"));
+	}
+};
+
+SchemaManager.prototype.includeSchema = function(schemaLocation, parentSchema) {
+	
+	// Check for duplicate include by namespace and schemaLocation
+	if (parentSchema.targetNSIndex in this.includes) {
+		if ($.inArray(schemaLocation, this.includes[parentSchema.targetNSIndex]) != -1)
+			return;
+		this.includes[parentSchema.targetNSIndex].push(schemaLocation);
+	} else {
+		// Register schema to includes list for duplicate/circular reference detection
+		this.includes[parentSchema.targetNSIndex] = [schemaLocation];
+	}
+	
+	// Retrieve schema document
+	this.retrieveSchema(schemaLocation, function(xsdDocument) {
+		// Instantiate schema processor using parents namespace
+		var schema = new SchemaProcessor(xsdDocument, this, parentSchema.targetNSIndex);
+		
+		// Register schema to imports list as part of namespace bucket
+		this.imports[parentSchema.targetNS].push(schema);
+		
+		// Process imported schemas before processing this one
+		this.processImports(schema);
+		this.processIncludes(schema);
+		
+		// Process the target schema
+		schema.processSchema();
+	});
+};
+
+SchemaManager.prototype.processIncludes = function(schema) {
+	// Load all of the imported schemas
+	var includes = schema.getChildren(schema.xsd, 'include');
+
+	for (var index in includes) {
+		var includeNode = includes[index];
+		this.includeSchema(includeNode.getAttribute("schemaLocation"), schema);
 	}
 };
 
 SchemaManager.prototype.setOriginatingRoot = function() {
-	//Establish originatingRoot reference
-	this.originatingRoot = this.originatingSchema.root;
-	
+
 	// Select root element if one is specified
 	if (this.options.rootElement != null) {
+		this.originatingRoot = this.originatingSchema.root;
+		
 		for (var index in this.originatingRoot.elements) {
 			var topLevelElement = this.originatingRoot.elements[index];
 			
 			if (this.options.rootElement != topLevelElement.name) {
 				this.originatingRoot = topLevelElement;
+			}
+		}
+	} else {
+		this.originatingRoot = {
+				schema : true,
+				ns : this.originatingSchema.targetNSIndex,
+				namespaces : [],
+				elements : []
+			};
+		
+		for (var ns in this.imports) {
+			var importSet = this.imports[ns];
+			
+			for (var index in importSet) {
+				var schema = importSet[index];
+				
+				for (var elIndex in schema.root.elements) {
+					this.originatingRoot.elements.push(schema.root.elements[elIndex]);
+				}
+			}
+		}
+	}
+};
+
+SchemaManager.prototype.mergeRootLevelElements = function() {
+	for (var ns in this.imports) {
+		var importSet = this.imports[ns];
+		
+		for (var index in importSet) {
+			var schema = importSet[index];
+			
+			for (var elIndex in schema.root.elements) {
+				this.originatingRoot.elements.push(schema.root.elements[elIndex]);
 			}
 		}
 	}
@@ -169,7 +248,7 @@ SchemaManager.prototype.mergeCrossSchemaType = function(object) {
 		delete object.reference;
 		// Merge in the external schema types, recursively merging together the external schema types
 		for (var i = 0; i < schemas.length; i++){
-			this.mergeType(object, this.mergeCrossSchemaType(schemas[i].rootDefinitions[references[i]]));
+			schemas[i].mergeType(object, this.mergeCrossSchemaType(schemas[i].rootDefinitions[references[i]]));
 		}
 	}
 	return object;
@@ -194,12 +273,99 @@ SchemaManager.prototype.resolveCrossSchemaTypeReferences = function(object, obje
 	}
 };
 
+/**
+ * Inspects the reference name and returns the set of schema objects that
+ * correspond to its namespace
+ */
+SchemaManager.prototype.resolveSchema = function(schema, name) {
+	if (name != null){
+		var index = name.indexOf(":");
+		var prefix = index == -1? "": name.substring(0, index);
+		var namespace = schema.localNamespaces[prefix];
+		var xsdObj = this.imports[namespace];
+		if (xsdObj == null)
+			xsdObj = [schema];
+		return xsdObj;
+	}
+	return this;
+};
+
+//Process a node with tag processing functin fnName.  Follows references on the node,
+//determining which schema object will be responsible for generating the definition.
+//node - the node being processed
+//fnName - the function to be called to process the node
+//object - definition object the node belongs to
+SchemaManager.prototype.execute = function(schema, node, fnName, object) {
+	var resolveName = node.getAttribute("ref") || node.getAttribute("substitutionGroup") 
+			|| node.getAttribute("type") || node.getAttribute("base");
+	var targetNode = node;
+	var xsdObj = schema;
+	var name = resolveName;
+	
+	// Determine if the node requires resolution to another definition node
+	if (resolveName != null && (schema.xsPrefix == "" && resolveName.indexOf(":") != -1) 
+			|| (schema.xsPrefix != "" && resolveName.indexOf(schema.xsPrefix) == -1)) {
+		// Determine which schema the reference belongs to
+		var xsdObjSet = this.resolveSchema(schema, resolveName);
+		
+		// Extract name parts such that namespace prefix is looked up in the originating schema
+		var nameParts = schema.extractName(name);
+		var processingNotStarted = false;
+		for (var index in xsdObjSet) {
+			xsdObj = xsdObjSet[index];
+			
+			//Check for cached version of the definition
+			if (nameParts.indexedName in xsdObj.rootDefinitions){
+				var definition = xsdObj.rootDefinitions[nameParts.indexedName];
+				if (definition != null) {
+					return definition;
+				}
+			}
+			
+			// Schema reference is not initialized yet, therefore it is a circular reference, store stub
+			processingNotStarted = !xsdObj.processingStarted && xsdObj !== this;
+			if (processingNotStarted) {
+				continue;
+			}
+			
+			// Grab the node the reference was referring to
+			targetNode = xsdObj.getChildren(xsdObj.xsd, undefined, nameParts.localName);
+			if (targetNode && targetNode.length > 0) {
+				targetNode = targetNode[0];
+				break;
+			}
+		}
+		if (processingNotStarted) {
+			return {name: nameParts.indexedName, schemaObject : xsdObjSet, reference : [nameParts.indexedName]};
+		}
+	} 
+	
+	try {
+		// Call the processing function on the referenced node
+		return xsdObj[fnName](targetNode, object);
+	} catch (error) {
+		$("body").append("<br/>" + name + ": " + error + " ");
+		throw error;
+	}
+};
+
+
+
 //Register a namespace if it is new
 SchemaManager.prototype.registerNamespace = function(namespaceUri) {
-	if ($.inArray(namespaceUri, this.namespaceIndexes) == -1)
+	var namespaceIndex = $.inArray(namespaceUri, this.namespaceIndexes);
+	if (namespaceIndex == -1) {
 		this.namespaceIndexes.push(namespaceUri);
+		return this.namespaceIndexes.length - 1;
+	}
+	
+	return namespaceIndex;
 };
 
 SchemaManager.prototype.getNamespaceIndex = function(namespaceUri) {
 	return $.inArray(namespaceUri, this.namespaceIndexes);
+};
+
+SchemaManager.prototype.getNamespaceUri = function(index) {
+	return this.namespaceIndexes[index];
 };

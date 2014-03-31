@@ -157,6 +157,8 @@ function SchemaManager(originatingXsdName, options) {
 	
 	// Resolve dangling external schema types from circular includes
 	this.resolveCrossSchemaTypeReferences(this.originatingRoot, []);
+
+	//this.mergeRootLevelElements();
 	
 	// Add namespace uris into the final schema object
 	this.exportNamespaces();
@@ -192,7 +194,16 @@ SchemaManager.prototype.importAjax = function(url, originalAttempt, callback) {
 	});
 };
 
+/**
+ * Only one schema per namespace will be imported.  All future namespaces imported into the 
+ * same schema are ignored.
+ * Provided namespaceUri is favored over the target namespace in the imported schema.
+ */
 SchemaManager.prototype.importSchema = function(schemaLocation, namespaceUri) {
+	
+	// Namespace already imported, circular import or already imported by another schema
+	if (namespaceUri in this.imports)
+		return;
 	
 	// Retrieve schema document
 	this.retrieveSchema(schemaLocation, function(xsdDocument) {
@@ -201,9 +212,13 @@ SchemaManager.prototype.importSchema = function(schemaLocation, namespaceUri) {
 		
 		// Register schema
 		if (namespaceUri)
-			this.imports[namespaceUri] = schema;
-		else
-			this.imports[schema.targetNS] = schema;
+			this.imports[namespaceUri] = [schema];
+		else {
+			// Discard schema if another schema was already imported in its target namespace
+			if (schema.targetNS in this.imports)
+				return;
+			this.imports[schema.targetNS] = [schema];
+		}
 		
 		// Store the first schema picked up as the originating schema
 		if (!this.originatingSchema)
@@ -211,6 +226,7 @@ SchemaManager.prototype.importSchema = function(schemaLocation, namespaceUri) {
 		
 		// Process imported schemas before processing this one
 		this.processImports(schema);
+		this.processIncludes(schema);
 		
 		// Process the target schema
 		schema.processSchema();
@@ -224,26 +240,95 @@ SchemaManager.prototype.processImports = function(schema) {
 	for (var index in imports) {
 		var importNode = imports[index];
 		var importNamespace = importNode.getAttribute('namespace');
-		if (importNamespace in this.imports) {
-			// Circular import or already imported by another schema
-		} else {
-			this.importSchema(importNode.getAttribute("schemaLocation"),
-					importNode.getAttribute("namespace"));
-		}
+		
+		this.importSchema(importNode.getAttribute("schemaLocation"),
+				importNode.getAttribute("namespace"));
+	}
+};
+
+SchemaManager.prototype.includeSchema = function(schemaLocation, parentSchema) {
+	
+	// Check for duplicate include by namespace and schemaLocation
+	if (parentSchema.targetNSIndex in this.includes) {
+		if ($.inArray(schemaLocation, this.includes[parentSchema.targetNSIndex]) != -1)
+			return;
+		this.includes[parentSchema.targetNSIndex].push(schemaLocation);
+	} else {
+		// Register schema to includes list for duplicate/circular reference detection
+		this.includes[parentSchema.targetNSIndex] = [schemaLocation];
+	}
+	
+	// Retrieve schema document
+	this.retrieveSchema(schemaLocation, function(xsdDocument) {
+		// Instantiate schema processor using parents namespace
+		var schema = new SchemaProcessor(xsdDocument, this, parentSchema.targetNSIndex);
+		
+		// Register schema to imports list as part of namespace bucket
+		this.imports[parentSchema.targetNS].push(schema);
+		
+		// Process imported schemas before processing this one
+		this.processImports(schema);
+		this.processIncludes(schema);
+		
+		// Process the target schema
+		schema.processSchema();
+	});
+};
+
+SchemaManager.prototype.processIncludes = function(schema) {
+	// Load all of the imported schemas
+	var includes = schema.getChildren(schema.xsd, 'include');
+
+	for (var index in includes) {
+		var includeNode = includes[index];
+		this.includeSchema(includeNode.getAttribute("schemaLocation"), schema);
 	}
 };
 
 SchemaManager.prototype.setOriginatingRoot = function() {
-	//Establish originatingRoot reference
-	this.originatingRoot = this.originatingSchema.root;
-	
+
 	// Select root element if one is specified
 	if (this.options.rootElement != null) {
+		this.originatingRoot = this.originatingSchema.root;
+		
 		for (var index in this.originatingRoot.elements) {
 			var topLevelElement = this.originatingRoot.elements[index];
 			
 			if (this.options.rootElement != topLevelElement.name) {
 				this.originatingRoot = topLevelElement;
+			}
+		}
+	} else {
+		this.originatingRoot = {
+				schema : true,
+				ns : this.originatingSchema.targetNSIndex,
+				namespaces : [],
+				elements : []
+			};
+		
+		for (var ns in this.imports) {
+			var importSet = this.imports[ns];
+			
+			for (var index in importSet) {
+				var schema = importSet[index];
+				
+				for (var elIndex in schema.root.elements) {
+					this.originatingRoot.elements.push(schema.root.elements[elIndex]);
+				}
+			}
+		}
+	}
+};
+
+SchemaManager.prototype.mergeRootLevelElements = function() {
+	for (var ns in this.imports) {
+		var importSet = this.imports[ns];
+		
+		for (var index in importSet) {
+			var schema = importSet[index];
+			
+			for (var elIndex in schema.root.elements) {
+				this.originatingRoot.elements.push(schema.root.elements[elIndex]);
 			}
 		}
 	}
@@ -278,7 +363,7 @@ SchemaManager.prototype.mergeCrossSchemaType = function(object) {
 		delete object.reference;
 		// Merge in the external schema types, recursively merging together the external schema types
 		for (var i = 0; i < schemas.length; i++){
-			this.mergeType(object, this.mergeCrossSchemaType(schemas[i].rootDefinitions[references[i]]));
+			schemas[i].mergeType(object, this.mergeCrossSchemaType(schemas[i].rootDefinitions[references[i]]));
 		}
 	}
 	return object;
@@ -303,14 +388,101 @@ SchemaManager.prototype.resolveCrossSchemaTypeReferences = function(object, obje
 	}
 };
 
+/**
+ * Inspects the reference name and returns the set of schema objects that
+ * correspond to its namespace
+ */
+SchemaManager.prototype.resolveSchema = function(schema, name) {
+	if (name != null){
+		var index = name.indexOf(":");
+		var prefix = index == -1? "": name.substring(0, index);
+		var namespace = schema.localNamespaces[prefix];
+		var xsdObj = this.imports[namespace];
+		if (xsdObj == null)
+			xsdObj = [schema];
+		return xsdObj;
+	}
+	return this;
+};
+
+//Process a node with tag processing functin fnName.  Follows references on the node,
+//determining which schema object will be responsible for generating the definition.
+//node - the node being processed
+//fnName - the function to be called to process the node
+//object - definition object the node belongs to
+SchemaManager.prototype.execute = function(schema, node, fnName, object) {
+	var resolveName = node.getAttribute("ref") || node.getAttribute("substitutionGroup") 
+			|| node.getAttribute("type") || node.getAttribute("base");
+	var targetNode = node;
+	var xsdObj = schema;
+	var name = resolveName;
+	
+	// Determine if the node requires resolution to another definition node
+	if (resolveName != null && (schema.xsPrefix == "" && resolveName.indexOf(":") != -1) 
+			|| (schema.xsPrefix != "" && resolveName.indexOf(schema.xsPrefix) == -1)) {
+		// Determine which schema the reference belongs to
+		var xsdObjSet = this.resolveSchema(schema, resolveName);
+		
+		// Extract name parts such that namespace prefix is looked up in the originating schema
+		var nameParts = schema.extractName(name);
+		var processingNotStarted = false;
+		for (var index in xsdObjSet) {
+			xsdObj = xsdObjSet[index];
+			
+			//Check for cached version of the definition
+			if (nameParts.indexedName in xsdObj.rootDefinitions){
+				var definition = xsdObj.rootDefinitions[nameParts.indexedName];
+				if (definition != null) {
+					return definition;
+				}
+			}
+			
+			// Schema reference is not initialized yet, therefore it is a circular reference, store stub
+			processingNotStarted = !xsdObj.processingStarted && xsdObj !== this;
+			if (processingNotStarted) {
+				continue;
+			}
+			
+			// Grab the node the reference was referring to
+			targetNode = xsdObj.getChildren(xsdObj.xsd, undefined, nameParts.localName);
+			if (targetNode && targetNode.length > 0) {
+				targetNode = targetNode[0];
+				break;
+			}
+		}
+		if (processingNotStarted) {
+			return {name: nameParts.indexedName, schemaObject : xsdObjSet, reference : [nameParts.indexedName]};
+		}
+	} 
+	
+	try {
+		// Call the processing function on the referenced node
+		return xsdObj[fnName](targetNode, object);
+	} catch (error) {
+		$("body").append("<br/>" + name + ": " + error + " ");
+		throw error;
+	}
+};
+
+
+
 //Register a namespace if it is new
 SchemaManager.prototype.registerNamespace = function(namespaceUri) {
-	if ($.inArray(namespaceUri, this.namespaceIndexes) == -1)
+	var namespaceIndex = $.inArray(namespaceUri, this.namespaceIndexes);
+	if (namespaceIndex == -1) {
 		this.namespaceIndexes.push(namespaceUri);
+		return this.namespaceIndexes.length - 1;
+	}
+	
+	return namespaceIndex;
 };
 
 SchemaManager.prototype.getNamespaceIndex = function(namespaceUri) {
 	return $.inArray(namespaceUri, this.namespaceIndexes);
+};
+
+SchemaManager.prototype.getNamespaceUri = function(index) {
+	return this.namespaceIndexes[index];
 };
 /**
  * Processes an XML schema, extracting key features and storing them into
@@ -324,7 +496,7 @@ SchemaManager.prototype.getNamespaceIndex = function(namespaceUri) {
  * xsdManager schema manager which this processor belongs to
  */
 
-function SchemaProcessor(xsdDocument, xsdManager) {
+function SchemaProcessor(xsdDocument, xsdManager, parentNSIndex) {
 	
 	this.xsd = xsdDocument;
 	this.xsdManager = xsdManager;
@@ -338,10 +510,16 @@ function SchemaProcessor(xsdDocument, xsdManager) {
 
 	this.xsPrefix = "xs:";
 	
-	// The target namespace for this schema
-	this.targetNS = null;
-	// The index of the target namespace in namespaceIndexes
-	this.targetNSIndex = null;
+	if (parentNSIndex !== undefined) {
+		this.targetNSIndex = parentNSIndex;
+		this.targetNS = this.xsdManager.getNamespaceUri(parentNSIndex);
+	} else {
+		// The target namespace for this schema
+		this.targetNS = null;
+		// The index of the target namespace in namespaceIndexes
+		this.targetNSIndex = null;
+	}
+	
 	// Root definition for this schema, either an element or a schema object
 	this.root = null;
 	
@@ -366,6 +544,7 @@ SchemaProcessor.prototype.processSchema = function() {
 };
 
 SchemaProcessor.prototype.extractNamespaces = function() {
+	
 	for (var i = 0; i < this.xsd.attributes.length; i++) {
 		var attr = this.xsd.attributes[i];
 		if (!attr.specified)
@@ -386,9 +565,25 @@ SchemaProcessor.prototype.extractNamespaces = function() {
 		}
 	}
 	
-	// Store the target namespace of this schema.
-	this.targetNS = this.xsd.getAttribute("targetNamespace");
-	this.targetNSIndex = this.xsdManager.getNamespaceIndex(this.targetNS);
+	// Only use target namespace if not already being provided with a namespace uri
+	if (!this.targetNS) {
+		// Store the target namespace of this schema.
+		this.targetNS = this.xsd.getAttribute("targetNamespace");
+		
+		// Determine if the targetNS is already registered locally
+		var localPrefix = this.getLocalNamespacePrefix(this.targetNS);
+		if (localPrefix == null) {
+			// Register the target namespace as the default namespace, even if there was already a default ns
+			this.targetNSIndex = this.registerNamespace(this.targetNS, "");
+		} else {
+			this.targetNSIndex = this.xsdManager.getNamespaceIndex(this.targetNS);
+		}
+	}
+	
+	// Register the target ns as the default ns if none was specified
+	if (!("" in this.localNamespaces)) {
+		this.localNamespaces[""] = this.targetNS;
+	}
 };
 
 // Post processing step which recursively walks the schema tree and merges type definitions
@@ -470,7 +665,7 @@ SchemaProcessor.prototype.buildElement = function(node, parentObject) {
 	var hasRef = node.getAttribute("ref") != null;
 	if (hasSubGroup || hasRef){
 		// Resolve reference to get the actual definition for this element
-		definition = this.execute(node, 'buildElement', parentObject);
+		definition = this.xsdManager.execute(this, node, 'buildElement', parentObject);
 		if (hasSubGroup) {
 			definition = $.extend({}, definition, {'name' : nameParts.localName});
 			if (node.parentNode === this.xsd && !hasRef) {
@@ -501,7 +696,7 @@ SchemaProcessor.prototype.buildElement = function(node, parentObject) {
 		} else {
 			definition.type = this.resolveType(type, definition);
 			if (definition.type == null) {
-				var typeDef = this.execute(node, 'buildType', definition);
+				var typeDef = this.xsdManager.execute(this, node, 'buildType', definition);
 				// If there was a previously defined type, then store a reference to it
 				if (typeDef !== undefined) {
 					definition.typeRef = typeDef;
@@ -526,7 +721,7 @@ SchemaProcessor.prototype.buildAttribute = function(node, parentObject) {
 	var hasRef = node.getAttribute("ref") != null;
 	if (hasRef){
 		// Follow reference to get the actual type definition
-		definition = this.execute(node, 'buildAttribute');
+		definition = this.xsdManager.execute(this, node, 'buildAttribute');
 	} else {
 		// Actual attribute definition, build new definition
 		nameParts = this.extractName(name);
@@ -543,7 +738,7 @@ SchemaProcessor.prototype.buildAttribute = function(node, parentObject) {
 		} else {
 			definition.type = this.resolveType(type, definition);
 			if (definition.type == null) {
-				var typeDef = this.execute(node, 'buildType', definition);
+				var typeDef = this.xsdManager.execute(this, node, 'buildType', definition);
 				// If there was a previously defined type, then store a reference to it
 				if (typeDef !== undefined) {
 					definition.typeRef = typeDef;
@@ -617,7 +812,7 @@ SchemaProcessor.prototype.buildComplexType = function(node, object) {
 	for (var i in children) {
 		var child = children[i];
 		if (child.localName == "group") {
-			self.execute(child, 'buildGroup', object);
+			self.xsdManager.execute(this, child, 'buildGroup', object);
 		} else if (child.localName == "simpleContent") {
 			self.buildSimpleContent(child, object);
 		} else if (child.localName == "complexContent") {
@@ -627,7 +822,7 @@ SchemaProcessor.prototype.buildComplexType = function(node, object) {
 		} else if (child.localName == "attribute") {
 			self.buildAttribute(child, object);
 		} else if (child.localName == "attributeGroup") {
-			self.execute(child, 'buildAttributeGroup', object);
+			self.xsdManager.execute(this, child, 'buildAttributeGroup', object);
 		} else if (child.localName == "sequence") {
 			self.buildSequence(child, object);
 		} else if (child.localName == "all") {
@@ -653,7 +848,7 @@ SchemaProcessor.prototype.buildList = function(node, object) {
 	var itemType = node.getAttribute('itemType');
 	object.type = this.resolveType(itemType, object);
 	if (object.type == null) {
-		this.execute(node, 'buildType', object);
+		this.xsdManager.execute(this, node, 'buildType', object);
 	}
 	object.multivalued = true;
 };
@@ -664,13 +859,22 @@ SchemaProcessor.prototype.buildUnion = function(node, object) {
 	if (memberTypes) {
 		memberTypes = memberTypes.split(' ');
 		var self = this;
+		
 		for (var i in memberTypes) {
 			var memberType = memberTypes[i];
-			var xsdObj = self.resolveXSD(memberType);
-			var targetNode = xsdObj.getChildren(null, 'simpleType', memberType)[0];
-			xsdObj.buildType(targetNode, object);
+			var xsdObjSet = self.xsdManager.resolveSchema(self, memberType);
+			for (var index in xsdObjSet) {
+				var xsdObj = xsdObjSet[index];
+				var targetNode = xsdObj.getChildren(null, 'simpleType', memberType);
+				if (targetNode && targetNode.length > 0) {
+					targetNode = targetNode[0];
+					xsdObj.buildType(targetNode, object);
+					break;
+				}
+			}
 		}
 	}
+	
 	var self = this;
 	var children = this.getChildren(node, 'simpleType');
 	for (var i in children)
@@ -720,7 +924,7 @@ SchemaProcessor.prototype.buildChoice = function(node, object) {
 			var element = self.buildElement(child, object);
 			choice.elements.push(element.ns + ":" + element.name);
 		} else if (child.localName == "group") {
-			self.execute(child, 'buildGroup', object);
+			self.xsdManager.execute(this, child, 'buildGroup', object);
 		} else if (child.localName == "choice") {
 			self.buildChoice(child, object);
 		} else if (child.localName == "sequence") {
@@ -743,7 +947,7 @@ SchemaProcessor.prototype.buildSequence = function(node, object) {
 		if (child.localName == "element") {
 			self.buildElement(child, object);
 		} else if (child.localName == "group") {
-			self.execute(child, 'buildGroup', object);
+			self.xsdManager.execute(this, child, 'buildGroup', object);
 		} else if (child.localName == "choice") {
 			self.buildChoice(child, object);
 		} else if (child.localName == "sequence") {
@@ -789,7 +993,7 @@ SchemaProcessor.prototype.buildRestriction = function(node, object) {
 	
 	object.type = this.resolveType(base, object);
 	if (object.type == null) {
-		var typeDef = this.execute(node, 'buildType', object);
+		var typeDef = this.xsdManager.execute(this, node, 'buildType', object);
 		if (typeDef !== undefined)
 			this.mergeType(object, typeDef);
 	}
@@ -800,13 +1004,13 @@ SchemaProcessor.prototype.buildRestriction = function(node, object) {
 		if (child.localName == "enumeration") {
 			object.values.push(child.getAttribute("value"));
 		} else if (child.localName == "group") {
-			self.execute(child, 'buildGroup', object);
+			self.xsdManager.execute(this, child, 'buildGroup', object);
 		} else if (child.localName == "choice") {
 			self.buildChoice(child, object);
 		} else if (child.localName == "attribute") {
 			self.buildAttribute(child, object);
 		} else if (child.localName == "attributeGroup") {
-			self.execute(child, 'buildAttributeGroup', object);
+			self.xsdManager.execute(this, child, 'buildAttributeGroup', object);
 		} else if (child.localName == "sequence") {
 			self.buildSequence(child, object);
 		} else if (child.localName == "all") {
@@ -823,7 +1027,7 @@ SchemaProcessor.prototype.buildExtension = function(node, object) {
 	
 	object.type = this.resolveType(base, object);
 	if (object.type == null) {
-		var typeDef = this.execute(node, 'buildType', object);
+		var typeDef = this.xsdManager.execute(this, node, 'buildType', object);
 		if (typeDef !== undefined)
 			this.mergeType(object, typeDef);
 	}
@@ -834,7 +1038,7 @@ SchemaProcessor.prototype.buildExtension = function(node, object) {
 		if (child.localName == "attribute") {
 			self.buildAttribute(child, object);
 		} else if (child.localName == "attributeGroup") {
-			self.execute(child, 'buildAttributeGroup', object);
+			self.xsdManager.execute(this, child, 'buildAttributeGroup', object);
 		} else if (child.localName == "sequence") {
 			self.buildSequence(child, object);
 		} else if (child.localName == "all") {
@@ -855,67 +1059,14 @@ SchemaProcessor.prototype.buildAttributeGroup = function(node, object) {
 		if (child.localName == "attribute") {
 			this.buildAttribute(child, object);
 		} else if (child.localName == "attributeGroup") {
-			this.execute(child, 'buildAttributeGroup', object);
+			this.xsdManager.execute(this, child, 'buildAttributeGroup', object);
 		}
-	}
-};
-
-// Process a node with tag processing functin fnName.  Follows references on the node,
-// determining which schema object will be responsible for generating the definition.
-// node - the node being processed
-// fnName - the function to be called to process the node
-// object - definition object the node belongs to
-SchemaProcessor.prototype.execute = function(node, fnName, object) {
-	var resolveName = node.getAttribute("ref") || node.getAttribute("substitutionGroup") 
-			|| node.getAttribute("type") || node.getAttribute("base");
-	var targetNode = node;
-	var xsdObj = this;
-	var name = resolveName;
-	// Determine if the node requires resolution to another definition node
-	if (resolveName != null && (this.xsPrefix == "" && resolveName.indexOf(":") != -1) 
-			|| (this.xsPrefix != "" && resolveName.indexOf(this.xsPrefix) == -1)) {
-		// Determine which schema the reference belongs to
-		xsdObj = this.resolveXSD(resolveName);
-		var nameParts = this.extractName(name);
-		//Check for cached version of the definition
-		if (nameParts.indexedName in xsdObj.rootDefinitions){
-			var definition = xsdObj.rootDefinitions[nameParts.indexedName];
-			if (definition != null) {
-				return definition;
-			}
-		}
-		// Schema reference is not initialized yet, therefore it is a circular reference, store stub
-		if (!xsdObj.processingStarted && xsdObj !== this)
-			return {name: nameParts.indexedName, schemaObject : [xsdObj], reference : [nameParts.indexedName]};
-		// Grab the node the reference was referring to
-		targetNode = xsdObj.getChildren(xsdObj.xsd, undefined, nameParts.localName)[0];
-	} 
-	
-	try {
-		// Call the processing function on the referenced node
-		return xsdObj[fnName](targetNode, object);
-	} catch (error) {
-		$("body").append("<br/>" + name + ": " + error + " ");
-		throw error;
 	}
 };
 
 SchemaProcessor.prototype.stripPrefix = function(name) {
 	var index = name.indexOf(":");
 	return index == -1? name: name.substring(index + 1);
-};
-
-SchemaProcessor.prototype.resolveXSD = function(name) {
-	if (name != null){
-		var index = name.indexOf(":");
-		var prefix = index == -1? null: name.substring(0, index);
-		var namespace = this.localNamespaces[prefix];
-		var xsdObj = this.xsdManager.imports[namespace];
-		if (xsdObj == null)
-			xsdObj = this;
-		return xsdObj;
-	}
-	return this;
 };
 
 SchemaProcessor.prototype.resolveType = function(type, object) {
@@ -983,7 +1134,6 @@ SchemaProcessor.prototype.extractName = function(name) {
 		return null;
 	var result = {};
 	var index = name.indexOf(':');
-	var prefix, localName;
 	if (index == -1) {
 		result['localName'] = name;
 		result['prefix'] = "";
@@ -998,9 +1148,19 @@ SchemaProcessor.prototype.extractName = function(name) {
 
 //Register a namespace, and optionally its prefix, to the schema
 SchemaProcessor.prototype.registerNamespace = function(namespaceUri, prefix) {
-	this.xsdManager.registerNamespace(namespaceUri);
+	var namespaceIndex = this.xsdManager.registerNamespace(namespaceUri);
 
 	if (prefix !== undefined)
 		this.localNamespaces[prefix] = namespaceUri;
+	
+	return namespaceIndex;
+};
+
+SchemaProcessor.prototype.getLocalNamespacePrefix = function(namespaceUri) {
+	for (var prefix in this.localNamespaces) {
+		if (this.localNamespaces[prefix] == namespaceUri)
+			return prefix;
+	}
+	return null;
 };
 ; return Xsd2Json;}.call();
