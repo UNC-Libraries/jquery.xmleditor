@@ -9,10 +9,12 @@
  * xsdDocument XML document representaton of the schema document to be processed
  * xsdManager schema manager which this processor belongs to
  */
-function SchemaProcessor(xsdDocument, xsdManager, parentNSIndex) {
+function SchemaProcessor(xsdDocument, xsdManager, schemaUrl, parentNSIndex) {
 	
 	this.xsd = xsdDocument;
 	this.xsdManager = xsdManager;
+	this.schemaUrl = schemaUrl;
+	this.schemaPath = this.schemaUrl.substring(0, this.schemaUrl.lastIndexOf("/") + 1);
 	
 	// Object definitions defined at the root level of the schema
 	this.rootDefinitions = {};
@@ -128,8 +130,80 @@ SchemaProcessor.prototype.resolveTypeReferences = function(object, objectStack) 
 	}
 };
 
+SchemaProcessor.prototype.build = function(node, startingDef, fnName) {
+	var name = node.getAttribute("name");
+	var definition = startingDef;
+	
+	if (name && node.parentNode == this.xsd) {
+		var nameParts = schema.extractName(name);
+		if (nameParts.indexedName in this.rootDefinitions){
+			// Use the cached definition
+			return this.rootDefinitions[nameParts.indexedName];
+		} else {
+			// New root definition
+			definition = {
+				name : nameParts.localName,
+				values : [],
+				type : null,
+				ns: this.targetNSIndex
+			};
+			
+			if (node.localName == "attribute") {
+				definition.attribute = true;
+			} else {
+				if (node.localName == "element")
+					definition.element = true;
+				definition.attributes = [];
+				definition.elements = [];
+			}
+			
+			this.rootDefinitions[nameParts.indexedName] = definition;
+		}
+	}
+	
+	if (!fnName) {
+		fnName = "build_" + node.localName;
+	}
+	
+	return this[fnName](node, definition);
+};
+
+SchemaProcessor.prototype.resolveBuild = function(node, definition) {
+	this.xsdManager.resolve(node, definition, "build");
+};
+
+SchemaProcessor.prototype.addElement = function(node, definition, parentDef) {
+	
+	if (!parentDef.schema) {
+		// Store min/max occurs on the the elements parent, as they only apply to this particular relationship
+		// Root level elements can't have min/max occurs attributes
+		var minOccurs = node.getAttribute("minOccurs");
+		var maxOccurs = node.getAttribute("maxOccurs");
+		if (parentObject && (minOccurs || maxOccurs)) {
+			var nameOrRefParts = nameParts? nameParts : this.extractName(node.getAttribute("ref"));
+			if (!("occurs" in parentObject))
+				parentDef.occurs = {};
+			parentDef.occurs[nameOrRefParts.indexedName] = {
+					'min' : minOccurs,
+					'max' : maxOccurs
+			};
+		}
+	}
+	
+	// Add this element as a child of the parent, unless it is abstract or already added
+	if (parentDef != null && node.getAttribute("abstract") != "true"
+			&& !this.containsChild(parentDef, definition))
+		parentDef.elements.push(definition);
+};
+
+SchemaProcessor.prototype.addAttribute = function(node, definition, parentDef) {
+	// Add the definition to its parents attributes array
+	if (parentDef != null)
+		parentDef.attributes.push(definition);
+};
+
 // Build the schema tag
-SchemaProcessor.prototype.buildSchema = function(node) {
+SchemaProcessor.prototype.build_schema = function(node) {
 	var object = {
 		"elements": [],
 		"ns": this.targetNSIndex,
@@ -139,8 +213,14 @@ SchemaProcessor.prototype.buildSchema = function(node) {
 	var children = this.getChildren(node);
 	for (var i in children) {
 		var child = children[i];
-		if (child.localName == 'element')
-			this.buildElement(child, object);
+		if (child.localName == 'element') {
+			var element = this.build(child, object);
+			this.addElement(child, element, object);
+		} else if (child.localName == 'simpleType' || 
+				child.localName == 'attribute' || child.localName == 'complexType' ||
+				child.localName == 'group' || child.localName == 'attributeGroup') {
+			this.build(child, object);
+		}
 	}
 	return object;
 };
@@ -148,68 +228,34 @@ SchemaProcessor.prototype.buildSchema = function(node) {
 // Build an element definition
 // node - element schema node
 // parentObject - definition of the parent this element will be added to
-SchemaProcessor.prototype.buildElement = function(node, parentObject) {
+SchemaProcessor.prototype.build_element = function(node, definition, parentDef) {
 	var definition = null;
 	var name = node.getAttribute("name");
 	var nameParts = this.extractName(name);
-	var parentIsSchema = node.parentNode === this.xsd;
-	
-	if (parentIsSchema) {
-		// Detect if this element is already defined in the list of root definitions, if so use that
-		if (nameParts && nameParts.indexedName in this.rootDefinitions)
-			return this.rootDefinitions[nameParts.indexedName];
-	} else {
-		// Store min/max occurs on the the elements parent, as they only apply to this particular relationship
-		// Root level elements can't have min/max occurs attributes
-		var minOccurs = node.getAttribute("minOccurs");
-		var maxOccurs = node.getAttribute("maxOccurs");
-		if (parentObject && (minOccurs || maxOccurs)) {
-			var nameOrRefParts = nameParts? nameParts : this.extractName(node.getAttribute("ref"));
-			if (!("occurs" in parentObject))
-				parentObject.occurs = {};
-			parentObject.occurs[nameOrRefParts.indexedName] = {
-					'min' : minOccurs,
-					'max' : maxOccurs
-			};
-		}
-	}
 	
 	var hasSubGroup = node.getAttribute("substitutionGroup") != null;
 	var hasRef = node.getAttribute("ref") != null;
 	if (hasSubGroup || hasRef){
 		// Resolve reference to get the actual definition for this element
-		definition = this.xsdManager.execute(this, node, 'buildElement', parentObject);
-		if (hasSubGroup) {
-			definition = $.extend({}, definition, {'name' : nameParts.localName});
-			if (node.parentNode === this.xsd && !hasRef) {
-				this.rootDefinitions[nameParts.indexedName] = definition;
-			}
-		}
+		definition = this.resolveBuild(node);
+		//definition = this.xsdManager.execute(this, node, 'buildElement', parentObject);
+		// Substitution group not yet entirely implement
+//		if (hasSubGroup) {
+//			definition = $.extend({}, definition, {'name' : nameParts.localName});
+//			if (node.parentNode === this.xsd && !hasRef) {
+//				this.rootDefinitions[nameParts.indexedName] = definition;
+//			}
+//		}
 	} else {
-		// Element has a name, means its a new element
-		definition = {
-				"name" : nameParts.localName,
-				"elements": [],
-				"attributes": [],
-				"values": [],
-				"type": null,
-				"ns": this.targetNSIndex,
-				"element": true
-		};
-		
-		// If this is a root level element, store it in rootDefinition
-		if (parentIsSchema) {
-			this.rootDefinitions[nameParts.indexedName] = definition;
-		}
 		
 		// Build or retrieve the type definition
 		var type = node.getAttribute("type");
 		if (type == null) {
-			this.buildType(this.getChildren(node)[0], definition);
+			this.build_type(this.getChildren(node)[0], definition);
 		} else {
 			definition.type = this.resolveType(type, definition);
 			if (definition.type == null) {
-				var typeDef = this.xsdManager.execute(this, node, 'buildType', definition);
+				var typeDef = this.resolveBuild(node, definition);
 				// If there was a previously defined type, then store a reference to it
 				if (typeDef !== undefined) {
 					definition.typeRef = typeDef;
@@ -218,40 +264,26 @@ SchemaProcessor.prototype.buildElement = function(node, parentObject) {
 		}
 	}
 	
-	// Add this element as a child of the parent, unless it is abstract or already added
-	if (parentObject != null && node.getAttribute("abstract") != "true")
-		if (!hasRef || (hasRef && !this.containsChild(parentObject, definition)))
-			parentObject.elements.push(definition);
-	
 	return definition;
 }
 
-SchemaProcessor.prototype.buildAttribute = function(node, parentObject) {
-	var definition = null;
+SchemaProcessor.prototype.build_attribute = function(node, definition) {
 	var name = node.getAttribute("name");
 	var nameParts;
 	
 	var hasRef = node.getAttribute("ref") != null;
 	if (hasRef){
-		// Follow reference to get the actual type definition
-		definition = this.xsdManager.execute(this, node, 'buildAttribute');
+		// Follow reference to get the actual type definition and merge in
+		$.extend(definition, this.resolveBuild(node));
 	} else {
-		// Actual attribute definition, build new definition
-		nameParts = this.extractName(name);
-		definition = {
-				"name" : nameParts.localName,
-				"values": [],
-				"ns": this.targetNSIndex,
-				"attribute": true
-			};
 		
 		var type = node.getAttribute("type");
 		if (type == null) {
-			this.buildType(this.getChildren(node)[0], definition);
+			this.build_type(this.getChildren(node)[0], definition);
 		} else {
 			definition.type = this.resolveType(type, definition);
 			if (definition.type == null) {
-				var typeDef = this.xsdManager.execute(this, node, 'buildType', definition);
+				var typeDef = this.resolveBuild(node, definition);
 				// If there was a previously defined type, then store a reference to it
 				if (typeDef !== undefined) {
 					definition.typeRef = typeDef;
@@ -259,15 +291,6 @@ SchemaProcessor.prototype.buildAttribute = function(node, parentObject) {
 			}
 		}
 	}
-	
-	// Store the definition to rootDefinitions if it was defined at the root of the schema
-	if (node.parentNode === this.xsd && !hasRef) {
-		this.rootDefinitions[nameParts.indexedName] = definition;
-	}
-	
-	// Add the definition to its parents attributes array
-	if (parentObject != null)
-		parentObject.attributes.push(definition);
 	
 	return definition;
 };

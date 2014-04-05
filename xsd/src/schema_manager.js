@@ -14,6 +14,8 @@ function SchemaManager(originatingXsdName, options) {
 	
 	var self = this;
 	
+	this.isNotRelativeUrlRegex = new RegExp(/^https?:\/\//);
+	
 	// Map of schema processors for imported schemas.  Stored by namespace
 	this.imports = {};
 	// Map of schema processors for included schemas.  Stored by schemaLocation
@@ -41,7 +43,7 @@ function SchemaManager(originatingXsdName, options) {
 	});
 	
 	// Load in the orginating schema and start processing from there
-	this.importSchema(originatingXsdName);
+	this.importSchema(this.computeSchemaLocation(originatingXsdName));
 	
 	// Establish originatingRoot reference
 	this.setOriginatingRoot();
@@ -54,15 +56,11 @@ function SchemaManager(originatingXsdName, options) {
 };
 
 SchemaManager.prototype.retrieveSchema = function(url, callback) {
-	this.importAjax(url, false, callback);
+	this.importAjax(url, callback);
 };
 
-SchemaManager.prototype.importAjax = function(url, originalAttempt, callback) {
-	var originalURL = url,
-			self = this;
-	// Prefer a local copy to the remote since likely can't get the remote copy due to cross domain ajax restrictions
-	if (!originalAttempt)
-		url = this.options.schemaURI + url.substring(url.lastIndexOf("/") + 1);
+SchemaManager.prototype.importAjax = function(url, callback, attemptFullUrl) {
+	var self = this;
 	
 	$.ajax({
 		url: url,
@@ -70,13 +68,33 @@ SchemaManager.prototype.importAjax = function(url, originalAttempt, callback) {
 		async: false,
 		success: function(data){
 			var xsdDocument = $.parseXML(data).documentElement;
-			callback.call(self, xsdDocument);
+			callback.call(self, xsdDocument, url);
 		}, error: function() {
-			if (!originalAttempt)
+			if (url.match(this.isNotRelativeUrlRegex) && !attemptFullUrl)
 				throw new Error("Unable to import " + url);
-			self.importAjax(originalURL, true, callback);
+			// Try treating as a relative url since original path wasn't retrievable
+			self.importAjax(this.options.schemaURI + url.substring(url.lastIndexOf("/") + 1),
+					callback, true);
 		}
 	});
+};
+
+SchemaManager.prototype.computeSchemaLocation = function(url, parentSchema) {
+	if (!url)
+		return null;
+	
+	var isNotRelative = url.match(this.isNotRelativeUrlRegex);
+	if (isNotRelative) {
+		return url;
+	} else {
+		if (parentSchema && parentSchema.schemaPath) {
+			// Path relative to its parent
+			return parentSchema.schemaPath + url;
+		} else if (this.options.schemaURI) {
+			// No parent path, so use go relative to base schema uri
+			return this.options.schemaURI + url;
+		}
+	}
 };
 
 /**
@@ -91,9 +109,9 @@ SchemaManager.prototype.importSchema = function(schemaLocation, namespaceUri) {
 		return;
 	
 	// Retrieve schema document
-	this.retrieveSchema(schemaLocation, function(xsdDocument) {
+	this.retrieveSchema(schemaLocation, function(xsdDocument, schemaUrl) {
 		// Instantiate schema processor
-		var schema = new SchemaProcessor(xsdDocument, this);
+		var schema = new SchemaProcessor(xsdDocument, this, schemaUrl);
 		
 		// Register schema
 		if (namespaceUri)
@@ -125,31 +143,32 @@ SchemaManager.prototype.processImports = function(schema) {
 	for (var index in imports) {
 		var importNode = imports[index];
 		var importNamespace = importNode.getAttribute('namespace');
+		var schemaLocation = 
+			this.computeSchemaLocation(importNode.getAttribute("schemaLocation"), schema);
 		
-		this.importSchema(importNode.getAttribute("schemaLocation"),
-				importNode.getAttribute("namespace"));
+		this.importSchema(schemaLocation, importNode.getAttribute("namespace"));
 	}
 };
 
-SchemaManager.prototype.includeSchema = function(schemaLocation, parentSchema) {
+SchemaManager.prototype.includeSchema = function(schemaLocation, namespaceIndex) {
 	
 	// Check for duplicate include by namespace and schemaLocation
-	if (parentSchema.targetNSIndex in this.includes) {
-		if ($.inArray(schemaLocation, this.includes[parentSchema.targetNSIndex]) != -1)
+	if (namespaceIndex in this.includes) {
+		if ($.inArray(schemaLocation, this.includes[namespaceIndex]) != -1)
 			return;
-		this.includes[parentSchema.targetNSIndex].push(schemaLocation);
+		this.includes[namespaceIndex].push(schemaLocation);
 	} else {
 		// Register schema to includes list for duplicate/circular reference detection
-		this.includes[parentSchema.targetNSIndex] = [schemaLocation];
+		this.includes[namespaceIndex] = [schemaLocation];
 	}
 	
 	// Retrieve schema document
-	this.retrieveSchema(schemaLocation, function(xsdDocument) {
+	this.retrieveSchema(schemaLocation, function(xsdDocument, schemaUrl) {
 		// Instantiate schema processor using parents namespace
-		var schema = new SchemaProcessor(xsdDocument, this, parentSchema.targetNSIndex);
+		var schema = new SchemaProcessor(xsdDocument, this, schemaUrl, namespaceIndex);
 		
 		// Register schema to imports list as part of namespace bucket
-		this.imports[parentSchema.targetNS].push(schema);
+		this.imports[this.getNamespaceUri(namespaceIndex)].push(schema);
 		
 		// Process imported schemas before processing this one
 		this.processImports(schema);
@@ -166,7 +185,11 @@ SchemaManager.prototype.processIncludes = function(schema) {
 
 	for (var index in includes) {
 		var includeNode = includes[index];
-		this.includeSchema(includeNode.getAttribute("schemaLocation"), schema);
+		var schemaLocation =
+			this.computeSchemaLocation(includeNode.getAttribute("schemaLocation"),
+					schema);
+		
+		this.includeSchema(schemaLocation, schema.targetNSIndex);
 	}
 };
 
@@ -295,12 +318,13 @@ SchemaManager.prototype.resolveSchema = function(schema, name) {
 //node - the node being processed
 //fnName - the function to be called to process the node
 //object - definition object the node belongs to
-SchemaManager.prototype.execute = function(schema, node, fnName, object) {
+SchemaManager.prototype.resolve = function(schema, node, fnName, object) {
 	var resolveName = node.getAttribute("ref") || node.getAttribute("substitutionGroup") 
 			|| node.getAttribute("type") || node.getAttribute("base");
 	var targetNode = node;
 	var xsdObj = schema;
 	var name = resolveName;
+	//if (name == "mspace") debugger;
 	
 	// Determine if the node requires resolution to another definition node
 	if (resolveName != null && (schema.xsPrefix == "" && resolveName.indexOf(":") != -1) 
@@ -335,7 +359,7 @@ SchemaManager.prototype.execute = function(schema, node, fnName, object) {
 				break;
 			}
 		}
-		if (processingNotStarted) {
+		if (processingNotStarted || !targetNode || targetNode.length == 0) {
 			return {name: nameParts.indexedName, schemaObject : xsdObjSet, reference : [nameParts.indexedName]};
 		}
 	} 
