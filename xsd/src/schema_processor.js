@@ -180,39 +180,33 @@ SchemaProcessor.prototype.build_schema = function(node) {
 		var child = children[i];
 
 		if (child.localName == 'element') {
-			var element = this.build(child, definition);
+			var element = this.buildTopLevel(child, definition);
 			this.addElement(child, element, definition);
 		} else if (child.localName == 'simpleType' || 
 				child.localName == 'attribute' || child.localName == 'complexType' ||
 				child.localName == 'group' || child.localName == 'attributeGroup') {
-			this.build(child, definition);
+			this.buildTopLevel(child, definition);
 		}
 	}
 	return definition;
 };
 
-SchemaProcessor.prototype.build = function(node, startingDef, fnName) {
+SchemaProcessor.prototype.buildTopLevel = function(node) {
 	var name = node.getAttribute("name");
-	var definition = startingDef;
+	// Root level definitions must have a name attribute
+	if (!name)
+		return;
+	var nameParts = this.extractName(name);
 	
-	if (name && node.parentNode == this.xsd) {
-		var nameParts = this.extractName(name);
-		if (nameParts.indexedName in this.rootDefinitions){
-			// Use the cached definition
-			return this.rootDefinitions[nameParts.indexedName];
-		} else {
-			// New root definition
-			definition = this.createDefinition(node, nameParts);
-			
-			this.rootDefinitions[nameParts.indexedName] = definition;
-		}
-	}
+	// New root definition
+	var definition = this.createDefinition(node, nameParts);
+	this.rootDefinitions[nameParts.indexedName] = definition;
 	
-	if (!fnName) {
-		fnName = "build_" + node.localName;
-	}
-	
-	return this[fnName](node, definition);
+	return this.build(node, definition);
+};
+
+SchemaProcessor.prototype.build = function(node, definition, parentDef) {
+	return this["build_" + node.localName](node, definition, parentDef);
 };
 
 // Build an element definition
@@ -230,7 +224,7 @@ SchemaProcessor.prototype.build_element = function(node, definition, parentDef) 
 		// Build or retrieve the type definition
 		var type = node.getAttribute("type");
 		if (type == null) {
-			this.build_type(this.getChildren(node)[0], definition);
+			this.build(this.getChildren(node)[0], definition);
 		} else {
 			// Check to see if it is a built in type
 			definition.type = this.getBuiltInType(type, definition);
@@ -254,7 +248,7 @@ SchemaProcessor.prototype.build_attribute = function(node, definition) {
 		if (type == null) {
 			var child = this.getChildren(node)[0];
 			if (child)
-				this.build_type(this.getChildren(node)[0], definition);
+				this.build(this.getChildren(node)[0], definition);
 			else // Fall back to string type if nothing else available
 				definition.type = "string";
 		} else {
@@ -270,18 +264,6 @@ SchemaProcessor.prototype.build_attribute = function(node, definition) {
 	return definition;
 };
 
-// Build a type definition
-SchemaProcessor.prototype.build_type = function(node, definition, parentDef) {
-	// Determine what kind of type this is
-	if (node.localName == "complexType") {
-		this.build_complexType(node, definition, parentDef);
-	} else if (node.localName == "simpleType") {
-		this.build_simpleType(node, definition, parentDef);
-	} else if (node.localName == "restriction") {
-		this.build_restriction(node, definition, parentDef);
-	}
-};
-
 // Process a complexType tag
 SchemaProcessor.prototype.build_complexType = function(node, definition, parentDef) {
 	if (node.getAttribute("mixed") == "true") {
@@ -291,23 +273,14 @@ SchemaProcessor.prototype.build_complexType = function(node, definition, parentD
 	var children = this.getChildren(node);
 	for (var i in children) {
 		var child = children[i];
-		if (child.localName == "group") {
-			this.build_group(child, definition);
-		} else if (child.localName == "simpleContent") {
-			this.build_simpleContent(child, definition);
-		} else if (child.localName == "complexContent") {
-			this.build_complexContent(child, definition);
-		} else if (child.localName == "choice") {
-			this.build_choice(child, definition);
-		} else if (child.localName == "attribute") {
+		switch (child.localName) {
+		case "group" : case "simpleContent" : case "complexContent" : case "choice" : 
+		case "attributeGroup" : case "sequence" : case "all" :
+			this.build(child, definition);
+			break;
+		case "attribute" :
 			this.addAttribute(child, this.build_attribute(child, 
 					this.createDefinition(child)), definition);
-		} else if (child.localName == "attributeGroup") {
-			this.build_attributeGroup(child, definition);
-		} else if (child.localName == "sequence") {
-			this.build_sequence(child, definition);
-		} else if (child.localName == "all") {
-			this.build_all(child, definition);
 		}
 	}
 };
@@ -315,12 +288,9 @@ SchemaProcessor.prototype.build_complexType = function(node, definition, parentD
 // Process a simpleType tag
 SchemaProcessor.prototype.build_simpleType = function(node, definition) {
 	var child = this.getChildren(node)[0];
-	if (child.localName == "restriction") {
-		this.build_restriction(child, definition);
-	} else if (child.localName == "list") {
-		this.build_list(child, definition);
-	} else if (child.localName == "union") {
-		this.build_union(child, definition);
+	switch (child.localName) {
+	case "restriction" : case "list" : case "union" :
+		this.build(child, definition);
 	}
 };
 
@@ -364,12 +334,9 @@ SchemaProcessor.prototype.build_group = function(node, definition) {
 	var children = this.getChildren(node);
 	for (var i in children) {
 		var child = children[i];
-		if (child.localName == "choice")  {
-			self.build_choice(child, definition);
-		} else if (child.localName == "all") {
-			self.build_all(child, definition);
-		} else if (child.localName == "sequence") {
-			self.build_sequence(child, definition);
+		switch (child.localName) {
+		case "choice" : case "all" : case "sequence" :
+			this.build(child, definition);
 		}
 	}
 };
@@ -398,18 +365,14 @@ SchemaProcessor.prototype.build_choice = function(node, definition) {
 	var children = this.getChildren(node);
 	for (var i in children) {
 		var child = children[i];
-		if (child.localName == "element") {
+		switch (child.localName) {
+		case "choice" : case "group" : case "sequence" : case "any" :
+			this.build(child, definition);
+			break;
+		case "element" :
 			var element = this.addElement(child, this.build_element(child, 
 					this.createDefinition(child)), definition);
 			choice.elements.push(element.ns + ":" + element.name);
-		} else if (child.localName == "group") {
-			this.build_group(child, definition);
-		} else if (child.localName == "choice") {
-			self.build_choice(child, definition);
-		} else if (child.localName == "sequence") {
-			self.build_sequence(child, definition);
-		} else if (child.localName == "any") {
-			self.build_any(child, definition);
 		}
 	}
 	if (!('choices' in definition))
@@ -423,17 +386,13 @@ SchemaProcessor.prototype.build_sequence = function(node, definition) {
 	var children = this.getChildren(node);
 	for (var i in children) {
 		var child = children[i];
-		if (child.localName == "element") {
-			this.addElement(child, this.build_element(child, 
+		switch (child.localName) {
+		case "choice" : case "group" : case "sequence" : case "any" :
+			this.build(child, definition);
+			break;
+		case "element" :
+			var element = this.addElement(child, this.build_element(child, 
 					this.createDefinition(child)), definition);
-		} else if (child.localName == "group") {
-			self.build_group(child, definition);
-		} else if (child.localName == "choice") {
-			self.build_choice(child, definition);
-		} else if (child.localName == "sequence") {
-			self.build_sequence(child, definition);
-		} else if (child.localName == "any") {
-			self.build_any(child, definition);
 		}
 	}
 };
@@ -450,20 +409,18 @@ SchemaProcessor.prototype.build_complexContent = function(node, definition) {
 	}
 	
 	var child = this.getChildren(node)[0];
-	if (child.localName == "extension") {
-		this.build_extension(child, definition);
-	} else if (child.localName == "restriction") {
-		this.build_restriction(child, definition);
+	switch (child.localName) {
+	case "extension" : case "restriction" :
+		this.build(child, definition);
 	}
 };
 
 // Process a simpleContent tag
 SchemaProcessor.prototype.build_simpleContent = function(node, definition) {
 	var child = this.getChildren(node)[0];
-	if (child.localName == "extension") {
-		this.build_extension(child, definition);
-	} else if (child.localName == "restriction") {
-		this.build_restriction(child, definition);
+	switch (child.localName) {
+	case "extension" : case "restriction" :
+		this.build(child, definition);
 	}
 };
 
@@ -480,23 +437,17 @@ SchemaProcessor.prototype.build_restriction = function(node, definition) {
 	var children = this.getChildren(node);
 	for (var i in children) {
 		var child = children[i];
-		if (child.localName == "enumeration") {
-			definition.values.push(child.getAttribute("value"));
-		} else if (child.localName == "group") {
-			self.build_group(child, definition);
-		} else if (child.localName == "choice") {
-			self.build_choice(child, definition);
-		} else if (child.localName == "attribute") {
+		switch (child.localName) {
+		case "group" : case "simpleType" : case "choice" : 
+		case "attributeGroup" : case "sequence" : case "all" :
+			this.build(child, definition);
+			break;
+		case "attribute" :
 			this.addAttribute(child, this.build_attribute(child, 
 					this.createDefinition(child)), definition);
-		} else if (child.localName == "attributeGroup") {
-			self.build_attributeGroup(child, definition);
-		} else if (child.localName == "sequence") {
-			self.build_sequence(child, definition);
-		} else if (child.localName == "all") {
-			self.build_all(child, definition);
-		} else if (child.localName == "simpleType") {
-			self.build_simpleType(child, definition);
+			break;
+		case "enumeration" :
+			definition.values.push(child.getAttribute("value"));
 		}
 	}
 };
@@ -514,19 +465,14 @@ SchemaProcessor.prototype.build_extension = function(node, definition) {
 	var children = this.getChildren(node);
 	for (var i in children) {
 		var child = children[i];
-		if (child.localName == "attribute") {
+		switch (child.localName) {
+		case "group" : case "choice" : case "attributeGroup" : 
+		case "sequence" : case "all" :
+			this.build(child, definition);
+			break;
+		case "attribute" :
 			this.addAttribute(child, this.build_attribute(child, 
 					this.createDefinition(child)), definition);
-		} else if (child.localName == "attributeGroup") {
-			self.build_attributeGroup(child, definition);
-		} else if (child.localName == "sequence") {
-			self.build_sequence(child, definition);
-		} else if (child.localName == "all") {
-			self.build_all(child, definition);
-		} else if (child.localName == "choice") {
-			self.build_choice(child, definition);
-		} else if (child.localName == "group") {
-			self.build_group(child, definition);
 		}
 	}
 };
@@ -542,11 +488,13 @@ SchemaProcessor.prototype.build_attributeGroup = function(node, definition) {
 	var children = this.getChildren(node);
 	for (var i in children) {
 		var child = children[i];
-		if (child.localName == "attribute") {
+		switch (child.localName) {
+		case "attributeGroup" :
+			this.build(child, definition);
+			break;
+		case "attribute" :
 			this.addAttribute(child, this.build_attribute(child, 
 					this.createDefinition(child)), definition);
-		} else if (child.localName == "attributeGroup") {
-			this.build_attributeGroup(child, definition);
 		}
 	}
 };
