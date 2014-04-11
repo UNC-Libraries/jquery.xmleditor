@@ -12,6 +12,15 @@ task "jquery.xmleditor.js" => FileList.new("src/*") do
   end
 end
 
+task "xsd2json.js" => FileList.new("xsd/src/*") do
+  environment = Sprockets::Environment.new
+  environment.append_path "xsd/src"
+  
+  File.open("xsd/xsd2json.js", "w+") do |f|
+    f << ";var Xsd2Json = function() {" + environment.find_asset("xsd2json.js").to_s + "; return Xsd2Json;}.call();"
+  end
+end
+
 task "mods.js" do
   FileUtils.cd("xsd")
   system "phantomjs build.js ../mods.js"

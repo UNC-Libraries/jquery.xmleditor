@@ -969,41 +969,44 @@ AttributeMenu.prototype.populate = function (xmlElement) {
 	this.target = xmlElement;
 	
 	var attributesArray = this.target.objectType.attributes;
-	var attributesPresent = {};
-	$(this.target.xmlNode[0].attributes).each(function() {
-		var targetAttribute = this;
-		$.each(attributesArray, function(){
-			if (this.name == targetAttribute.nodeName) {
-				attributesPresent[this.name] = $("#" + xmlElement.domNodeID + "_" + targetAttribute.nodeName.replace(':', '-'));
+	if (attributesArray) {
+		var attributesPresent = {};
+		$(this.target.xmlNode[0].attributes).each(function() {
+			var targetAttribute = this;
+			$.each(attributesArray, function(){
+				if (this.name == targetAttribute.nodeName) {
+					attributesPresent[this.name] = $("#" + xmlElement.domNodeID + "_" + targetAttribute.nodeName.replace(':', '-'));
+				}
+			});
+		});
+		
+		var self = this;
+		$.each(this.target.objectType.attributes, function(){
+			var attribute = this;
+			// Using prefix according to the xml document namespace prefixes
+			var nsPrefix = self.editor.xmlState.namespaces.getNamespacePrefix(attribute.namespace);
+			// Namespace not present in XML, so use prefix from schema
+			if (nsPrefix === undefined)
+				nsPrefix = self.editor.schemaTree.namespaces.getNamespacePrefix(attribute.namespace);
+				
+			var attrName = nsPrefix + attribute.localName;
+			var addButton = $("<li/>").attr({
+					title : 'Add ' + attrName,
+					'id' : xmlElement.domNodeID + "_" + attrName.replace(":", "_") + "_add"
+				}).html(attrName)
+				.data('xml', {
+					"objectType": attribute,
+					"target": xmlElement
+				}).appendTo(self.menuContent);
+			
+			if (attribute.name in attributesPresent) {
+				addButton.addClass("disabled");
+				if (attributesPresent[attribute.name].length > 0)
+					attributesPresent[attribute.name].data('xmlAttribute').addButton = addButton;
 			}
 		});
-	});
-	
-	var self = this;
-	$.each(this.target.objectType.attributes, function(){
-		var attribute = this;
-		// Using prefix according to the xml document namespace prefixes
-		var nsPrefix = self.editor.xmlState.namespaces.getNamespacePrefix(attribute.namespace);
-		// Namespace not present in XML, so use prefix from schema
-		if (nsPrefix === undefined)
-			nsPrefix = self.editor.schemaTree.namespaces.getNamespacePrefix(attribute.namespace);
-			
-		var attrName = nsPrefix + attribute.localName;
-		var addButton = $("<li/>").attr({
-				title : 'Add ' + attrName,
-				'id' : xmlElement.domNodeID + "_" + attrName.replace(":", "_") + "_add"
-			}).html(attrName)
-			.data('xml', {
-				"objectType": attribute,
-				"target": xmlElement
-			}).appendTo(self.menuContent);
+	}
 		
-		if (attribute.name in attributesPresent) {
-			addButton.addClass("disabled");
-			if (attributesPresent[attribute.name].length > 0)
-				attributesPresent[attribute.name].data('xmlAttribute').addButton = addButton;
-		}
-	});
 	if (this.expanded) {
 		var endingHeight = this.menuContent.outerHeight();
 		if (endingHeight == 0)
@@ -1267,6 +1270,17 @@ GUIEditor.prototype._initEventBindings = function() {
 		event.stopPropagation();
 	}).on('click', '.top_actions .delete', function(event){
 		self.deleteElement($(this).parents('.' + xmlElementClass).eq(0).data('xmlElement'));
+		event.stopPropagation();
+	}).on('click', '.toggle_collapse', function(event){
+		var $this = $(this);
+		var contentBlock = $this.closest('.' + xmlElementClass).find('.content_block');
+		if ($this.html() == "+") {
+			$this.html("_");
+			contentBlock.slideDown(200);
+		} else {
+			$this.html("+");
+			contentBlock.slideUp(200);
+		}
 		event.stopPropagation();
 	}).on('change', '.element_text', function(event){
 		var xmlElement = $(this).parents('.' + xmlElementClass).eq(0).data('xmlElement')
@@ -2417,7 +2431,7 @@ SchemaTree.prototype.pathMatches = function(elementNode, definition) {
 			if (definition.parents[index] == null || definition.parents[index].schema)
 				return true;
 		} else {
-			if (localName(parentDef) == localName(parentNode) && parentDef.namespace == parentNode.namespaceURI) {
+			if (parentDef.localName == localName(parentNode) && parentDef.namespace == parentNode.namespaceURI) {
 				// Parent definitions matched, so continue the walk
 				var answer = this.pathMatches(parentNode, parentDef);
 				// If this particular parent definition matched all the way, then return true.
@@ -2913,7 +2927,7 @@ function XMLElement(xmlNode, objectType, editor) {
 	// Flag indicating if any children nodes can be added to this element
 	this.allowChildren = this.objectType.elements.length > 0;
 	// Flag indicating if any attributes can be added to this element
-	this.allowAttributes = this.objectType.attributes != null && this.objectType.attributes.length > 0;
+	this.allowAttributes = this.objectType.attributes && this.objectType.attributes.length > 0;
 	// Should this element allow text nodes to be added
 	this.allowText = this.objectType.type != null;
 	// ID of the dom node for this element
@@ -2987,8 +3001,13 @@ XMLElement.prototype.render = function(parentElement, recursive, relativeToXMLEl
 	elementNameContainer.className = 'element_name';
 	this.elementHeader.appendChild(elementNameContainer);
 
-	this.elementName = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace) 
+	if (this.objectType.schema)
+		this.elementName = this.xmlNode[0].tagName;
+	else {
+		this.elementName = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace) 
 		+ this.objectType.localName;
+	}
+	
 	// set up element title and entry field if appropriate
 	var titleElement = document.createElement('span');
 	titleElement.appendChild(document.createTextNode(this.elementName));
@@ -3036,6 +3055,8 @@ XMLElement.prototype.renderChildren = function(recursive) {
 XMLElement.prototype.renderAttributes = function () {
 	var self = this;
 	var attributesArray = this.objectType.attributes;
+	if (!attributesArray)
+		return;
 	
 	$(this.xmlNode[0].attributes).each(function() {
 		var attrNamespace = this.namespaceURI? this.namespaceURI : self.objectType.namespace;
@@ -3163,6 +3184,12 @@ XMLElement.prototype.addTopActions = function () {
 	var topActionSpan = document.createElement('li');
 	topActionSpan.className = 'top_actions';
 	
+	var toggleCollapse = document.createElement('span');
+	toggleCollapse.className = 'toggle_collapse';
+	toggleCollapse.id = this.guiElementID + '_toggle_collapse';
+	toggleCollapse.appendChild(document.createTextNode('_'));
+	topActionSpan.appendChild(toggleCollapse);
+	
 	var moveDown = document.createElement('span');
 	moveDown.className = 'move_down';
 	moveDown.id = this.domNodeID + '_down';
@@ -3192,7 +3219,7 @@ XMLElement.prototype.addContentContainers = function (recursive) {
 	
 	var placeholder = document.createElement('div');
 	placeholder.className = 'placeholder';
-	if (attributesArray.length > 0){
+	if (attributesArray && attributesArray.length > 0){
 		if (elementsArray.length > 0)
 			placeholder.appendChild(document.createTextNode('Use the menu to add subelements and attributes.'));
 		else
@@ -3202,7 +3229,7 @@ XMLElement.prototype.addContentContainers = function (recursive) {
 	this.placeholder = $(placeholder);
 	this.domNode.append(this.placeholder);
 	
-	if (attributesArray.length > 0) {
+	if (attributesArray && attributesArray.length > 0) {
 		this.addAttributeContainer();
 	}
 	

@@ -12,7 +12,7 @@ function XMLElement(xmlNode, objectType, editor) {
 	// Flag indicating if any children nodes can be added to this element
 	this.allowChildren = this.objectType.elements.length > 0;
 	// Flag indicating if any attributes can be added to this element
-	this.allowAttributes = this.objectType.attributes != null && this.objectType.attributes.length > 0;
+	this.allowAttributes = this.objectType.attributes && this.objectType.attributes.length > 0;
 	// Should this element allow text nodes to be added
 	this.allowText = this.objectType.type != null;
 	// ID of the dom node for this element
@@ -86,8 +86,13 @@ XMLElement.prototype.render = function(parentElement, recursive, relativeToXMLEl
 	elementNameContainer.className = 'element_name';
 	this.elementHeader.appendChild(elementNameContainer);
 
-	this.elementName = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace) 
+	if (this.objectType.schema)
+		this.elementName = this.xmlNode[0].tagName;
+	else {
+		this.elementName = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace) 
 		+ this.objectType.localName;
+	}
+	
 	// set up element title and entry field if appropriate
 	var titleElement = document.createElement('span');
 	titleElement.appendChild(document.createTextNode(this.elementName));
@@ -135,6 +140,8 @@ XMLElement.prototype.renderChildren = function(recursive) {
 XMLElement.prototype.renderAttributes = function () {
 	var self = this;
 	var attributesArray = this.objectType.attributes;
+	if (!attributesArray)
+		return;
 	
 	$(this.xmlNode[0].attributes).each(function() {
 		var attrNamespace = this.namespaceURI? this.namespaceURI : self.objectType.namespace;
@@ -262,6 +269,12 @@ XMLElement.prototype.addTopActions = function () {
 	var topActionSpan = document.createElement('li');
 	topActionSpan.className = 'top_actions';
 	
+	var toggleCollapse = document.createElement('span');
+	toggleCollapse.className = 'toggle_collapse';
+	toggleCollapse.id = this.guiElementID + '_toggle_collapse';
+	toggleCollapse.appendChild(document.createTextNode('_'));
+	topActionSpan.appendChild(toggleCollapse);
+	
 	var moveDown = document.createElement('span');
 	moveDown.className = 'move_down';
 	moveDown.id = this.domNodeID + '_down';
@@ -291,7 +304,7 @@ XMLElement.prototype.addContentContainers = function (recursive) {
 	
 	var placeholder = document.createElement('div');
 	placeholder.className = 'placeholder';
-	if (attributesArray.length > 0){
+	if (attributesArray && attributesArray.length > 0){
 		if (elementsArray.length > 0)
 			placeholder.appendChild(document.createTextNode('Use the menu to add subelements and attributes.'));
 		else
@@ -301,7 +314,7 @@ XMLElement.prototype.addContentContainers = function (recursive) {
 	this.placeholder = $(placeholder);
 	this.domNode.append(this.placeholder);
 	
-	if (attributesArray.length > 0) {
+	if (attributesArray && attributesArray.length > 0) {
 		this.addAttributeContainer();
 	}
 	

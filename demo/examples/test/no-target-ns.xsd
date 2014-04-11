@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	xmlns:dc="http://purl.org/dc/elements/1.1/">
+	
+	<xs:import namespace="http://www.w3.org/XML/1998/namespace"
+		schemaLocation="../dcterms/xml.xsd">
+	</xs:import>
+	<xs:import namespace="http://purl.org/dc/elements/1.1/"
+		schemaLocation="../dcterms/dc.xsd" />
+		
+	<xs:element name="root" type="rootType" />
+	
+	<xs:complexType name="rootType">
+		<xs:choice>
+			<xs:element name="name" type="xs:string" />
+			<xs:element name="uri" type="xs:string" />
+			<xs:element name="dc" type="dcElements" />
+		</xs:choice>
+	</xs:complexType>
+	
+	<xs:complexType name="dcElements">
+    <xs:choice>
+      <xs:element ref="dc:title"/>
+		  <xs:element ref="dc:creator"/>
+		  <xs:element ref="dc:subject"/>
+		  <xs:element ref="dc:description"/>
+		  <xs:element ref="dc:publisher"/>
+		  <xs:element ref="dc:contributor"/>
+    </xs:choice>
+  </xs:complexType>
+</xs:schema>
