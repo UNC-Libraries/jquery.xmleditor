@@ -18,7 +18,6 @@ function SchemaProcessor(xsdDocument, xsdManager, schemaUrl, parentNSIndex) {
 	
 	// Object definitions defined at the root level of the schema
 	this.rootDefinitions = {};
-	this.types = {};
 	
 	// Local namespace prefix registry
 	this.localNamespaces = $.extend({}, this.xsdManager.globalNamespaces);
@@ -43,19 +42,9 @@ function SchemaProcessor(xsdDocument, xsdManager, schemaUrl, parentNSIndex) {
 
 // Process the schema file to extract its structure into javascript objects
 SchemaProcessor.prototype.processSchema = function() {
-
-	try {
-		// Flag indicating that this schema 
-		this.processingStarted = true;
-		
-		// Begin constructing the element tree, starting from the schema element
-		this.root = this.buildSchema(this.xsd);
-
-		// Resolve dangling type references
-		this.resolveTypeReferences(this.root, []);
-	} catch (e) {
-		console.log(e);
-	}
+	
+	// Begin constructing the element tree, starting from the schema element
+	this.root = this.build_schema(this.xsd);
 };
 
 SchemaProcessor.prototype.extractNamespaces = function() {
@@ -88,11 +77,10 @@ SchemaProcessor.prototype.extractNamespaces = function() {
 		// Determine if the targetNS is already registered locally
 		var localPrefix = this.getLocalNamespacePrefix(this.targetNS);
 		if (localPrefix == null) {
-			// Register the target namespace as the default namespace, even if there was already a default ns
-			this.targetNSIndex = this.registerNamespace(this.targetNS, "");
-		} else {
-			this.targetNSIndex = this.xsdManager.getNamespaceIndex(this.targetNS);
+			// Register the target namespace as the default namespace
+			localPrefix = "";
 		}
+		this.targetNSIndex = this.registerNamespace(this.targetNS, "");
 	}
 	
 	// Register the target ns as the default ns if none was specified
@@ -101,75 +89,34 @@ SchemaProcessor.prototype.extractNamespaces = function() {
 	}
 };
 
-// Post processing step which recursively walks the schema tree and merges type definitions
-// into elements that reference them.
-SchemaProcessor.prototype.resolveTypeReferences = function(object, objectStack) {
-	if (object.typeRef == null) {
-		// Since this object did not have a type reference, continue to walk its children
-		if (object.element || object.schema) {
-			var self = this;
-			if (object.elements) {
-				objectStack.push(object);
-				$.each(object.elements, function(){
-					if ($.inArray(this, objectStack) == -1)
-						self.resolveTypeReferences(this, objectStack);
-				});
-				objectStack.pop();
-			}
-			if (object.attributes != null) {
-				$.each(object.attributes, function(){
-					self.resolveTypeReferences(this);
-				});
-			}
-		}
+SchemaProcessor.prototype.createDefinition = function(node, nameParts) {
+	if (!nameParts) {
+		var name = node.getAttribute("name");
+		if (name)
+			nameParts = this.extractName(name);
+	}
+		
+	// New root definition
+	var definition = {
+		values : [],
+		type : null,
+		ns: this.targetNSIndex,
+		np : true
+	};
+	
+	if (nameParts && nameParts.localName)
+		definition.name = nameParts.localName;
+	
+	if (node.localName == "attribute") {
+		definition.attribute = true;
 	} else {
-		// If there was a type definition on this object, merge it in and stop to avoid infinite loops
-		var typeDef = object.typeRef;
-		delete object.typeRef;
-		this.mergeType(object, typeDef);
-	}
-};
-
-SchemaProcessor.prototype.build = function(node, startingDef, fnName) {
-	var name = node.getAttribute("name");
-	var definition = startingDef;
-	
-	if (name && node.parentNode == this.xsd) {
-		var nameParts = schema.extractName(name);
-		if (nameParts.indexedName in this.rootDefinitions){
-			// Use the cached definition
-			return this.rootDefinitions[nameParts.indexedName];
-		} else {
-			// New root definition
-			definition = {
-				name : nameParts.localName,
-				values : [],
-				type : null,
-				ns: this.targetNSIndex
-			};
-			
-			if (node.localName == "attribute") {
-				definition.attribute = true;
-			} else {
-				if (node.localName == "element")
-					definition.element = true;
-				definition.attributes = [];
-				definition.elements = [];
-			}
-			
-			this.rootDefinitions[nameParts.indexedName] = definition;
-		}
+		if (node.localName == "element")
+			definition.element = true;
+		definition.attributes = [];
+		definition.elements = [];
 	}
 	
-	if (!fnName) {
-		fnName = "build_" + node.localName;
-	}
-	
-	return this[fnName](node, definition);
-};
-
-SchemaProcessor.prototype.resolveBuild = function(node, definition) {
-	this.xsdManager.resolve(node, definition, "build");
+	return definition;
 };
 
 SchemaProcessor.prototype.addElement = function(node, definition, parentDef) {
@@ -179,9 +126,10 @@ SchemaProcessor.prototype.addElement = function(node, definition, parentDef) {
 		// Root level elements can't have min/max occurs attributes
 		var minOccurs = node.getAttribute("minOccurs");
 		var maxOccurs = node.getAttribute("maxOccurs");
-		if (parentObject && (minOccurs || maxOccurs)) {
-			var nameOrRefParts = nameParts? nameParts : this.extractName(node.getAttribute("ref"));
-			if (!("occurs" in parentObject))
+		if (parentDef && (minOccurs || maxOccurs)) {
+			var nameOrRef = node.getAttribute("name") || node.getAttribute("ref");
+			var nameOrRefParts = this.extractName(nameOrRef);
+			if (!("occurs" in parentDef))
 				parentDef.occurs = {};
 			parentDef.occurs[nameOrRefParts.indexedName] = {
 					'min' : minOccurs,
@@ -194,6 +142,8 @@ SchemaProcessor.prototype.addElement = function(node, definition, parentDef) {
 	if (parentDef != null && node.getAttribute("abstract") != "true"
 			&& !this.containsChild(parentDef, definition))
 		parentDef.elements.push(definition);
+	
+	return definition;
 };
 
 SchemaProcessor.prototype.addAttribute = function(node, definition, parentDef) {
@@ -202,64 +152,91 @@ SchemaProcessor.prototype.addAttribute = function(node, definition, parentDef) {
 		parentDef.attributes.push(definition);
 };
 
+SchemaProcessor.prototype.addReference = function(definition, refName) {
+	var nameParts = this.extractName(refName);
+	definition.ref = nameParts.indexedName;
+};
+
+SchemaProcessor.prototype.addTypeReference = function(definition, refName) {
+	var nameParts = this.extractName(refName);
+	if (!definition.typeRef) {
+		definition.typeRef = [];
+	}
+	
+	definition.typeRef.push(nameParts.indexedName);
+};
+
 // Build the schema tag
 SchemaProcessor.prototype.build_schema = function(node) {
-	var object = {
-		"elements": [],
-		"ns": this.targetNSIndex,
-		"schema": true
+	var definition = {
+		elements : [],
+		ns : this.targetNSIndex,
+		schema : true,
+		np : true
 	};
 	var self = this;
 	var children = this.getChildren(node);
 	for (var i in children) {
 		var child = children[i];
+
 		if (child.localName == 'element') {
-			var element = this.build(child, object);
-			this.addElement(child, element, object);
+			var element = this.build(child, definition);
+			this.addElement(child, element, definition);
 		} else if (child.localName == 'simpleType' || 
 				child.localName == 'attribute' || child.localName == 'complexType' ||
 				child.localName == 'group' || child.localName == 'attributeGroup') {
-			this.build(child, object);
+			this.build(child, definition);
 		}
 	}
-	return object;
+	return definition;
+};
+
+SchemaProcessor.prototype.build = function(node, startingDef, fnName) {
+	var name = node.getAttribute("name");
+	var definition = startingDef;
+	
+	if (name && node.parentNode == this.xsd) {
+		var nameParts = this.extractName(name);
+		if (nameParts.indexedName in this.rootDefinitions){
+			// Use the cached definition
+			return this.rootDefinitions[nameParts.indexedName];
+		} else {
+			// New root definition
+			definition = this.createDefinition(node, nameParts);
+			
+			this.rootDefinitions[nameParts.indexedName] = definition;
+		}
+	}
+	
+	if (!fnName) {
+		fnName = "build_" + node.localName;
+	}
+	
+	return this[fnName](node, definition);
 };
 
 // Build an element definition
 // node - element schema node
-// parentObject - definition of the parent this element will be added to
+// parentdefinition - definition of the parent this element will be added to
 SchemaProcessor.prototype.build_element = function(node, definition, parentDef) {
-	var definition = null;
-	var name = node.getAttribute("name");
-	var nameParts = this.extractName(name);
 	
-	var hasSubGroup = node.getAttribute("substitutionGroup") != null;
-	var hasRef = node.getAttribute("ref") != null;
-	if (hasSubGroup || hasRef){
-		// Resolve reference to get the actual definition for this element
-		definition = this.resolveBuild(node);
-		//definition = this.xsdManager.execute(this, node, 'buildElement', parentObject);
-		// Substitution group not yet entirely implement
-//		if (hasSubGroup) {
-//			definition = $.extend({}, definition, {'name' : nameParts.localName});
-//			if (node.parentNode === this.xsd && !hasRef) {
-//				this.rootDefinitions[nameParts.indexedName] = definition;
-//			}
-//		}
+	var ref = node.getAttribute("ref");
+	var subGroup = node.getAttribute("substitutionGroup");
+	if (ref) {
+		this.addReference(definition, ref);
+	} else if (subGroup) {
+		this.addTypeReference(definition, subGroup);
 	} else {
-		
 		// Build or retrieve the type definition
 		var type = node.getAttribute("type");
 		if (type == null) {
 			this.build_type(this.getChildren(node)[0], definition);
 		} else {
-			definition.type = this.resolveType(type, definition);
+			// Check to see if it is a built in type
+			definition.type = this.getBuiltInType(type, definition);
 			if (definition.type == null) {
-				var typeDef = this.resolveBuild(node, definition);
-				// If there was a previously defined type, then store a reference to it
-				if (typeDef !== undefined) {
-					definition.typeRef = typeDef;
-				}
+				// Was not built in, make a reference to resolve later
+				this.addTypeReference(definition, type);
 			}
 		}
 	}
@@ -268,26 +245,24 @@ SchemaProcessor.prototype.build_element = function(node, definition, parentDef) 
 }
 
 SchemaProcessor.prototype.build_attribute = function(node, definition) {
-	var name = node.getAttribute("name");
-	var nameParts;
-	
-	var hasRef = node.getAttribute("ref") != null;
-	if (hasRef){
-		// Follow reference to get the actual type definition and merge in
-		$.extend(definition, this.resolveBuild(node));
+	var ref = node.getAttribute("ref");
+	if (ref) {
+		this.addReference(definition, ref);
 	} else {
-		
+		// Build or retrieve the type definition
 		var type = node.getAttribute("type");
 		if (type == null) {
-			this.build_type(this.getChildren(node)[0], definition);
+			var child = this.getChildren(node)[0];
+			if (child)
+				this.build_type(this.getChildren(node)[0], definition);
+			else // Fall back to string type if nothing else available
+				definition.type = "string";
 		} else {
-			definition.type = this.resolveType(type, definition);
+			// Check to see if it is a built in type
+			definition.type = this.getBuiltInType(type, definition);
 			if (definition.type == null) {
-				var typeDef = this.resolveBuild(node, definition);
-				// If there was a previously defined type, then store a reference to it
-				if (typeDef !== undefined) {
-					definition.typeRef = typeDef;
-				}
+				// Was not built in, make a reference to resolve later
+				this.addTypeReference(definition, type);
 			}
 		}
 	}
@@ -296,117 +271,78 @@ SchemaProcessor.prototype.build_attribute = function(node, definition) {
 };
 
 // Build a type definition
-SchemaProcessor.prototype.buildType = function(node, object) {
-	if (node == null)
-		return;
-	
-	var needsMerge = false;
-	var extendingObject = object;
-	var name = node.getAttribute("name");
-	if (name != null){
-		var nameParts = this.extractName(name);
-		// If this type has already been processed, then apply it
-		if (nameParts.indexedName in this.rootDefinitions) {
-			this.mergeType(object, this.types[nameParts.indexedName]);
-			return;
-		}
-		// New type, create base
-		var type = {
-				elements: [],
-				attributes: [],
-				values: [],
-				ns: this.targetNSIndex
-			};
-		this.rootDefinitions[nameParts.indexedName] = type;
-		//this.types[name] = type;
-		extendingObject = type;
-		needsMerge = true;
-	}
-	
+SchemaProcessor.prototype.build_type = function(node, definition, parentDef) {
 	// Determine what kind of type this is
 	if (node.localName == "complexType") {
-		this.buildComplexType(node, extendingObject);
+		this.build_complexType(node, definition, parentDef);
 	} else if (node.localName == "simpleType") {
-		this.buildSimpleType(node, extendingObject);
+		this.build_simpleType(node, definition, parentDef);
 	} else if (node.localName == "restriction") {
-		this.buildRestriction(node, extendingObject);
-	}
-	
-	// Only need to merge if creating a new named type definition
-	if (needsMerge) {
-		this.mergeType(object, extendingObject);
+		this.build_restriction(node, definition, parentDef);
 	}
 };
 
 // Process a complexType tag
-SchemaProcessor.prototype.buildComplexType = function(node, object) {
-	var self = this;
+SchemaProcessor.prototype.build_complexType = function(node, definition, parentDef) {
 	if (node.getAttribute("mixed") == "true") {
-		object.type = "mixed";
+		definition.type = "mixed";
 	}
+	
 	var children = this.getChildren(node);
 	for (var i in children) {
 		var child = children[i];
 		if (child.localName == "group") {
-			self.xsdManager.execute(this, child, 'buildGroup', object);
+			this.build_group(child, definition);
 		} else if (child.localName == "simpleContent") {
-			self.buildSimpleContent(child, object);
+			this.build_simpleContent(child, definition);
 		} else if (child.localName == "complexContent") {
-			self.buildComplexContent(child, object);
+			this.build_complexContent(child, definition);
 		} else if (child.localName == "choice") {
-			self.buildChoice(child, object);
+			this.build_choice(child, definition);
 		} else if (child.localName == "attribute") {
-			self.buildAttribute(child, object);
+			this.addAttribute(child, this.build_attribute(child, 
+					this.createDefinition(child)), definition);
 		} else if (child.localName == "attributeGroup") {
-			self.xsdManager.execute(this, child, 'buildAttributeGroup', object);
+			this.build_attributeGroup(child, definition);
 		} else if (child.localName == "sequence") {
-			self.buildSequence(child, object);
+			this.build_sequence(child, definition);
 		} else if (child.localName == "all") {
-			self.buildAll(child, object);
+			this.build_all(child, definition);
 		}
 	}
 };
 
 // Process a simpleType tag
-SchemaProcessor.prototype.buildSimpleType = function(node, object) {
+SchemaProcessor.prototype.build_simpleType = function(node, definition) {
 	var child = this.getChildren(node)[0];
 	if (child.localName == "restriction") {
-		this.buildRestriction(child, object);
+		this.build_restriction(child, definition);
 	} else if (child.localName == "list") {
-		this.buildList(child, object);
+		this.build_list(child, definition);
 	} else if (child.localName == "union") {
-		this.buildUnion(child, object);
+		this.build_union(child, definition);
 	}
 };
 
-// Process a list tag
-SchemaProcessor.prototype.buildList = function(node, object) {
-	var itemType = node.getAttribute('itemType');
-	object.type = this.resolveType(itemType, object);
-	if (object.type == null) {
-		this.xsdManager.execute(this, node, 'buildType', object);
-	}
-	object.multivalued = true;
+// Process a list tag, which allows for a single tag with multiple values
+SchemaProcessor.prototype.build_list = function(node, definition) {
+	// For the moment, lists will just be treated as free text fields
+	definition.type = this.xsPrefix + "string";
+	definition.multivalued = true;
 };
 
 // Process a union tag
-SchemaProcessor.prototype.buildUnion = function(node, object) {
+SchemaProcessor.prototype.build_union = function(node, definition) {
 	var memberTypes = node.getAttribute('memberTypes');
 	if (memberTypes) {
 		memberTypes = memberTypes.split(' ');
-		var self = this;
 		
 		for (var i in memberTypes) {
 			var memberType = memberTypes[i];
-			var xsdObjSet = self.xsdManager.resolveSchema(self, memberType);
-			for (var index in xsdObjSet) {
-				var xsdObj = xsdObjSet[index];
-				var targetNode = xsdObj.getChildren(null, 'simpleType', memberType);
-				if (targetNode && targetNode.length > 0) {
-					targetNode = targetNode[0];
-					xsdObj.buildType(targetNode, object);
-					break;
-				}
+			
+			definition.type = this.getBuiltInType(memberType, definition);
+			if (definition.type == null) {
+				this.addTypeReference(definition, memberType);
 			}
 		}
 	}
@@ -414,39 +350,45 @@ SchemaProcessor.prototype.buildUnion = function(node, object) {
 	var self = this;
 	var children = this.getChildren(node, 'simpleType');
 	for (var i in children)
-		self.buildSimpleType(children[i], object);
+		self.build_simpleType(children[i], definition);
 };
 
 // Process a group tag
-SchemaProcessor.prototype.buildGroup = function(node, object) {
+SchemaProcessor.prototype.build_group = function(node, definition) {
+	var ref = node.getAttribute("ref");
+	if (ref){
+		this.addTypeReference(definition, ref);
+		return definition;
+	}
 	var self = this;
 	var children = this.getChildren(node);
 	for (var i in children) {
 		var child = children[i];
 		if (child.localName == "choice")  {
-			self.buildChoice(child, object);
+			self.build_choice(child, definition);
 		} else if (child.localName == "all") {
-			self.buildAll(child, object);
+			self.build_all(child, definition);
 		} else if (child.localName == "sequence") {
-			self.buildSequence(child, object);
+			self.build_sequence(child, definition);
 		}
 	}
 };
 
 // Process an all tag
-SchemaProcessor.prototype.buildAll = function(node, object) {
+SchemaProcessor.prototype.build_all = function(node, definition) {
 	var self = this;
 	var children = this.getChildren(node);
 	for (var i in children) {
 		var child = children[i];
 		if (child.localName == "element") {
-			self.buildElement(child, object);
+			this.addElement(child, this.build_element(child, 
+					this.createDefinition(child)), definition);
 		}
 	}
 };
 
 // Process a choice tag
-SchemaProcessor.prototype.buildChoice = function(node, object) {
+SchemaProcessor.prototype.build_choice = function(node, definition) {
 	var self = this;
 	var choice = {
 			"elements": [],
@@ -457,157 +399,161 @@ SchemaProcessor.prototype.buildChoice = function(node, object) {
 	for (var i in children) {
 		var child = children[i];
 		if (child.localName == "element") {
-			var element = self.buildElement(child, object);
+			var element = this.addElement(child, this.build_element(child, 
+					this.createDefinition(child)), definition);
 			choice.elements.push(element.ns + ":" + element.name);
 		} else if (child.localName == "group") {
-			self.xsdManager.execute(this, child, 'buildGroup', object);
+			this.build_group(child, definition);
 		} else if (child.localName == "choice") {
-			self.buildChoice(child, object);
+			self.build_choice(child, definition);
 		} else if (child.localName == "sequence") {
-			self.buildSequence(child, object);
+			self.build_sequence(child, definition);
 		} else if (child.localName == "any") {
-			self.buildAny(child, object);
+			self.build_any(child, definition);
 		}
 	}
-	if (!('choices' in object))
-		object.choices = [];
-	object.choices.push(choice);
+	if (!('choices' in definition))
+		definition.choices = [];
+	definition.choices.push(choice);
 };
 
 // Process a sequence tag
-SchemaProcessor.prototype.buildSequence = function(node, object) {
+SchemaProcessor.prototype.build_sequence = function(node, definition) {
 	var self = this;
 	var children = this.getChildren(node);
 	for (var i in children) {
 		var child = children[i];
 		if (child.localName == "element") {
-			self.buildElement(child, object);
+			this.addElement(child, this.build_element(child, 
+					this.createDefinition(child)), definition);
 		} else if (child.localName == "group") {
-			self.xsdManager.execute(this, child, 'buildGroup', object);
+			self.build_group(child, definition);
 		} else if (child.localName == "choice") {
-			self.buildChoice(child, object);
+			self.build_choice(child, definition);
 		} else if (child.localName == "sequence") {
-			self.buildSequence(child, object);
+			self.build_sequence(child, definition);
 		} else if (child.localName == "any") {
-			self.buildAny(child, object);
+			self.build_any(child, definition);
 		}
 	}
 };
 
 // Process an any tag
-SchemaProcessor.prototype.buildAny = function(node, object) {
-	object.any = !(node.getAttribute("minOccurs") == "0" && node.getAttribute("maxOccurs") == "0");
+SchemaProcessor.prototype.build_any = function(node, definition) {
+	definition.any = !(node.getAttribute("minOccurs") == "0" && node.getAttribute("maxOccurs") == "0");
 };
 
 // Process a complexContent tag
-SchemaProcessor.prototype.buildComplexContent = function(node, object) {
+SchemaProcessor.prototype.build_complexContent = function(node, definition) {
 	if (node.getAttribute("mixed") == "true") {
-		object.type = "mixed";
+		definition.type = "mixed";
 	}
 	
 	var child = this.getChildren(node)[0];
 	if (child.localName == "extension") {
-		this.buildExtension(child, object);
+		this.build_extension(child, definition);
 	} else if (child.localName == "restriction") {
-		this.buildRestriction(child, object);
+		this.build_restriction(child, definition);
 	}
 };
 
 // Process a simpleContent tag
-SchemaProcessor.prototype.buildSimpleContent = function(node, object) {
+SchemaProcessor.prototype.build_simpleContent = function(node, definition) {
 	var child = this.getChildren(node)[0];
 	if (child.localName == "extension") {
-		this.buildExtension(child, object);
+		this.build_extension(child, definition);
 	} else if (child.localName == "restriction") {
-		this.buildRestriction(child, object);
+		this.build_restriction(child, definition);
 	}
 };
 
 // Process a restriction tag
-SchemaProcessor.prototype.buildRestriction = function(node, object) {
+SchemaProcessor.prototype.build_restriction = function(node, definition) {
 	var base = node.getAttribute("base");
 	
-	object.type = this.resolveType(base, object);
-	if (object.type == null) {
-		var typeDef = this.xsdManager.execute(this, node, 'buildType', object);
-		if (typeDef !== undefined)
-			this.mergeType(object, typeDef);
+	definition.type = this.getBuiltInType(base, definition);
+	if (definition.type == null) {
+		this.addTypeReference(definition, base);
 	}
+	
 	var self = this;
 	var children = this.getChildren(node);
 	for (var i in children) {
 		var child = children[i];
 		if (child.localName == "enumeration") {
-			object.values.push(child.getAttribute("value"));
+			definition.values.push(child.getAttribute("value"));
 		} else if (child.localName == "group") {
-			self.xsdManager.execute(this, child, 'buildGroup', object);
+			self.build_group(child, definition);
 		} else if (child.localName == "choice") {
-			self.buildChoice(child, object);
+			self.build_choice(child, definition);
 		} else if (child.localName == "attribute") {
-			self.buildAttribute(child, object);
+			this.addAttribute(child, this.build_attribute(child, 
+					this.createDefinition(child)), definition);
 		} else if (child.localName == "attributeGroup") {
-			self.xsdManager.execute(this, child, 'buildAttributeGroup', object);
+			self.build_attributeGroup(child, definition);
 		} else if (child.localName == "sequence") {
-			self.buildSequence(child, object);
+			self.build_sequence(child, definition);
 		} else if (child.localName == "all") {
-			self.buildAll(child, object);
+			self.build_all(child, definition);
 		} else if (child.localName == "simpleType") {
-			self.buildSimpleType(child, object);
+			self.build_simpleType(child, definition);
 		}
 	}
 };
 
 // Process an extension tag
-SchemaProcessor.prototype.buildExtension = function(node, object) {
+SchemaProcessor.prototype.build_extension = function(node, definition) {
 	var base = node.getAttribute("base");
 	
-	object.type = this.resolveType(base, object);
-	if (object.type == null) {
-		var typeDef = this.xsdManager.execute(this, node, 'buildType', object);
-		if (typeDef !== undefined)
-			this.mergeType(object, typeDef);
+	definition.type = this.getBuiltInType(base, definition);
+	if (definition.type == null) {
+		this.addTypeReference(definition, base);
 	}
+	
 	var self = this;
 	var children = this.getChildren(node);
 	for (var i in children) {
 		var child = children[i];
 		if (child.localName == "attribute") {
-			self.buildAttribute(child, object);
+			this.addAttribute(child, this.build_attribute(child, 
+					this.createDefinition(child)), definition);
 		} else if (child.localName == "attributeGroup") {
-			self.xsdManager.execute(this, child, 'buildAttributeGroup', object);
+			self.build_attributeGroup(child, definition);
 		} else if (child.localName == "sequence") {
-			self.buildSequence(child, object);
+			self.build_sequence(child, definition);
 		} else if (child.localName == "all") {
-			self.buildAll(child, object);
+			self.build_all(child, definition);
 		} else if (child.localName == "choice") {
-			self.buildChoice(child, object);
+			self.build_choice(child, definition);
 		} else if (child.localName == "group") {
-			self.buildGroup(child, object);
+			self.build_group(child, definition);
 		}
 	}
 };
 
 // Process an attributeGroup tag
-SchemaProcessor.prototype.buildAttributeGroup = function(node, object) {
+SchemaProcessor.prototype.build_attributeGroup = function(node, definition) {
+	var ref = node.getAttribute("ref");
+	if (ref){
+		this.addTypeReference(definition, ref);
+		return definition;
+	}
+	
 	var children = this.getChildren(node);
 	for (var i in children) {
 		var child = children[i];
 		if (child.localName == "attribute") {
-			this.buildAttribute(child, object);
+			this.addAttribute(child, this.build_attribute(child, 
+					this.createDefinition(child)), definition);
 		} else if (child.localName == "attributeGroup") {
-			this.xsdManager.execute(this, child, 'buildAttributeGroup', object);
+			this.build_attributeGroup(child, definition);
 		}
 	}
 };
 
-SchemaProcessor.prototype.stripPrefix = function(name) {
-	var index = name.indexOf(":");
-	return index == -1? name: name.substring(index + 1);
-};
-
-SchemaProcessor.prototype.resolveType = function(type, object) {
-	if (object.type != null)
-		return object.type;
+SchemaProcessor.prototype.getBuiltInType = function(type, definition) {
+	if (definition.type != null)
+		return definition.type;
 	if (type.indexOf(":") == -1) {
 		if (this.xsPrefix == "")
 			return type;
@@ -617,19 +563,6 @@ SchemaProcessor.prototype.resolveType = function(type, object) {
 		}
 	}
 	return null;
-};
-
-SchemaProcessor.prototype.mergeType = function(base, type) {
-	for (var key in type) {
-		if (type.hasOwnProperty(key)) {
-			var value = type[key];
-			if (value != null && base[key] == null){
-				base[key] = value;
-			} else if ($.isArray(value) && $.isArray(type[key])){
-				base[key] = base[key].concat(value);
-			}
-		}
-	}
 };
 
 //Retrieve all the children of node which belong to the schema namespace.  
@@ -654,11 +587,14 @@ SchemaProcessor.prototype.getChildren = function(node, childName, nameAttribute)
 }
 
 //Namespace aware check to see if a definition already contains parent child element
-SchemaProcessor.prototype.containsChild = function(object, child) {
-	if (object.elements) {
-		for (var index in object.elements) {
-			if (object.elements[index].name == child.name
-					&& object.elements[index].ns == child.ns)
+SchemaProcessor.prototype.containsChild = function(definition, child) {
+	if (definition.elements) {
+		var childName = child.ref || child.ns + ":" + child.name;
+		for (var index in definition.elements) {
+			var element = definition.elements[index];
+			var existingName = element.ref || element.ns + ":" + element.name;
+			
+			if (childName == existingName)
 				return true;
 		}
 	}

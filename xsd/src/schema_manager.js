@@ -14,7 +14,7 @@ function SchemaManager(originatingXsdName, options) {
 	
 	var self = this;
 	
-	this.isNotRelativeUrlRegex = new RegExp(/^https?:\/\//);
+	this.isHttpUrl = new RegExp(/^https?:\/\//);
 	
 	// Map of schema processors for imported schemas.  Stored by namespace
 	this.imports = {};
@@ -48,8 +48,7 @@ function SchemaManager(originatingXsdName, options) {
 	// Establish originatingRoot reference
 	this.setOriginatingRoot();
 	
-	// Resolve dangling external schema types from circular includes
-	this.resolveCrossSchemaTypeReferences(this.originatingRoot, []);
+	this.resolveTypeReferences(this.originatingRoot);
 	
 	// Add namespace uris into the final schema object
 	this.exportNamespaces();
@@ -59,22 +58,26 @@ SchemaManager.prototype.retrieveSchema = function(url, callback) {
 	this.importAjax(url, callback);
 };
 
-SchemaManager.prototype.importAjax = function(url, callback, attemptFullUrl) {
+SchemaManager.prototype.importAjax = function(url, callback, failedLocalAttempt) {
 	var self = this;
+	var isHttpRequest = url.match(this.isHttpUrl);
+	var schemaPath = url;
+	// Try http urls as local calls first since the full urls generally fail
+	if (isHttpRequest && !failedLocalAttempt)
+		schemaPath = self.options.schemaURI + url.substring(url.lastIndexOf("/") + 1);
 	
 	$.ajax({
-		url: url,
+		url: schemaPath,
 		dataType: "text",
 		async: false,
 		success: function(data){
 			var xsdDocument = $.parseXML(data).documentElement;
 			callback.call(self, xsdDocument, url);
 		}, error: function() {
-			if (url.match(this.isNotRelativeUrlRegex) && !attemptFullUrl)
+			if (!isHttpRequest || failedLocalAttempt)
 				throw new Error("Unable to import " + url);
 			// Try treating as a relative url since original path wasn't retrievable
-			self.importAjax(this.options.schemaURI + url.substring(url.lastIndexOf("/") + 1),
-					callback, true);
+			self.importAjax(url, callback, true);
 		}
 	});
 };
@@ -83,7 +86,7 @@ SchemaManager.prototype.computeSchemaLocation = function(url, parentSchema) {
 	if (!url)
 		return null;
 	
-	var isNotRelative = url.match(this.isNotRelativeUrlRegex);
+	var isNotRelative = url.match(this.isHttpUrl);
 	if (isNotRelative) {
 		return url;
 	} else {
@@ -211,7 +214,8 @@ SchemaManager.prototype.setOriginatingRoot = function() {
 				schema : true,
 				ns : this.originatingSchema.targetNSIndex,
 				namespaces : [],
-				elements : []
+				elements : [],
+				np : true
 			};
 		
 		for (var ns in this.imports) {
@@ -259,40 +263,80 @@ SchemaManager.prototype.exportNamespaces = function() {
 	this.originatingRoot.namespaces = namespaceRegistry;
 };
 
-//Detect if the given object referenced a type from a schema which was not available at the time
-//it was originally being processed.  If so, then merge the definition with the definition from
-//the external schema.
-SchemaManager.prototype.mergeCrossSchemaType = function(object) {
-	if (object.schemaObject) {
-		var schemas = object.schemaObject;
-		var references = object.reference;
-		// Clean up the cross schema references
-		delete object.schemaObject;
-		delete object.reference;
-		// Merge in the external schema types, recursively merging together the external schema types
-		for (var i = 0; i < schemas.length; i++){
-			schemas[i].mergeType(object, this.mergeCrossSchemaType(schemas[i].rootDefinitions[references[i]]));
+//Post processing step which recursively walks the schema tree and merges type definitions
+//into elements that reference them.
+SchemaManager.prototype.resolveTypeReferences = function(definition) {
+	
+	// Prevent processing the same object more than once
+	if (definition.np)
+		delete definition.np;
+	else
+		return definition;
+
+	if (definition.ref) {
+		var ref = definition.ref;
+		delete definition.ref;
+		
+		var refDef = this.resolveDefinition(ref);
+		if (!refDef)
+			throw new Error("Could not resolve reference " + ref 
+					+ " from definition " + definition.name);
+		
+		// Compute nested types depth first before merging in this type
+		this.resolveTypeReferences(refDef);
+		
+		this.mergeRef(definition, refDef);
+	} else {
+		// Process children
+		var self = this;
+		if (definition.elements) {
+			$.each(definition.elements, function(){
+				self.resolveTypeReferences(this);
+			});
+		}
+		if (definition.attributes != null) {
+			$.each(definition.attributes, function(){
+				self.resolveTypeReferences(this);
+			});
+		}
+		
+		if (definition.typeRef) {
+			// Merge in any type references
+			var typeRefs = definition.typeRef;
+			delete definition.typeRef;
+			
+			for (var index in typeRefs) {
+				var typeRef = typeRefs[index];
+				
+				// Find the definition being referenced across all schemas
+				var typeDef = this.resolveDefinition(typeRef);
+				if (!typeDef)
+					throw new Error("Could not resolve reference to type " + typeRef 
+							+ " from definition " + definition.name);
+				
+				// Compute nested types depth first before merging in this type
+				this.resolveTypeReferences(typeDef);
+				
+				this.mergeType(definition, typeDef);
+			}
 		}
 	}
-	return object;
 };
 
-//Walk the schema tree to resolve dangling cross schema definitions, which are created as stubs 
-//when circular schema includes are detected.
-//This is only performed once ALL schemas have been processed and local types resolved
-SchemaManager.prototype.resolveCrossSchemaTypeReferences = function(object, objectStack) {
-	this.mergeCrossSchemaType(object);
-	if (object.element || object.schema) {
-		if (object.elements) {
-			objectStack.push(object);
-			for (var i in object.elements) 
-				if ($.inArray(object.elements[i], objectStack) == -1)
-					this.resolveCrossSchemaTypeReferences(object.elements[i], objectStack);
-			objectStack.pop();
+SchemaManager.prototype.resolveDefinition = function(indexedName) {
+	var index = indexedName.substring(0, indexedName.indexOf(":"));
+	
+	var schemaSet = this.imports[this.getNamespaceUri(index)];
+	for (var index in schemaSet) {
+		var schema = schemaSet[index];
+		
+		//Check for cached version of the definition
+		if (indexedName in schema.rootDefinitions){
+			var definition = schema.rootDefinitions[indexedName];
+			if (definition != null) {
+				return definition;
+			}
 		}
-		// Resolve attribute definitions
-		for (var i in object.attributes) 
-			this.resolveCrossSchemaTypeReferences(object.attributes[i]);
 	}
 };
 
@@ -313,67 +357,26 @@ SchemaManager.prototype.resolveSchema = function(schema, name) {
 	return this;
 };
 
-//Process a node with tag processing functin fnName.  Follows references on the node,
-//determining which schema object will be responsible for generating the definition.
-//node - the node being processed
-//fnName - the function to be called to process the node
-//object - definition object the node belongs to
-SchemaManager.prototype.resolve = function(schema, node, fnName, object) {
-	var resolveName = node.getAttribute("ref") || node.getAttribute("substitutionGroup") 
-			|| node.getAttribute("type") || node.getAttribute("base");
-	var targetNode = node;
-	var xsdObj = schema;
-	var name = resolveName;
-	//if (name == "mspace") debugger;
-	
-	// Determine if the node requires resolution to another definition node
-	if (resolveName != null && (schema.xsPrefix == "" && resolveName.indexOf(":") != -1) 
-			|| (schema.xsPrefix != "" && resolveName.indexOf(schema.xsPrefix) == -1)) {
-		// Determine which schema the reference belongs to
-		var xsdObjSet = this.resolveSchema(schema, resolveName);
-		
-		// Extract name parts such that namespace prefix is looked up in the originating schema
-		var nameParts = schema.extractName(name);
-		var processingNotStarted = false;
-		for (var index in xsdObjSet) {
-			xsdObj = xsdObjSet[index];
-			
-			//Check for cached version of the definition
-			if (nameParts.indexedName in xsdObj.rootDefinitions){
-				var definition = xsdObj.rootDefinitions[nameParts.indexedName];
-				if (definition != null) {
-					return definition;
-				}
-			}
-			
-			// Schema reference is not initialized yet, therefore it is a circular reference, store stub
-			processingNotStarted = !xsdObj.processingStarted && xsdObj !== this;
-			if (processingNotStarted) {
-				continue;
-			}
-			
-			// Grab the node the reference was referring to
-			targetNode = xsdObj.getChildren(xsdObj.xsd, undefined, nameParts.localName);
-			if (targetNode && targetNode.length > 0) {
-				targetNode = targetNode[0];
-				break;
+SchemaManager.prototype.mergeType = function(base, type) {
+	for (var key in type) {
+		if (type.hasOwnProperty(key)) {
+			var value = type[key];
+			if (value != null && base[key] == null){
+				base[key] = value;
+			} else if ($.isArray(value) && $.isArray(type[key])){
+				base[key] = base[key].concat(value);
 			}
 		}
-		if (processingNotStarted || !targetNode || targetNode.length == 0) {
-			return {name: nameParts.indexedName, schemaObject : xsdObjSet, reference : [nameParts.indexedName]};
-		}
-	} 
-	
-	try {
-		// Call the processing function on the referenced node
-		return xsdObj[fnName](targetNode, object);
-	} catch (error) {
-		$("body").append("<br/>" + name + ": " + error + " ");
-		throw error;
 	}
 };
 
-
+SchemaManager.prototype.mergeRef = function(base, ref) {
+	if (ref.name)
+		base.name = ref.name;
+	base.ns = ref.ns;
+	
+	this.mergeType(base, ref);
+}
 
 //Register a namespace if it is new
 SchemaManager.prototype.registerNamespace = function(namespaceUri) {
