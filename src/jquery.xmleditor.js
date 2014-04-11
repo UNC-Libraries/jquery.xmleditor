@@ -193,7 +193,18 @@ $.widget( "xml.xmlEditor", {
 				.before(this.xmlEditorContainer)
 				.hide();
 		} else {
-			localXMLContent = this.element.html();
+			if (this.element.children().length > 0) {
+				// If the content is embedded as part of the html, retrieve it as such.
+				// Note, this is case insensitive and can leave to problems
+				localXMLContent = this.element.html();
+			} else {
+				// Content is probably XML encoded
+				localXMLContent = this.element.text();
+			}
+			
+			// Clear out the contents of the element being initialized on
+			this.element.text("");
+			
 			// Add the editor into the dom
 			this.xmlEditorContainer = $("<div/>").attr('class', xmlEditorContainerClass).appendTo(this.element);
 		}
