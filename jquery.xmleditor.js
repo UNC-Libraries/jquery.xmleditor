@@ -2431,7 +2431,7 @@ SchemaTree.prototype.pathMatches = function(elementNode, definition) {
 			if (definition.parents[index] == null || definition.parents[index].schema)
 				return true;
 		} else {
-			if (localName(parentDef) == localName(parentNode) && parentDef.namespace == parentNode.namespaceURI) {
+			if (parentDef.localName == localName(parentNode) && parentDef.namespace == parentNode.namespaceURI) {
 				// Parent definitions matched, so continue the walk
 				var answer = this.pathMatches(parentNode, parentDef);
 				// If this particular parent definition matched all the way, then return true.
