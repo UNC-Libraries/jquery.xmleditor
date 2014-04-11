@@ -24,34 +24,36 @@
 <body>
 	<h1>EAC-CPF Example with Language Autocomplete</h1>
 	<p>Language suggestions in: control > languageDeclaration > language</p><br/>
-	<div id="xml_editor"><eac-cpf xmlns="urn:isbn:1-931666-33-4"></eac-cpf></div>
+	<div id="xml_editor">
+		&lt;eac-cpf xmlns=&quot;urn:isbn:1-931666-33-4&quot;&gt;
+			&lt;control&gt;
+				&lt;languageDeclaration&gt;
+					&lt;language /&gt;
+				&lt;/languageDeclaration&gt;
+			&lt;/control&gt;
+		&lt;/eac-cpf&gt;
+	</div>
 <script>
 	$(function() {
-		var availableTags = [
-			"Aguano",
-			"Tucanoan",
-			"English",
-			"Spanish",
-			"French",
-			"Chinese",
-			"German",
-			"C++",
-			"Japanese",
-			"Urdu",
-			"Hindi"
-			];
-		var extractor = new Xsd2Json("cpf.xsd", {"schemaURI":"examples/eac-cpf/"});
-		$("#xml_editor").xmlEditor({
-								schema: extractor.getSchema(),
-								elementUpdated : function(event) {
-									if (event.action == 'render' && this.objectType.localName == 'language') {
-										this.textInput.autocomplete({
-											source: availableTags
-										});
-									}
-								}
-				});
-	});
+	    var availableTags = [ "Aguano", "Tucanoan", "English", "Spanish",
+	            "French", "Chinese", "German", "C++", "Japanese", "Urdu",
+	            "Hindi" ];
+	    var extractor = new Xsd2Json("cpf.xsd", {
+		    "schemaURI" : "examples/eac-cpf/"
+	    });
+	    $("#xml_editor").xmlEditor(
+	            {
+	                schema : extractor.getSchema(),
+	                elementUpdated : function(event) {
+		                if (event.action == 'render'
+		                        && this.objectType.localName == 'language') {
+			                this.textInput.autocomplete({
+				                source : availableTags
+			                });
+		                }
+	                }
+	            });
+    });
 </script>
 </body>
 </html>

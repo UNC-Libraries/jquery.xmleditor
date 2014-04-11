@@ -32,7 +32,7 @@ It'll also save your users some loading time.
 
 ### Embedding the editor
 ```
-<div id="xml_editor"><root></root></div>
+<div id="xml_editor">&lt;rootElement&gt;&lt;/rootElement&gt;</div>
 <script>
   $(function() {
 		$("#xml_editor").xmlEditor({
