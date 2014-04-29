@@ -357,10 +357,11 @@ SchemaProcessor.prototype.build_all = function(node, definition) {
 // Process a choice tag
 SchemaProcessor.prototype.build_choice = function(node, definition) {
 	var self = this;
+	var max = node.getAttribute("maxOccurs");
 	var choice = {
 			"elements": [],
 			"minOccurs": node.getAttribute("minOccurs"),
-			"maxOccurs": node.getAttribute("maxOccurs")
+			"maxOccurs": (max == null || (isNaN(max) && "unbounded" != max) || max < 0)? 1 : max
 	};
 	var children = this.getChildren(node);
 	for (var i in children) {
@@ -372,7 +373,10 @@ SchemaProcessor.prototype.build_choice = function(node, definition) {
 		case "element" :
 			var element = this.addElement(child, this.build_element(child, 
 					this.createDefinition(child)), definition);
-			choice.elements.push(element.ns + ":" + element.name);
+			if (element.name)
+				choice.elements.push(element.ns + ":" + element.name);
+			else
+				choice.elements.push(element.ref);
 		}
 	}
 	if (!('choices' in definition))
