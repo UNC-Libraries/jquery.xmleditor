@@ -52,6 +52,7 @@ var xmlWorkAreaContainerClass = "xml_work_area";
 var addTopMenuClass = "add_top_menu";
 var addAttrMenuClass = "add_attribute_menu";
 var addElementMenuClass = "add_element_menu";
+var addTextMenuClass = "add_text_menu";
 var xmlMenuBarClass = "xml_menu_bar";
 var submitButtonClass = "send_xml";
 var submissionStatusClass = "xml_submit_status";
@@ -204,6 +205,7 @@ $.widget( "xml.xmlEditor", {
 			
 			// Clear out the contents of the element being initialized on
 			this.element.text("");
+			
 			// Add the editor into the dom
 			this.xmlEditorContainer = $("<div/>").attr('class', xmlEditorContainerClass).appendTo(this.element);
 		}
@@ -384,6 +386,7 @@ $.widget( "xml.xmlEditor", {
 		$(window).resize($.proxy(this.resize, this));
 		
 		this.modifyMenu.initialize(this.xmlEditorContainer);
+		this.modifyMenu.addTextMenu(addTextMenuClass, true);
 		this.modifyMenu.addMenu(addElementMenuClass, this.options.addElementMenuHeaderText, 
 				true, false, true);
 		this.modifyMenu.addAttributeMenu(addAttrMenuClass, this.options.addAttrMenuHeaderText, 
@@ -951,6 +954,59 @@ AbstractXMLObject.prototype.focus = function() {
 
 AbstractXMLObject.prototype.getDomNode = function () {
 	return this.domNode;
+};
+function AddTextMenu(menuID, enabled, owner, editor) {
+	this.menuID = menuID;
+	// Refence to jquery object which contains the menu options
+	this.menuContent = null;
+	// Indicates if the menu can be interacted with
+	this.enabled = enabled;
+	this.owner = owner;
+	this.editor = editor;
+}
+
+AddTextMenu.prototype.destroy = function() {
+	if (this.menuContent != null)
+		this.menuContent.remove();
+};
+
+// Creates the structure for the menu, including headers and content areas.
+AddTextMenu.prototype.render = function(parentContainer) {
+	this.menuContent = $("<ul id='" + this.menuID + "' class='" + menuContentClass + "'/>")
+		.data('menuData', this).appendTo(parentContainer);
+	
+	this.addButton = $("<li>Add text</li>").attr({
+		title : 'Add text'
+	}).appendTo(this.menuContent);
+};
+
+AddTextMenu.prototype.initEventHandlers = function() {
+	var self = this;
+	// Add new child element click event
+	this.menuContent.on('click', 'li', function(event){
+		var prepend = self.editor.options.prependNewElements;
+		if (event.shiftKey) prepend = !prepend;
+		self.owner.editor.addTextCallback(this, prepend);
+	});
+};
+
+AddTextMenu.prototype.populate = function(xmlElement) {
+	if (xmlElement.objectType.type != "mixed") {
+		this.menuContent.hide();
+		return;
+	}
+	
+	this.addButton.data('xml', {
+		"target": this.xmlElement
+	});
+	
+	this.menuContent.show();
+	
+	return this;
+};
+
+AddTextMenu.prototype.clear = function() {
+	this.menuContent.hide();
 };
 function AttributeMenu(menuID, label, expanded, enabled, owner, editor) {
 	ModifyElementMenu.call(this, menuID, label, expanded, enabled, owner, editor);
@@ -2223,6 +2279,17 @@ ModifyMenuPanel.prototype.addAttributeMenu = function(menuID, label, expanded, e
 	return menu;
 };
 
+ModifyMenuPanel.prototype.addTextMenu = function(menuID, enabled) {
+	var menu = new AddTextMenu(menuID, enabled, this, this.editor);
+	this.menus[menuID] = {
+			"menu" : menu, 
+			"contextual": true
+		};
+	menu.render(this.menuContainer);
+	menu.initEventHandlers();
+	return menu;
+};
+
 // Empty entries from all contextual menus
 ModifyMenuPanel.prototype.clearContextualMenus = function() {
 	$.each(this.menus, function(){
@@ -3047,18 +3114,37 @@ XMLElement.prototype.renderChildren = function(recursive) {
 	this.domNode.children("." + xmlElementClass).remove();
 	
 	var elementsArray = this.objectType.elements;
-	var self = this;
-	this.xmlNode.children().each(function() {
-		for ( var i = 0; i < elementsArray.length; i++) {
-			var prefix = self.editor.xmlState.namespaces.getNamespacePrefix(elementsArray[i].namespace);
-			if (prefix + elementsArray[i].localName == this.nodeName) {
-				var childElement = new XMLElement($(this), elementsArray[i], self.editor);
-				childElement.render(self, recursive);
-				self.addChildrenCount(childElement);
-				return;
+	
+	if (this.objectType.type == "mixed") {
+		var children = this.xmlNode[0].childNodes;
+		
+		for (var index in children) {
+			var childNode = children[index];
+			if (childNode.nodeType == 1) {
+				this.renderChild(childNode, elementsArray, recursive);
+			} else if (childNode.nodeType == 3) {
+				var textNode = new XMLTextNode($(childNode), this.editor);
+				textNode.render(this);
 			}
 		}
-	});
+	} else {
+		var self = this;
+		this.xmlNode.children().each(function() {
+			self.renderChild(this, elementsArray, recursive);
+		});
+	}
+};
+
+XMLElement.prototype.renderChild = function(childNode, elementsArray, recursive) {
+	for ( var i = 0; i < elementsArray.length; i++) {
+		var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(elementsArray[i].namespace);
+		if (prefix + elementsArray[i].localName == childNode.nodeName) {
+			var childElement = new XMLElement($(childNode), elementsArray[i], this.editor);
+			childElement.render(this, recursive);
+			this.addChildrenCount(childElement);
+			return;
+		}
+	}
 };
 
 // Render all present attributes for this elements
@@ -3243,7 +3329,7 @@ XMLElement.prototype.addContentContainers = function (recursive) {
 		this.addAttributeContainer();
 	}
 	
-	if (this.objectType.type != null) {
+	if (this.objectType.type != null && this.objectType.type != "mixed") {
 		this.addTextContainer();
 	}
 
@@ -3473,5 +3559,144 @@ XMLElement.prototype.getAttributeContainer = function() {
 
 XMLElement.prototype.getChildContainer = function() {
 	return this.childContainer;
+};
+function XMLTextNode(xmlNode, editor) {
+	var textType = {
+		text : true,
+		type : "text"
+	};
+	
+	AbstractXMLObject.call(this, editor, textType);
+	
+	// ID of the dom node for this element
+	this.domNodeID = null;
+	// dom node for this element
+	this.domNode = null;
+	// XMLElement which is the parent of this element
+	this.parentElement = null;
+	// Main input for text node of this element
+	this.textInput = null;
+	// dom element header for this element
+	this.elementHeader = null;
+	
+}
+
+XMLTextNode.prototype.constructor = XMLTextNode;
+XMLTextNode.prototype = Object.create( AbstractXMLObject.prototype );
+
+XMLTextNode.prototype.render = function(parentElement, recursive, relativeToXMLTextNode, prepend) {
+	this.parentElement = parentElement;
+	this.domNodeID = this.guiEditor.nextIndex();
+	
+	// Create the element and add it to the container
+	this.domNode = document.createElement('div');
+	var $domNode = $(this.domNode);
+	this.domNode.id = this.domNodeID;
+	this.domNode.className = this.parentElement.objectType.ns + "_" + this.parentElement.objectType.localName + 'TextNode ' + xmlElementClass;
+	
+	this.parentElement.childContainer[0].appendChild(this.domNode);
+	
+	// Begin building contents
+	this.elementHeader = document.createElement('ul');
+	this.elementHeader.className = 'element_header';
+	this.domNode.appendChild(this.elementHeader);
+	var elementNameContainer = document.createElement('li');
+	elementNameContainer.className = 'element_name';
+	this.elementHeader.appendChild(elementNameContainer);
+	
+	this.elementHeader.appendChild(this.addTopActions(this.domNodeID));
+	
+	this.domNode = $domNode;
+	this.domNode.data("xmlText", this);
+	
+	//this.updated({action : 'render'});
+	
+	return this.domNode;
+};
+
+//Generate buttons for performing move and delete actions on this element
+XMLTextNode.prototype.addTopActions = function () {
+	var self = this;
+	var topActionSpan = document.createElement('li');
+	topActionSpan.className = 'top_actions';
+	
+	var toggleCollapse = document.createElement('span');
+	toggleCollapse.className = 'toggle_collapse';
+	toggleCollapse.id = this.guiElementID + '_toggle_collapse';
+	toggleCollapse.appendChild(document.createTextNode('_'));
+	topActionSpan.appendChild(toggleCollapse);
+	
+	var moveDown = document.createElement('span');
+	moveDown.className = 'move_down';
+	moveDown.id = this.domNodeID + '_down';
+	moveDown.appendChild(document.createTextNode('\u2193'));
+	topActionSpan.appendChild(moveDown);
+	
+	var moveUp = document.createElement('span');
+	moveUp.className = 'move_up';
+	moveUp.id = this.domNodeID + '_up';
+	moveUp.appendChild(document.createTextNode('\u2191'));
+	topActionSpan.appendChild(moveUp);
+	
+	var deleteButton = document.createElement('span');
+	deleteButton.className = 'delete';
+	deleteButton.id = this.domNodeID + '_del';
+	deleteButton.appendChild(document.createTextNode('X'));
+	topActionSpan.appendChild(deleteButton);
+	
+	return topActionSpan;
+};
+
+//Synchronize the text input for this element to a text node in the xml document
+XMLTextNode.prototype.syncText = function() {
+	var newText = this.textInput.val();
+	if (this.xmlNode[0].childNodes.length > 0) {
+		this.xmlNode[0].childNodes[0].nodeValue = newText;
+	} else {
+		this.xmlNode[0].appendChild(document.createTextNode(newText));
+	}
+};
+
+//Remove this element from the xml document and editor
+XMLTextNode.prototype.remove = function() {
+	// Remove the element from the xml doc
+	this.xmlNode.remove();
+	
+	if (this.domNode != null) {
+		this.domNode.remove();
+	}
+};
+
+// Swap the gui representation of this element to the location of swapTarget
+XMLTextNode.prototype.swap = function (swapTarget) {
+	if (swapTarget == null) {
+		return;
+	}
+	
+	// Swap the xml nodes
+	swapTarget.xmlNode.detach().insertAfter(this.xmlNode);
+	if (swapTarget.domNode != null && this.domNode != null) {
+		// Swap the gui nodes
+		swapTarget.domNode.detach().insertAfter(this.domNode);
+	}
+};
+
+// Move this element up one location in the gui.  Returns true if the swap was able to happen
+XMLTextNode.prototype.moveUp = function() {
+	var previousSibling = this.domNode.prev("." + XMLTextNodeClass);
+	if (previousSibling.length > 0) {
+		this.swap(previousSibling.data("XMLTextNode"));
+		return true;
+	} else {
+		return false;
+	}
+};
+
+XMLTextNode.prototype.select = function() {
+	this.domNode.addClass("selected");
+};
+
+XMLTextNode.prototype.isSelected = function() {
+	return this.domNode.hasClass("selected");
 };
 })(jQuery);

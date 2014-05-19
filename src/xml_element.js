@@ -122,18 +122,37 @@ XMLElement.prototype.renderChildren = function(recursive) {
 	this.domNode.children("." + xmlElementClass).remove();
 	
 	var elementsArray = this.objectType.elements;
-	var self = this;
-	this.xmlNode.children().each(function() {
-		for ( var i = 0; i < elementsArray.length; i++) {
-			var prefix = self.editor.xmlState.namespaces.getNamespacePrefix(elementsArray[i].namespace);
-			if (prefix + elementsArray[i].localName == this.nodeName) {
-				var childElement = new XMLElement($(this), elementsArray[i], self.editor);
-				childElement.render(self, recursive);
-				self.addChildrenCount(childElement);
-				return;
+	
+	if (this.objectType.type == "mixed") {
+		var children = this.xmlNode[0].childNodes;
+		
+		for (var index in children) {
+			var childNode = children[index];
+			if (childNode.nodeType == 1) {
+				this.renderChild(childNode, elementsArray, recursive);
+			} else if (childNode.nodeType == 3) {
+				var textNode = new XMLTextNode($(childNode), this.editor);
+				textNode.render(this);
 			}
 		}
-	});
+	} else {
+		var self = this;
+		this.xmlNode.children().each(function() {
+			self.renderChild(this, elementsArray, recursive);
+		});
+	}
+};
+
+XMLElement.prototype.renderChild = function(childNode, elementsArray, recursive) {
+	for ( var i = 0; i < elementsArray.length; i++) {
+		var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(elementsArray[i].namespace);
+		if (prefix + elementsArray[i].localName == childNode.nodeName) {
+			var childElement = new XMLElement($(childNode), elementsArray[i], this.editor);
+			childElement.render(this, recursive);
+			this.addChildrenCount(childElement);
+			return;
+		}
+	}
 };
 
 // Render all present attributes for this elements
@@ -318,7 +337,7 @@ XMLElement.prototype.addContentContainers = function (recursive) {
 		this.addAttributeContainer();
 	}
 	
-	if (this.objectType.type != null) {
+	if (this.objectType.type != null && this.objectType.type != "mixed") {
 		this.addTextContainer();
 	}
 
@@ -496,6 +515,13 @@ XMLElement.prototype.addAttribute = function (objectType) {
 // Remove an attribute of type objectType from this element
 XMLElement.prototype.removeAttribute = function (objectType) {
 	this.xmlNode[0].removeAttribute(objectType.name);
+};
+
+XMLElement.prototype.addText = function () {
+	var xmlDocument = this.editor.xmlState.xml[0];
+	var textNode = xmlDocument.createTextNode('');
+	this.xmlNode[0].appendChild(textNode);
+	return textNode;
 };
 
 // Get the dom node for the currently selected attribute in this element

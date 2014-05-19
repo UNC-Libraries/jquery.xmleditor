@@ -71,6 +71,17 @@ ModifyMenuPanel.prototype.addAttributeMenu = function(menuID, label, expanded, e
 	return menu;
 };
 
+ModifyMenuPanel.prototype.addTextMenu = function(menuID, enabled) {
+	var menu = new AddTextMenu(menuID, enabled, this, this.editor);
+	this.menus[menuID] = {
+			"menu" : menu, 
+			"contextual": true
+		};
+	menu.render(this.menuContainer);
+	menu.initEventHandlers();
+	return menu;
+};
+
 // Empty entries from all contextual menus
 ModifyMenuPanel.prototype.clearContextualMenus = function() {
 	$.each(this.menus, function(){

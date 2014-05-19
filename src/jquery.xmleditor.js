@@ -52,6 +52,7 @@ var xmlWorkAreaContainerClass = "xml_work_area";
 var addTopMenuClass = "add_top_menu";
 var addAttrMenuClass = "add_attribute_menu";
 var addElementMenuClass = "add_element_menu";
+var addTextMenuClass = "add_text_menu";
 var xmlMenuBarClass = "xml_menu_bar";
 var submitButtonClass = "send_xml";
 var submissionStatusClass = "xml_submit_status";
@@ -385,6 +386,7 @@ $.widget( "xml.xmlEditor", {
 		$(window).resize($.proxy(this.resize, this));
 		
 		this.modifyMenu.initialize(this.xmlEditorContainer);
+		this.modifyMenu.addTextMenu(addTextMenuClass, true);
 		this.modifyMenu.addMenu(addElementMenuClass, this.options.addElementMenuHeaderText, 
 				true, false, true);
 		this.modifyMenu.addAttributeMenu(addAttrMenuClass, this.options.addAttrMenuHeaderText, 
@@ -475,6 +477,25 @@ $.widget( "xml.xmlEditor", {
 		data.target.addAttribute(data.objectType);
 		// Inform the active editor of the newly added attribute
 		this.activeEditor.addAttributeEvent(data.target, data.objectType, $(instigator));
+	},
+	
+	addTextCallback: function (instigator, relativeTo, prepend) {
+		if ($(instigator).hasClass("disabled") || !this.guiEditor.active)
+			return;
+		// Synchronize xml document if there are unsynchronized changes in the text editor
+		if (this.xmlState.changesNotSynced()) {
+			try {
+				this.setXMLFromEditor();
+			} catch (e) {
+				alert(e.message);
+				return;
+			}
+		}
+		
+		var data = $(instigator).data('xml');
+		var textNode = data.target.addText();
+		// Inform the active editor of the newly added text
+		this.activeEditor.addTextEvent(data.target, textNode);
 	},
 	
 	// Triggered when a document has been loaded or reloaded

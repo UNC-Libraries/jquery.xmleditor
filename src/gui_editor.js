@@ -186,6 +186,10 @@ GUIEditor.prototype.addAttributeEvent = function(parentElement, objectType, addB
 	this.editor.resize();
 };
 
+GUIEditor.prototype.addTextEvent = function(parentElement, textNode) {
+	
+};
+
 // Select element selected and inform the editor state of this change
 GUIEditor.prototype.selectElement = function(selected) {
 	if (!selected || selected.length == 0) {
