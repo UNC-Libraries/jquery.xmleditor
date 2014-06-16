@@ -38,6 +38,8 @@ var menuColumnClass = "xml_menu_column";
 var menuContentClass = 'menu_content';
 var menuExpandDuration = 180;
 var xmlElementClass = 'xml_element';
+var xmlTextClass = 'xml_text_node';
+var xmlNodeClass = 'xml_node';
 var topLevelContainerClass = 'top_level_element_group';
 var elementRootPrefix = "root_element_";
 var elementPrefix = "xml_element_";
@@ -52,6 +54,7 @@ var xmlWorkAreaContainerClass = "xml_work_area";
 var addTopMenuClass = "add_top_menu";
 var addAttrMenuClass = "add_attribute_menu";
 var addElementMenuClass = "add_element_menu";
+var addNodeMenuClass = "add_node_menu";
 var xmlMenuBarClass = "xml_menu_bar";
 var submitButtonClass = "send_xml";
 var submissionStatusClass = "xml_submit_status";
@@ -389,6 +392,7 @@ $.widget( "xml.xmlEditor", {
 				true, false, true);
 		this.modifyMenu.addAttributeMenu(addAttrMenuClass, this.options.addAttrMenuHeaderText, 
 				true, false, true);
+		this.modifyMenu.addNodeMenu(addNodeMenuClass, "Add Nodes", true, false);
 		this.addTopLevelMenu = this.modifyMenu.addMenu(addTopMenuClass, this.options.addTopMenuHeaderText, 
 				true, true, false, function(target) {
 			var selectedElement = self.guiEditor.selectedElement;
@@ -477,6 +481,25 @@ $.widget( "xml.xmlEditor", {
 		this.activeEditor.addAttributeEvent(data.target, data.objectType, $(instigator));
 	},
 	
+	addTextCallback: function(instigator) {
+		if ($(instigator).hasClass("disabled"))
+			return;
+		// Synchronize xml document if there are unsynchronized changes in the text editor
+		if (this.xmlState.changesNotSynced()) {
+			try {
+				this.setXMLFromEditor();
+			} catch (e) {
+				alert(e.message);
+				return;
+			}
+		}
+		// Create attribute on the targeted parent, and add its namespace if missing
+		var data = $(instigator).data('xml');
+		var textNode = data.target.addTextNode(data.objectType);
+		// Inform the active editor of the newly added attribute
+		this.activeEditor.addTextEvent(data.target, textNode);
+	},
+
 	// Triggered when a document has been loaded or reloaded
 	documentLoadedEvent : function(newDocument) {
 		if (this.guiEditor != null && this.guiEditor.rootElement != null)
@@ -494,12 +517,12 @@ $.widget( "xml.xmlEditor", {
 		if (mode == 0) {
 			if (this.textEditor.isInitialized() && this.xmlState.isChanged()) {
 				// Try to reconstruct the xml object before changing tabs.  Cancel change if parse error to avoid losing changes.
-				try {
+				//try {
 					this.setXMLFromEditor();
-				} catch (e) {
-					this.addProblem("Invalid xml", e);
-					return false;
-				}
+				// } catch (e) {
+				// 	this.addProblem("Invalid xml", e);
+				// 	return false;
+				// }
 				this.undoHistory.captureSnapshot();
 			}
 		}
@@ -694,6 +717,7 @@ $.widget( "xml.xmlEditor", {
 				this.problemsPanel.append(problem.message.replace(/</g, "&lt;").replace(/>/g, "&gt;"));
 			}
 		}
+		console.error(problem);
 		this.refreshProblemPanel();
 	},
 	

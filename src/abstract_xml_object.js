@@ -14,7 +14,7 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 	var input = null;
 	var $input = null;
 	// Select input for fields with a predefined set of values
-	if (this.objectType.values.length > 0){
+	if (this.objectType.values && this.objectType.values.length > 0){
 		var selectionValues = this.objectType.values;
 		input = document.createElement('select');
 		input.id = inputID;
@@ -33,7 +33,7 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 			input.selectedIndex = -1;
 		$input = $(input);
 	} // Text area for normal elements and string attributes
-	else if ((this.objectType.element && (this.objectType.type == 'string' || this.objectType.type == 'mixed')) 
+	else if ((this.objectType.text && (this.objectType.type == 'string' || this.objectType.type == 'mixed')) 
 			|| this.objectType.attribute){
 		input = document.createElement('textarea');
 		input.id = inputID;
@@ -94,4 +94,14 @@ AbstractXMLObject.prototype.focus = function() {
 
 AbstractXMLObject.prototype.getDomNode = function () {
 	return this.domNode;
+};
+
+// Remove this element from the xml document and editor
+AbstractXMLObject.prototype.remove = function() {
+	// Remove the element from the xml doc
+	this.xmlNode.remove();
+	
+	if (this.domNode != null) {
+		this.domNode.remove();
+	}
 };

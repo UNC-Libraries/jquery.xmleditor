@@ -459,6 +459,37 @@
 	padding: 5px 18px 0 0;
 }
 
+.xml_text_node {
+	background-color: #eee;
+    border: 1px solid #cccfdd;
+    border-radius: 0 5px 5px 0;
+}
+
+.xml_text_node .xml_delete {
+	float: right;
+    margin: 4px 4px 0 0;
+    background-color: #e4e4e4;
+    border-radius: 2px;
+
+    padding: 2px 5px;
+	border: 1px solid #aaaabb;
+	font-size: 11px;
+	color: #4C4C4C;
+	font-weight: 400;
+	vertical-align: 50%;
+	cursor: pointer;
+
+}
+
+.xml_text_node .xml_input, .xml_text_node .xml_textarea {
+	width: 96%;
+	width: calc(100% - 32px);
+	display: inline-block;
+	margin: 0 0 -1px;
+}
+
+
+
 .xml_tab_area .gui_content { 
 	padding: 3px 0 0 0;
 	background-color: #fafafa;
