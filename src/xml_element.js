@@ -72,9 +72,9 @@ XMLElement.prototype.render = function(parentElement, recursive, relativeToXMLEl
 				$domNode.insertAfter(relativeToXMLElement.domNode);
 		} else {
 			if (prepend)
-				this.parentElement.childContainer.prepend(this.domNode);
+				this.parentElement.nodeContainer.prepend(this.domNode);
 			else
-				this.parentElement.childContainer[0].appendChild(this.domNode);
+				this.parentElement.nodeContainer[0].appendChild(this.domNode);
 		}
 	}
 	
@@ -100,7 +100,7 @@ XMLElement.prototype.render = function(parentElement, recursive, relativeToXMLEl
 	
 	// Switch gui element over to a jquery object
 	this.domNode = $domNode;
-	this.domNode.data("xmlElement", this);
+	this.domNode.data("xmlObject", this);
 
 	// Add the subsections for the elements content next.
 	this.addContentContainers(recursive);
@@ -251,11 +251,11 @@ XMLElement.prototype.populateChildren = function() {
 
 XMLElement.prototype.initializeGUI = function () {
 	var self = this;
-	if (this.childContainer != null) {
-		// Enable sorting of this element's child elements
-		this.childContainer.sortable({
+	if (this.nodeContainer != null) {
+		// Enable sorting of this element's child nodes
+		this.nodeContainer.sortable({
 			distance: 10,
-			items: '> .' + xmlElementClass,
+			items: '> .' + xmlNodeClass,
 			update: function(event, ui) {
 				self.editor.guiEditor.updateElementPosition($(ui.item));
 			}
@@ -288,7 +288,7 @@ XMLElement.prototype.addTopActions = function () {
 	topActionSpan.appendChild(moveUp);
 	
 	var deleteButton = document.createElement('span');
-	deleteButton.className = 'delete';
+	deleteButton.className = 'xml_delete';
 	deleteButton.id = this.domNodeID + '_del';
 	deleteButton.appendChild(document.createTextNode('X'));
 	topActionSpan.appendChild(deleteButton);
@@ -304,27 +304,105 @@ XMLElement.prototype.addContentContainers = function (recursive) {
 	
 	var placeholder = document.createElement('div');
 	placeholder.className = 'placeholder';
-	if (attributesArray && attributesArray.length > 0){
-		if (elementsArray.length > 0)
-			placeholder.appendChild(document.createTextNode('Use the menu to add subelements and attributes.'));
-		else
-			placeholder.appendChild(document.createTextNode('Use the menu to add attributes.'));
-	} else
-		placeholder.appendChild(document.createTextNode('Use the menu to add subelements.'));
+
+	var allowAttributes
+
+	if (this.allowText) {
+		if (this.allowAttributes) {
+			if (this.allowChildren) {
+				placeholder.appendChild(document.createTextNode('Use the menu to add subelements, attributes and text.'));
+			} else {
+				placeholder.appendChild(document.createTextNode('Use the menu to add attributes and text.'));
+			}
+		} else if (this.allowChildren) {
+			placeholder.appendChild(document.createTextNode('Use the menu to add subelements and text.'));
+		} else {
+			placeholder.appendChild(document.createTextNode('Use the menu to add text.'));
+		}
+	} else {
+		if (this.allowAttributes) {
+			if (this.allowChildren) {
+				placeholder.appendChild(document.createTextNode('Use the menu to add subelements and attributes.'));
+			} else {
+				placeholder.appendChild(document.createTextNode('Use the menu to add attributes.'));
+			}
+		} else if (this.allowChildren) {
+			placeholder.appendChild(document.createTextNode('Use the menu to add subelements.'));
+		}
+	}
+
 	this.placeholder = $(placeholder);
 	this.domNode.append(this.placeholder);
 	
 	if (attributesArray && attributesArray.length > 0) {
 		this.addAttributeContainer();
 	}
-	
-	if (this.objectType.type != null) {
-		this.addTextContainer();
+
+	this.addNodeContainer(recursive);
+};
+
+XMLElement.prototype.addNodeContainer = function (recursive) {
+	var container = document.createElement('div');
+	container.id = this.domNodeID + "_cont_nodes";
+	container.className = 'content_block';
+	this.nodeContainer = $(container);
+	this.domNode[0].appendChild(container);
+
+	this.childCount = 0;
+	this.textCount = 0;
+
+	var textContainsChildren = this.xmlNode[0].children && this.xmlNode[0].children.length > 0;
+	var textAllowed = this.objectType.type != null && this.objectType.type != "mixed";
+
+	var childNodes = this.xmlNode[0].childNodes;
+	for (var i in childNodes) {
+		var childNode = childNodes[i];
+
+		switch (childNode.nodeType) {
+			case 1 : // element
+				this.renderChild(childNode, recursive);
+				break;
+			case 3 : // text
+				if (textAllowed)
+					this.renderText(childNode);
+				break;
+			case 4 : // cdata
+				break;
+			case 8 : // comment
+				break;
+		}
 	}
 
-	if (elementsArray.length > 0) {
-		this.addSubelementContainer(recursive);
+	// Add in a default text node if applicable and none present
+	if (textAllowed && this.textCount == 0) {
+		this.renderText();
 	}
+};
+
+// Render children elements
+// recursive - if false, then only the immediate children will be rendered
+XMLElement.prototype.renderChild = function(childNode, recursive) {
+	
+	var elementsArray = this.objectType.elements;
+
+	for ( var i = 0; i < elementsArray.length; i++) {
+		var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(elementsArray[i].namespace);
+		if (prefix + elementsArray[i].localName == childNode.nodeName) {
+			var childElement = new XMLElement($(childNode), elementsArray[i], this.editor);
+			childElement.render(this, recursive);
+			this.addChildrenCount(childElement);
+			return;
+		}
+	}
+};
+
+XMLElement.prototype.renderText = function(childNode) {
+	var textNode = new XMLTextNode(childNode, this.objectType.type, this.editor);
+	textNode.render(this);
+
+	this.textCount++;
+
+	return textNode;
 };
 
 XMLElement.prototype.addTextContainer = function () {
@@ -334,30 +412,26 @@ XMLElement.prototype.addTextContainer = function () {
 	this.domNode.append(container);
 	var textContainsChildren = this.xmlNode[0].children && this.xmlNode[0].children.length > 0;
 	
-	var textValue = "";
+	this.textInput = [];
 	if (textContainsChildren) {
-		textValue = this.editor.xml2Str(this.xmlNode.children());
+		var textInput = this.createElementInput(this.domNodeID + "_text", 
+				this.editor.xml2Str(this.xmlNode.children()), container);
+		textInput.addClass('element_text');
+		textInput.attr("disabled", "disabled");
+		this.textInput.push(textInput);
 	} else {
-		textValue = this.xmlNode.text();
-	}
-	
-	this.textInput = this.createElementInput(this.domNodeID + "_text", 
-			textValue, container);
-	this.textInput.addClass('element_text');
-	if (textContainsChildren)
-		this.textInput.attr("disabled", "disabled");
-};
-
-XMLElement.prototype.addSubelementContainer = function (recursive) {
-	var container = document.createElement('div');
-	container.id = this.domNodeID + "_cont_elements";
-	container.className = "content_block " + childrenContainerClass;
-	this.domNode[0].appendChild(container);
-	this.childContainer = $(container);
-	
-	// Add all the subchildren
-	if (recursive) {
-		this.renderChildren(true);
+		textValue = "";
+		var childNodes = this.xmlNode[0].childNodes;
+		for (var i in childNodes) {
+			var childNode = childNodes[i];
+			if (childNode.nodeType == 3) {
+				var textInput = this.createElementInput(this.domNodeID + "_text" + i, 
+						childNode.nodeValue, container);
+				textInput.addClass('element_text');
+				textInput.attr('data-node-index', i);
+				this.textInput.push(textInput);
+			}
+		}
 	}
 };
 
@@ -415,26 +489,6 @@ XMLElement.prototype.addElement = function(objectType, relativeToXMLElement, pre
 	return childElement;
 };
 
-// Synchronize the text input for this element to a text node in the xml document
-XMLElement.prototype.syncText = function() {
-	var newText = this.textInput.val();
-	if (this.xmlNode[0].childNodes.length > 0) {
-		this.xmlNode[0].childNodes[0].nodeValue = newText;
-	} else {
-		this.xmlNode[0].appendChild(document.createTextNode(newText));
-	}
-};
-
-// Remove this element from the xml document and editor
-XMLElement.prototype.remove = function() {
-	// Remove the element from the xml doc
-	this.xmlNode.remove();
-	
-	if (this.domNode != null) {
-		this.domNode.remove();
-	}
-};
-
 // Swap the gui representation of this element to the location of swapTarget
 XMLElement.prototype.swap = function (swapTarget) {
 	if (swapTarget == null) {
@@ -453,7 +507,7 @@ XMLElement.prototype.swap = function (swapTarget) {
 XMLElement.prototype.moveUp = function() {
 	var previousSibling = this.domNode.prev("." + xmlElementClass);
 	if (previousSibling.length > 0) {
-		this.swap(previousSibling.data("xmlElement"));
+		this.swap(previousSibling.data("xmlObject"));
 		return true;
 	} else {
 		return false;
@@ -464,7 +518,7 @@ XMLElement.prototype.moveUp = function() {
 XMLElement.prototype.moveDown = function() {
 	var nextSibling = this.domNode.next("." + xmlElementClass);
 	if (nextSibling.length > 0) {
-		nextSibling.data("xmlElement").swap(this);
+		nextSibling.data("xmlObject").swap(this);
 		return true;
 	} else {
 		return false;
@@ -491,6 +545,10 @@ XMLElement.prototype.addAttribute = function (objectType) {
 		node.setAttributeNS(objectType.namespace, attributeName, attributeValue);
 	} else this.xmlNode.attr(attributeName, attributeValue);
 	return attributeValue;
+};
+
+XMLElement.prototype.addTextNode = function () {
+	return this.renderText();
 };
 
 // Remove an attribute of type objectType from this element
@@ -520,12 +578,14 @@ XMLElement.prototype.updated = function (event) {
 		return;
 	this.childCount = 0;
 	this.attributeCount = 0;
+	this.textCount = 0;
 	
-	if (this.childContainer != null && this.objectType.elements) {
-		this.childCount = this.childContainer[0].children.length;
-		if (this.childCount > 0)
-			this.childContainer.show();
-		else this.childContainer.hide();
+	if (this.nodeContainer != null && this.objectType.elements) {
+		this.childCount = this.nodeContainer.children("." + xmlElementClass).length;
+		this.textCount = this.nodeContainer.children("." + xmlTextClass).length;
+		if (this.childCount > 0 || this.textCount > 0)
+			this.nodeContainer.show();
+		else this.nodeContainer.hide();
 	}
 	if (this.attributeContainer != null && this.objectType.attributes) {
 		this.attributeCount = this.attributeContainer[0].children.length;
@@ -535,7 +595,7 @@ XMLElement.prototype.updated = function (event) {
 	}
 	
 	// Show or hide the instructional placeholder depending on if there are any contents in the element
-	if (!this.allowText && this.childCount == 0 && this.attributeCount == 0) {
+	if (this.childCount == 0 && this.textCount == 0 && this.attributeCount == 0) {
 		this.placeholder.show();
 	} else {
 		this.placeholder.hide();
