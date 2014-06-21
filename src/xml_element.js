@@ -339,7 +339,7 @@ XMLElement.prototype.addNodeContainer = function (recursive) {
 	this.nodeCount = 0;
 
 	var textContainsChildren = this.xmlNode[0].children && this.xmlNode[0].children.length > 0;
-	var textAllowed = this.objectType.type != null && this.objectType.type != "mixed";
+	var textAllowed = this.objectType.type != null;
 
 	var childNodes = this.xmlNode[0].childNodes;
 	for (var i in childNodes) {
@@ -357,12 +357,13 @@ XMLElement.prototype.addNodeContainer = function (recursive) {
 				this.renderCData(childNode);
 				break;
 			case 8 : // comment
+				this.renderComment(childNode);
 				break;
 		}
 	}
 
 	// Add in a default text node if applicable and none present
-	if (textAllowed && this.nodeCount == 0) {
+	if (textAllowed && this.nodeCount == 0 && this.objectType.type != "mixed") {
 		this.renderText();
 	}
 };
@@ -384,22 +385,31 @@ XMLElement.prototype.renderChild = function(childNode, recursive) {
 	}
 };
 
-XMLElement.prototype.renderText = function(childNode) {
+XMLElement.prototype.renderText = function(childNode, prepend) {
 	var textNode = new XMLTextNode(childNode, this.objectType.type, this.editor);
-	textNode.render(this);
+	textNode.render(this, prepend);
 
 	this.nodeCount++;
 
 	return textNode;
 };
 
-XMLElement.prototype.renderCData = function(childNode) {
+XMLElement.prototype.renderCData = function(childNode, prepend) {
 	var cdataNode = new XMLCDataNode(childNode, this.editor);
-	cdataNode.render(this);
+	cdataNode.render(this, prepend);
 
 	this.nodeCount++;
 
 	return cdataNode;
+};
+
+XMLElement.prototype.renderComment = function(childNode, prepend) {
+	var node = new XMLCommentNode(childNode, this.editor);
+	node.render(this, prepend);
+
+	this.nodeCount++;
+
+	return node;
 };
 
 XMLElement.prototype.addAttributeContainer = function () {
@@ -456,42 +466,6 @@ XMLElement.prototype.addElement = function(objectType, relativeToXMLElement, pre
 	return childElement;
 };
 
-// Swap the gui representation of this element to the location of swapTarget
-XMLElement.prototype.swap = function (swapTarget) {
-	if (swapTarget == null) {
-		return;
-	}
-	
-	// Swap the xml nodes
-	swapTarget.xmlNode.detach().insertAfter(this.xmlNode);
-	if (swapTarget.domNode != null && this.domNode != null) {
-		// Swap the gui nodes
-		swapTarget.domNode.detach().insertAfter(this.domNode);
-	}
-};
-
-// Move this element up one location in the gui.  Returns true if the swap was able to happen
-XMLElement.prototype.moveUp = function() {
-	var previousSibling = this.domNode.prev("." + xmlElementClass);
-	if (previousSibling.length > 0) {
-		this.swap(previousSibling.data("xmlObject"));
-		return true;
-	} else {
-		return false;
-	}
-};
-
-// Move this element down one location in the gui.  Returns true if the swap was able to happen
-XMLElement.prototype.moveDown = function() {
-	var nextSibling = this.domNode.next("." + xmlElementClass);
-	if (nextSibling.length > 0) {
-		nextSibling.data("xmlObject").swap(this);
-		return true;
-	} else {
-		return false;
-	}
-};
-
 // Add a new attribute of type objectType to this element
 XMLElement.prototype.addAttribute = function (objectType) {
 	var attributeValue = "";
@@ -514,12 +488,15 @@ XMLElement.prototype.addAttribute = function (objectType) {
 	return attributeValue;
 };
 
-XMLElement.prototype.addTextNode = function () {
-	return this.renderText();
-};
 
-XMLElement.prototype.addCDataNode = function () {
-	return this.renderCData();
+
+XMLElement.prototype.addNode = function (nodeType, prepend) {
+	switch (nodeType) {
+		case "text" : return this.renderText(null, prepend);
+		case "cdata" : return this.renderCData(null, prepend);
+		case "comment" : return this.renderComment(null, prepend);
+	}
+	return null;
 };
 
 // Remove an attribute of type objectType from this element

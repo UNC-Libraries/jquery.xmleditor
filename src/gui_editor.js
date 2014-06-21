@@ -8,7 +8,7 @@ function GUIEditor(editor) {
 	this.elementIndex = 0;
 	this.rootElement = null;
 	this.active = false;
-	this.selectedElement = null;
+	this.h = null;
 }
 
 GUIEditor.prototype.initialize = function(parentContainer) {
@@ -64,14 +64,14 @@ GUIEditor.prototype._initEventBindings = function() {
 		self.editor.xmlState.documentChangedEvent();
 	});
 	// Element
-	this.xmlContent.on('click', '.' + xmlElementClass, function(event){
-		self.selectElement(this);
+	this.xmlContent.on('click', '.' + xmlNodeClass, function(event){
+		self.selectNode(this);
 		event.stopPropagation();
 	}).on('click', '.move_up', function(event){
-		self.moveElement($(this).parents('.' + xmlElementClass).eq(0).data('xmlObject'), true);
+		self.moveNode($(this).parents('.' + xmlElementClass).eq(0).data('xmlObject'), true);
 		event.stopPropagation();
 	}).on('click', '.move_down', function(event){
-		self.moveElement($(this).parents('.' + xmlElementClass).eq(0).data('xmlObject'));
+		self.moveNode($(this).parents('.' + xmlElementClass).eq(0).data('xmlObject'));
 		event.stopPropagation();
 	}).on('click', '.' + xmlTextClass + ' .xml_delete', function(event){
 		self.deleteText($(this).parents('.' + xmlTextClass).eq(0).data('xmlObject'));
@@ -98,6 +98,14 @@ GUIEditor.prototype._initEventBindings = function() {
 		textObject.syncText();
 		xmlElement.updated({action : 'valueSynced'});
 		self.editor.xmlState.documentChangedEvent();
+	}).on('focus', '.xml_text_node .xml_textarea', function(event) {
+		var textObject = $(this).parents(".xml_node").first().data('xmlObject');
+		textObject.select();
+		event.stopPropagation();
+	}).on('click', '.xml_text_node', function(event) {
+		var textObject = $(this).data('xmlObject');
+		textObject.select();
+		event.stopPropagation();
 	});
 };
 
@@ -173,7 +181,7 @@ GUIEditor.prototype.addElementEvent = function(parentElement, newElement) {
 	var state = this.editor;
 
 	this.focusObject(newElement.domNode);
-	this.selectElement(newElement);
+	this.selectNode(newElement);
 	if (parentElement == this.rootElement)
 		this.editor.addTopLevelMenu.populate(this.rootElement);
 	this.editor.xmlState.documentChangedEvent();
@@ -192,42 +200,43 @@ GUIEditor.prototype.addAttributeEvent = function(parentElement, objectType, addB
 	this.editor.resize();
 };
 
-GUIEditor.prototype.addTextEvent = function(parentElement, xmlObject) {
-	parentElement.updated({action : 'textAdded', target : parentElement});
+GUIEditor.prototype.addNodeEvent = function(parentElement, xmlObject) {
+	parentElement.updated({action : xmlObject.objectType.type + 'Added', target : parentElement});
 	this.focusObject(xmlObject.domNode);
 	this.editor.xmlState.documentChangedEvent();
 	this.editor.resize();
-};
-
-GUIEditor.prototype.addCDataEvent = function(parentElement, xmlObject) {
-	parentElement.updated({action : 'cdataAdded', target : parentElement});
-	this.focusObject(xmlObject.domNode);
-	this.editor.xmlState.documentChangedEvent();
-	this.editor.resize();
-};
+}
 
 // Select element selected and inform the editor state of this change
-GUIEditor.prototype.selectElement = function(selected) {
+GUIEditor.prototype.selectNode = function(selected) {
 	if (!selected || selected.length == 0) {
 		this.deselect();
 	} else {
-		$("." + xmlElementClass + ".selected").removeClass("selected");
-		$('.' + attributeContainerClass + ".selected").removeClass("selected");
+		$(".selected").removeClass("selected");
 
 		var selectedObject;
 		if (selected instanceof Element || selected instanceof jQuery) {
-			selectedObject = $(selected).data("xmlObject");
+			var $selected = $(selected);
+			if ($selected.is("." + xmlNodeClass)) {
+				selectedObject = $selected.data("xmlObject");
+			} else {
+				selectedObject = $selected.closest("." + xmlNodeClass).data("xmlObject");
+			}
 		} else {
 			selectedObject = selected;
 		}
 
+		this.selectedNode = selectedObject;
+		this.selectedElement = selectedObject;
+		this.selectedNode.select();
 		if (selectedObject instanceof XMLElement) {
-			this.selectedElement = selectedObject;
-		} else if (selectedObject instanceof XMLElement) {
+			console.log("Unfocusing input while selecting element");
+			$("*:focus").blur();
+		} else {
 			this.selectedElement = selectedObject.parentElement;
-		}
-
-		this.selectedElement.select();
+			this.selectedNode.domNode.addClass("selected");
+		} 
+		
 		this.editor.modifyMenu.refreshContextualMenus(this.selectedElement);
 	}
 	return this;
@@ -241,7 +250,7 @@ GUIEditor.prototype.deselect = function() {
 		return this;
 	}
 	$("." + xmlElementClass + ".selected").removeClass("selected");
-	this.selectedElement = null;
+	this.selectedNode = null;
 	if (this.editor.modifyMenu != null)
 		this.editor.modifyMenu.clearContextualMenus();
 	return this;
@@ -249,10 +258,10 @@ GUIEditor.prototype.deselect = function() {
 
 // Delete the selected element or attribute
 GUIEditor.prototype.deleteSelected = function() {
-	if (this.selectedElement == null)
+	if (this.selectedNode == null)
 		return this;
 	try {
-		var selectedAttribute = this.selectedElement.getSelectedAttribute();
+		var selectedAttribute = this.selectedNode.getSelectedAttribute();
 	} catch(error) {
 		// Attribute container undefined
 		var selectedAttribute = [];
@@ -268,7 +277,7 @@ GUIEditor.prototype.deleteSelected = function() {
 		var xmlAttribute = selectedAttribute.data("xmlAttribute");
 		xmlAttribute.remove();
 	} else {
-		this.deleteElement(this.selectedElement);
+		this.deleteElement(this.selectedNode);
 	}
 	return this;
 };
@@ -287,7 +296,7 @@ GUIEditor.prototype.deleteElement = function(xmlElement) {
 			afterDeleteSelection = xmlElement.domNode.prev("." + xmlElementClass);
 		if (afterDeleteSelection.length == 0)
 			afterDeleteSelection = xmlElement.domNode.parents("." + xmlElementClass).first();
-		this.selectElement(afterDeleteSelection);
+		this.selectNode(afterDeleteSelection);
 	} else if (parent.isSelected && parent != this.rootElement) {
 		this.editor.modifyMenu.refreshContextualMenus(parent);
 	}
@@ -310,17 +319,20 @@ GUIEditor.prototype.deleteText = function(xmlText) {
 
 // Move the currently selected element by x number of positions
 GUIEditor.prototype.moveSelected = function(up) {
-	return this.moveElement(this.selectedElement, up);
+	var selectedTextNode = $(".selected." + xmlTextClass);
+	if (selectedTextNode.length > 0)
+		return this.moveNode(selectedTextNode.data("xmlObject"), up);
+	return this.moveNode(this.selectedNode, up);
 };
 
-// Move xmlElement by x number of positions
-GUIEditor.prototype.moveElement = function(xmlElement, up) {
-	if (xmlElement == null)
+// Move xmlObject by x number of positions
+GUIEditor.prototype.moveNode = function(xmlObject, up) {
+	if (xmlObject == null)
 		return this;
-	var result = up? xmlElement.moveUp() : xmlElement.moveDown();
+	var result = up? xmlObject.moveUp() : xmlObject.moveDown();
 	if (result) {
 		this.editor.xmlState.documentChangedEvent();
-		xmlElement.focus();
+		xmlObject.focus();
 	}
 	return this;
 };
@@ -336,18 +348,18 @@ GUIEditor.prototype.updateElementPosition = function(moved) {
 	} else {
 		movedElement.xmlNode.detach().insertAfter(sibling.data('xmlObject').xmlNode);
 	}
-	this.selectElement(moved);
+	this.selectNode(moved);
 	this.editor.xmlState.documentChangedEvent();
 };
 
 // Select the next or previous sibling element of the selected element
 GUIEditor.prototype.selectSibling = function(reverse) {
 	var direction = reverse? 'prev' : 'next';
-	if (this.selectedElement.domNode.length > 0) {
-		newSelection = this.selectedElement.domNode[direction]("." + xmlElementClass);
-		if (newSelection.length == 0 && !this.selectedElement.isTopLevel) {
+	if (this.selectedNode.domNode.length > 0) {
+		newSelection = this.selectedNode.domNode[direction]("." + xmlElementClass);
+		if (newSelection.length == 0 && !this.selectedNode.isTopLevel) {
 			// If there is no next sibling but the parent has one, then go to parents sibling
-			this.selectedElement.domNode.parents("." + xmlElementClass).each(function(){
+			this.selectedNode.domNode.parents("." + xmlElementClass).each(function(){
 				newSelection = $(this)[direction]("." + xmlElementClass);
 				if (newSelection.length > 0 || $(this).data("xmlObject").isTopLevel)
 					return false;
@@ -360,18 +372,18 @@ GUIEditor.prototype.selectSibling = function(reverse) {
 	
 	if (newSelection.length == 0)
 		return this;
-	this.selectElement(newSelection.first()).selectedElement.focus();
+	this.selectNode(newSelection.first()).selectedNode.focus();
 	return this;
 };
 
 // Select the parent of the currently selected element
 GUIEditor.prototype.selectParent = function(reverse) {
 	if (reverse)
-		newSelection = this.selectedElement.domNode.find("." + xmlElementClass);
-	else newSelection = this.selectedElement.domNode.parents("." + xmlElementClass);
+		newSelection = this.selectedNode.domNode.find("." + xmlElementClass);
+	else newSelection = this.selectedNode.domNode.parents("." + xmlElementClass);
 	if (newSelection.length == 0)
 		return this;
-	this.selectElement(newSelection.first()).selectedElement.focus();
+	this.selectNode(newSelection.first()).selectedNode.focus();
 	return this;
 };
 
@@ -379,7 +391,7 @@ GUIEditor.prototype.selectParent = function(reverse) {
 // then select the next sibling if any are available.
 GUIEditor.prototype.selectNext = function(reverse) {
 	var newSelection = null;
-	if (this.selectedElement == null) {
+	if (this.selectedNode == null) {
 		if (!reverse)
 			newSelection = $("." + xmlElementClass).first();
 	} else {
@@ -389,28 +401,28 @@ GUIEditor.prototype.selectNext = function(reverse) {
 		if (reverse)
 			allElements = $(allElements.get().reverse());
 		
-		var selectedElement = this.selectedElement;
+		var selectedNode = this.selectedNode;
 		allElements.each(function(){
 			if (found) {
 				newSelection = $(this);
 				return false;
-			} else if (this.id == selectedElement.domNodeID) {
+			} else if (this.id == selectedNode.domNodeID) {
 				found = true;
 			}
 		});
 	}
 	
 	if (newSelection != null)
-		this.selectElement(newSelection.first()).selectedElement.focus();
+		this.selectNode(newSelection.first()).selectedNode.focus();
 	return this;
 };
 
 // Select the previous or next attribute of the selected element
 GUIEditor.prototype.selectAttribute = function(reverse) {
-	if (this.selectedElement == null) {
+	if (this.selectedNode == null) {
 		return this;
 	} else {
-		var selectedAttribute = this.selectedElement.getSelectedAttribute();
+		var selectedAttribute = this.selectedNode.getSelectedAttribute();
 		if (selectedAttribute.length > 0) {
 			var newSelection = selectedAttribute[reverse? 'prev' : 'next']("." + attributeContainerClass);
 			if (newSelection.length > 0) {
@@ -418,8 +430,8 @@ GUIEditor.prototype.selectAttribute = function(reverse) {
 				newSelection.addClass("selected");
 			}
 		} else {
-			if (this.selectedElement.domNode)
-				selectedAttribute = this.selectedElement.domNode.children("." + attributeContainerClass)
+			if (this.selectedNode.domNode)
+				selectedAttribute = this.selectedNode.domNode.children("." + attributeContainerClass)
 						.first().addClass("selected");
 		}
 	}
@@ -427,20 +439,20 @@ GUIEditor.prototype.selectAttribute = function(reverse) {
 
 // Find and select the nearest element text field in an element or its children
 GUIEditor.prototype.focusSelectedText = function() {
-	if (this.selectedElement == null)
+	if (this.selectedNode == null)
 		return this;
 	var focused = null;
-	if (this.selectedElement.textInput != null) {
-		focused = this.selectedElement.textInput.focus();
+	if (this.selectedNode.textInput != null) {
+		focused = this.selectedNode.textInput.focus();
 	} else {
-		focused = this.selectedElement.domNode.find("input[type=text].element_text:visible, textarea.element_text:visible, select.element_text:visible").first().focus();
+		focused = this.selectedNode.domNode.find("input[type=text].element_text:visible, textarea.element_text:visible, select.element_text:visible").first().focus();
 	}
 	if (focused == null || focused.length == 0)
 		return this;
 	// If the focused input was in an element other than the selected one, then select it
 	var containerElement = focused.parents("." + xmlElementClass);
-	if (containerElement !== this.selectedElement)
-		this.selectElement(containerElement);
+	if (containerElement !== this.selectedNode)
+		this.selectNode(containerElement);
 	return this;
 };
 
@@ -448,7 +460,7 @@ GUIEditor.prototype.focusSelectedText = function() {
 // input field focused belonged to a child, then select that child.
 GUIEditor.prototype.focusInput = function(reverse) {
 	var focused = $("input:focus, textarea:focus, select:focus");
-	if (focused.length == 0 && this.selectedElement == null) {
+	if (focused.length == 0 && this.selectedNode == null) {
 		if (reverse)
 			return this;
 		// Nothing is selected or focused, so grab the first available input
@@ -458,9 +470,9 @@ GUIEditor.prototype.focusInput = function(reverse) {
 		var foundFocus = false;
 		var inputsSelector = "input[type=text]:visible, textarea:visible, select:visible";
 		// If no inputs are focused but an element is selected, seek the next input near this element
-		if (this.selectedElement != null && focused.length == 0) {
+		if (this.selectedNode != null && focused.length == 0) {
 			inputsSelector += ", ." + xmlElementClass;
-			focused = this.selectedElement.domNode;
+			focused = this.selectedNode.domNode;
 		}
 		var visibleInputs = this.xmlContent.find(inputsSelector);
 		// If in reverse mode, get the previous input
@@ -469,7 +481,7 @@ GUIEditor.prototype.focusInput = function(reverse) {
 		}
 		// Seek the next input after the focused one
 		visibleInputs.each(function(){
-			// Can't focus a xml class if they are present.
+			// Can't focus xml classes if they are present.
 			if (foundFocus && !$(this).hasClass(xmlElementClass)) {
 				focused = $(this).focus();
 				return false;
@@ -478,13 +490,6 @@ GUIEditor.prototype.focusInput = function(reverse) {
 			}
 		});
 	}
-	// If the focused input was in an element other than the selected one, then select it
-	var containerElement = focused.parents("." + xmlElementClass);
-	if (containerElement !== this.selectedElement)
-		this.selectElement(containerElement);
-	var container = focused.parents('.' + attributeContainerClass);
-	if (container.length > 0)
-		container.addClass('selected');
 	return this;
 };
 

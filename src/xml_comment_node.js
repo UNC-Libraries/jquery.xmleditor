@@ -1,7 +1,7 @@
-function XMLCDataNode(cdataNode, editor) {
+function XMLCommentNode(cdataNode, editor) {
 	var nodeType = {
-		cdata : true,
-		type : "cdata"
+		comment : true,
+		type : "comment"
 	};
 
 	XMLTextNode.call(this, cdataNode, nodeType, editor);
@@ -9,14 +9,14 @@ function XMLCDataNode(cdataNode, editor) {
 	this.objectType = nodeType;
 }
 
-XMLCDataNode.prototype.constructor = XMLCDataNode;
-XMLCDataNode.prototype = Object.create( XMLTextNode.prototype );
+XMLCommentNode.prototype.constructor = XMLCommentNode;
+XMLCommentNode.prototype = Object.create( XMLTextNode.prototype );
 
-XMLCDataNode.prototype.addXmlNode = function(prepend) {
+XMLCommentNode.prototype.addXmlNode = function(prepend) {
 	var textValue = "";
 	if (!this.textNode) {
 		var parentNode = this.parentElement.xmlNode;
-		this.textNode = parentNode[0].ownerDocument.createCDATASection("");
+		this.textNode = parentNode[0].ownerDocument.createComment("");
 		if (prepend) {
 			parentNode.prepend(this.textNode);
 		} else {
@@ -29,39 +29,39 @@ XMLCDataNode.prototype.addXmlNode = function(prepend) {
 	return textValue;
 };
 
-XMLCDataNode.prototype.render = function(parentElement, prepend) {
+XMLCommentNode.prototype.render = function(parentElement, prepend) {
 	XMLTextNode.prototype.render.call(this, parentElement, prepend);
-	this.domNode.addClass("xml_cdata_node");
+	this.domNode.addClass("xml_comment_node");
 
 	var header = document.createElement('label');
 	header.className = 'xml_type_header';
-	header.appendChild(document.createTextNode('CDATA'));
+	header.appendChild(document.createTextNode('comment'));
 	$(header).attr("for", this.domNodeID + "_text");
 
 	this.domNode.children(".xml_input_column").prepend(header);
 };
 
 // Persist the input value back into the text node
-XMLCDataNode.prototype.syncText = function() {
+XMLCommentNode.prototype.syncText = function() {
 	XMLTextNode.prototype.syncText.call(this);
 };
 
-XMLCDataNode.prototype.remove = function() {
+XMLCommentNode.prototype.remove = function() {
 	AbstractXMLObject.prototype.remove.call(this);
 };
 
-XMLCDataNode.prototype.select = function() {
+XMLCommentNode.prototype.select = function() {
 	XMLTextNode.prototype.select.call(this);
 };
 
-XMLCDataNode.prototype.swap = function(swapTarget) {
+XMLCommentNode.prototype.swap = function(swapTarget) {
 	AbstractXMLObject.prototype.swap.call(this, swapTarget);
 };
 
-XMLCDataNode.prototype.moveUp = function() {
+XMLCommentNode.prototype.moveUp = function() {
 	AbstractXMLObject.prototype.moveUp.call(this);
 };
 
-XMLCDataNode.prototype.moveDown = function() {
+XMLCommentNode.prototype.moveDown = function() {
 	AbstractXMLObject.prototype.moveDown.call(this);
 };

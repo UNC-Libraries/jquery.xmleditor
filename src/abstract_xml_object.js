@@ -43,7 +43,7 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 		$input = $(input);
 	} // Text area for normal elements and string attributes
 	else if ((this.objectType.text && (this.objectType.type == 'string' || this.objectType.type == 'mixed')) 
-			|| this.objectType.attribute || this.objectType.cdata){
+			|| this.objectType.attribute || this.objectType.cdata || this.objectType.comment){
 		input = document.createElement('textarea');
 		input.id = inputID;
 		input.className = 'xml_textarea';
@@ -112,5 +112,41 @@ AbstractXMLObject.prototype.remove = function() {
 	
 	if (this.domNode != null) {
 		this.domNode.remove();
+	}
+};
+
+// Swap the gui representation of this element to the location of swapTarget
+AbstractXMLObject.prototype.swap = function (swapTarget) {
+	if (swapTarget == null) {
+		return;
+	}
+	
+	// Swap the xml nodes
+	swapTarget.xmlNode.detach().insertAfter(this.xmlNode);
+	if (swapTarget.domNode != null && this.domNode != null) {
+		// Swap the gui nodes
+		swapTarget.domNode.detach().insertAfter(this.domNode);
+	}
+};
+
+// Move this element up one location in the gui.  Returns true if the swap was able to happen
+AbstractXMLObject.prototype.moveUp = function() {
+	var previousSibling = this.domNode.prev("." + xmlNodeClass);
+	if (previousSibling.length > 0) {
+		this.swap(previousSibling.data("xmlObject"));
+		return true;
+	} else {
+		return false;
+	}
+};
+
+// Move this element down one location in the gui.  Returns true if the swap was able to happen
+AbstractXMLObject.prototype.moveDown = function() {
+	var nextSibling = this.domNode.next("." + xmlNodeClass);
+	if (nextSibling.length > 0) {
+		nextSibling.data("xmlObject").swap(this);
+		return true;
+	} else {
+		return false;
 	}
 };

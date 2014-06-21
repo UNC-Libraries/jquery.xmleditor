@@ -111,6 +111,10 @@
 	background-color: #F0F8FF;
 }
 
+.xml_text_node.selected {
+	background-color: #c4eff5;
+}
+
 .xml_text_node + .xml_text_node {
 	border-top-width: 0;
 }
@@ -121,6 +125,8 @@
 	width: calc(100% - 27px);
 	padding: 0;
 	margin: 0;
+	overflow-x: hidden;
+	background-color: #F0F8FF;
 }
 
 .xml_text_node .xml_input_column textarea {
@@ -129,6 +135,7 @@
 	width: 100%;
 	margin: 0;
 	resize: none;
+	overflow-y: auto;
 }
 
 .xml_text_node .xml_delete {
@@ -157,6 +164,10 @@
 	display: block;
 	font-weight: bold;
 	cursor: default;
+}
+
+.xml_text_node.xml_comment_node .xml_type_header {
+	color : #B6B5BE;
 }
 
 .xml_input, .xml_select, .xml_textarea {
