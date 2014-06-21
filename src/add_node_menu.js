@@ -21,7 +21,7 @@ AddNodeMenu.prototype.destroy = function() {
 AddNodeMenu.prototype.initEventHandlers = function() {
 	var self = this;
 	// Add new child element click event
-	this.menuContent.on('click', 'li', function(event){
+	this.menuContent.on('click', '.xml-add-text', function(event){
 		var prepend = self.editor.options.prependNewElements;
 		if (event.shiftKey) prepend = !prepend;
 		self.owner.editor.addTextCallback(this, prepend);
@@ -30,7 +30,7 @@ AddNodeMenu.prototype.initEventHandlers = function() {
 	this.menuContent.on('click', '.xml-add-cdata', function(event){
 		var prepend = self.editor.options.prependNewElements;
 		if (event.shiftKey) prepend = !prepend;
-		self.owner.editor.addCDATACallback(this, prepend);
+		self.owner.editor.addCDataCallback(this, prepend);
 	});
 };
 
@@ -48,7 +48,7 @@ AddNodeMenu.prototype.populate = function(xmlElement) {
 	}).appendTo(this.menuContent);
 
 	if (xmlElement.objectType.type != null) {
-		this.addButton = $("<li>Add text</li>").attr({
+		this.addButton = $("<li class='xml-add-text'>Add text</li>").attr({
 			title : 'Add text'
 		}).data('xml', {
 			"target": xmlElement

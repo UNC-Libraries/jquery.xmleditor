@@ -1,7 +1,16 @@
-function AbstractXMLObject(editor, objectType) {
+function AbstractXMLObject(objectType, editor) {
 	this.editor = editor;
 	this.guiEditor = this.editor.guiEditor;
 	this.objectType = objectType;
+
+	// ID of the dom node for this element
+	this.domNodeID = null;
+	// dom node for this element
+	this.domNode = null;
+	// XMLElement which is the parent of this element
+	this.parentElement = null;
+	// Main input for text node of this element
+	this.textInput = null;
 }
 
 // Generates input fields for elements and attributes, depending on the type of value in the definition
@@ -34,7 +43,7 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 		$input = $(input);
 	} // Text area for normal elements and string attributes
 	else if ((this.objectType.text && (this.objectType.type == 'string' || this.objectType.type == 'mixed')) 
-			|| this.objectType.attribute){
+			|| this.objectType.attribute || this.objectType.cdata){
 		input = document.createElement('textarea');
 		input.id = inputID;
 		input.className = 'xml_textarea';

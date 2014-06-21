@@ -21,7 +21,7 @@ GUIEditor.prototype.initialize = function(parentContainer) {
 	
 	this.guiContent.append(this.xmlContent);
 	
-	this.documentElement = new AbstractXMLObject(this.editor, null);
+	this.documentElement = new AbstractXMLObject(null, this.editor);
 	this.documentElement.domNode = this.xmlContent;
 	this.documentElement.nodeContainer = this.xmlContent;
 	this.documentElement.placeholder = this.placeholder;
@@ -93,7 +93,9 @@ GUIEditor.prototype._initEventBindings = function() {
 	}).on('change', '.element_text', function(event){
 		var $this = $(this);
 		var xmlElement = $this.parents('.' + xmlElementClass).eq(0).data('xmlObject');
-		$this.parents(".xml_node").first().data('xmlObject').syncText();
+		var textObject = $this.parents(".xml_node").first().data('xmlObject');
+		if (!textObject) return;
+		textObject.syncText();
 		xmlElement.updated({action : 'valueSynced'});
 		self.editor.xmlState.documentChangedEvent();
 	});
@@ -183,16 +185,23 @@ GUIEditor.prototype.addAttributeEvent = function(parentElement, objectType, addB
 	var attribute = new XMLAttribute(objectType, parentElement, this.editor);
 	attribute.render();
 	parentElement.updated({action : 'attributeAdded', target : objectType.name});
-	this.focusObject(attribute.attributeContainer);
+	this.focusObject(attribute.domNode);
 	addButton.addClass("disabled");
 	attribute.addButton = addButton;
 	this.editor.xmlState.documentChangedEvent();
 	this.editor.resize();
 };
 
-GUIEditor.prototype.addTextEvent = function(parentElement, textNode) {
+GUIEditor.prototype.addTextEvent = function(parentElement, xmlObject) {
 	parentElement.updated({action : 'textAdded', target : parentElement});
-	this.focusObject(textNode.domNode);
+	this.focusObject(xmlObject.domNode);
+	this.editor.xmlState.documentChangedEvent();
+	this.editor.resize();
+};
+
+GUIEditor.prototype.addCDataEvent = function(parentElement, xmlObject) {
+	parentElement.updated({action : 'cdataAdded', target : parentElement});
+	this.focusObject(xmlObject.domNode);
 	this.editor.xmlState.documentChangedEvent();
 	this.editor.resize();
 };
@@ -409,8 +418,8 @@ GUIEditor.prototype.selectAttribute = function(reverse) {
 				newSelection.addClass("selected");
 			}
 		} else {
-			if (this.selectedElement.attributeContainer)
-				selectedAttribute = this.selectedElement.attributeContainer.children("." + attributeContainerClass)
+			if (this.selectedElement.domNode)
+				selectedAttribute = this.selectedElement.domNode.children("." + attributeContainerClass)
 						.first().addClass("selected");
 		}
 	}
