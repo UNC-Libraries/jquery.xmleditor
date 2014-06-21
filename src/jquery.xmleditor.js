@@ -493,11 +493,30 @@ $.widget( "xml.xmlEditor", {
 				return;
 			}
 		}
-		// Create attribute on the targeted parent, and add its namespace if missing
+		// Create text on the targeted parent, and add its namespace if missing
 		var data = $(instigator).data('xml');
 		var textNode = data.target.addTextNode(data.objectType);
 		// Inform the active editor of the newly added attribute
 		this.activeEditor.addTextEvent(data.target, textNode);
+	},
+
+	addCDataCallback: function(instigator) {
+		if ($(instigator).hasClass("disabled"))
+			return;
+		// Synchronize xml document if there are unsynchronized changes in the text editor
+		if (this.xmlState.changesNotSynced()) {
+			try {
+				this.setXMLFromEditor();
+			} catch (e) {
+				alert(e.message);
+				return;
+			}
+		}
+		// Create cdata on the targeted parent, and add its namespace if missing
+		var data = $(instigator).data('xml');
+		var textNode = data.target.addCDataNode();
+		// Inform the active editor of the newly added attribute
+		this.activeEditor.addCDataEvent(data.target, textNode);
 	},
 
 	// Triggered when a document has been loaded or reloaded

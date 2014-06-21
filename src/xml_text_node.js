@@ -7,25 +7,35 @@ function XMLTextNode(textNode, dataType, editor) {
 	this.textNode = textNode;
 	this.xmlNode = $(textNode);
 	
-	AbstractXMLObject.call(this, editor, textType);
-	
-	// ID of the dom node for this element
-	this.domNodeID = null;
-	// dom node for this element
-	this.domNode = null;
-	// XMLElement which is the parent of this element
-	this.parentElement = null;
-	// Main input for text node of this element
-	this.textInput = null;
-	// dom element header for this element
-	this.elementHeader = null;
+	AbstractXMLObject.call(this, textType, editor);
 	
 }
 
 XMLTextNode.prototype.constructor = XMLTextNode;
 XMLTextNode.prototype = Object.create( AbstractXMLObject.prototype );
 
-XMLTextNode.prototype.render = function(parentElement, relativeToXMLTextNode, prepend) {
+// Persist the input value back into the text node
+XMLTextNode.prototype.syncText = function() {
+	this.textNode.nodeValue = this.textInput.val();
+};
+
+XMLTextNode.prototype.select = function() {
+	
+};
+
+XMLTextNode.prototype.addXmlNode = function(relativeTo, prepend) {
+	var textValue = "";
+	if (!this.textNode) {
+		this.textNode = document.createTextNode("");
+		this.parentElement.xmlNode[0].appendChild(this.textNode);
+		this.xmlNode = $(this.textNode);
+	} else {
+		textValue = this.textNode.nodeValue;
+	}
+	return textValue;
+};
+
+XMLTextNode.prototype.render = function(parentElement, relativeTo, prepend) {
 	this.parentElement = parentElement;
 	this.domNodeID = this.guiEditor.nextIndex();
 	
@@ -36,21 +46,18 @@ XMLTextNode.prototype.render = function(parentElement, relativeToXMLTextNode, pr
 	this.domNode.className = xmlNodeClass + ' ' + xmlTextClass;
 	
 	this.parentElement.nodeContainer[0].appendChild(this.domNode);
-	
-	var textValue = "";
-	if (!this.textNode) {
-		this.textNode = document.createTextNode("");
-		this.parentElement.xmlNode[0].appendChild(this.textNode);
-		this.xmlNode = $(this.textNode);
-	} else {
-		textValue = this.textNode.nodeValue;
-	}
 
-	this.textInput = this.createElementInput(this.domNodeID + "_text", 
-						textValue, this.domNode);
+	var inputColumn = document.createElement('div');
+	inputColumn.className = 'xml_input_column';
+	this.domNode.appendChild(inputColumn);
+
+	var textValue = this.addXmlNode(relativeTo, prepend);
+
+	this.textInput = AbstractXMLObject.prototype.createElementInput.call(this,
+			this.domNodeID + "_text", textValue, inputColumn);
 	this.textInput.addClass('element_text');
 
-	this.deleteButton = document.createElement('span');
+	this.deleteButton = document.createElement('div');
 	this.deleteButton.className = 'xml_delete';
 	this.deleteButton.appendChild(document.createTextNode('x'));
 	this.domNode.appendChild(this.deleteButton);
@@ -61,11 +68,3 @@ XMLTextNode.prototype.render = function(parentElement, relativeToXMLTextNode, pr
 	return this.domNode;
 };
 
-// Persist the input value back into the text node
-XMLTextNode.prototype.syncText = function() {
-	this.textNode.nodeValue = this.textInput.val();
-};
-
-XMLTextNode.prototype.select = function() {
-	
-};

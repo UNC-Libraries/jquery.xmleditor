@@ -102,14 +102,67 @@
 
 /****************/
 
+.xml_text_node {
+	/*border-radius: 5px;*/
+	position: relative;
+	padding: 0;
+	width: 100%;
+	border: 1px solid #cccfdd;
+	background-color: #F0F8FF;
+}
+
+.xml_text_node + .xml_text_node {
+	border-top-width: 0;
+}
+
+.xml_text_node .xml_input_column {
+	box-shadow: -2px 2px 2px #ddddee inset;
+	border-right: 1px solid #ddd;
+	width: calc(100% - 27px);
+	padding: 0;
+	margin: 0;
+}
+
+.xml_text_node .xml_input_column textarea {
+	background: transparent;
+	border: none;
+	width: 100%;
+	margin: 0;
+	resize: none;
+}
+
+.xml_text_node .xml_delete {
+	position: absolute;
+	right: 4px;
+	top: 4px;
+	background-color: #e4e4e4;
+    border-radius: 2px;
+    padding: 2px 5px;
+	border: 1px solid #aaaabb;
+	font-size: 11px;
+	color: #4C4C4C;
+	font-weight: 400;
+	vertical-align: 50%;
+	cursor: pointer;
+}
+
+.xml_text_node .xml_type_header {
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	padding: 5px;
+	display: block;
+	font-weight: bold;
+	cursor: default;
+}
+
 .xml_input, .xml_select, .xml_textarea {
 	max-width: 100%;
 	display: block;
-	border: 1px solid #cccfdd;
-	box-shadow: -2px 2px 2px #ddddee inset;
 	font-size: 13px;
-	background-color: #F0F8FF;
-	padding-left: 4px;
 }
 
 .xml_input {
@@ -458,37 +511,6 @@
 	line-height: 16px;
 	padding: 5px 18px 0 0;
 }
-
-.xml_text_node {
-	background-color: #eee;
-    border: 1px solid #cccfdd;
-    border-radius: 0 5px 5px 0;
-}
-
-.xml_text_node .xml_delete {
-	float: right;
-    margin: 4px 4px 0 0;
-    background-color: #e4e4e4;
-    border-radius: 2px;
-
-    padding: 2px 5px;
-	border: 1px solid #aaaabb;
-	font-size: 11px;
-	color: #4C4C4C;
-	font-weight: 400;
-	vertical-align: 50%;
-	cursor: pointer;
-
-}
-
-.xml_text_node .xml_input, .xml_text_node .xml_textarea {
-	width: 96%;
-	width: calc(100% - 32px);
-	display: inline-block;
-	margin: 0 0 -1px;
-}
-
-
 
 .xml_tab_area .gui_content { 
 	padding: 3px 0 0 0;

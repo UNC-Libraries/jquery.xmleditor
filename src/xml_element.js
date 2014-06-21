@@ -3,7 +3,7 @@
  * document and GUI
  */
 function XMLElement(xmlNode, objectType, editor) {
-	AbstractXMLObject.call(this, editor, objectType);
+	AbstractXMLObject.call(this, objectType, editor);
 	// jquery object reference to the xml node represented by this object in the active xml document
 	this.xmlNode = $(xmlNode);
 	this.isRootElement = this.xmlNode[0].parentNode === this.xmlNode[0].ownerDocument;
@@ -15,20 +15,12 @@ function XMLElement(xmlNode, objectType, editor) {
 	this.allowAttributes = this.objectType.attributes && this.objectType.attributes.length > 0;
 	// Should this element allow text nodes to be added
 	this.allowText = this.objectType.type != null;
-	// ID of the dom node for this element
-	this.domNodeID = null;
-	// dom node for this element
-	this.domNode = null;
-	// XMLElement which is the parent of this element
-	this.parentElement = null;
-	// Main input for text node of this element
-	this.textInput = null;
 	// dom element header for this element
 	this.elementHeader = null;
-	// dom element which contains the display of child elements
-	this.childContainer = null;
+	// dom element which contains the display of child nodes
+	this.nodeContainer = null;
 	// Counter for total number of immediate children of this element
-	this.childCount = 0;
+	this.nodeCount = 0;
 	// dom element for attributes
 	this.attributeContainer = null;
 	// Counter for number of attributes assigned to this element
@@ -42,10 +34,6 @@ function XMLElement(xmlNode, objectType, editor) {
 
 XMLElement.prototype.constructor = XMLElement;
 XMLElement.prototype = Object.create( AbstractXMLObject.prototype );
-
-XMLElement.prototype.getDomNode = function () {
-	return this.domNode;
-};
 
 // Render the GUI view of this element and all of its subelements/attributes
 // parentElement - the XMLElement parent of this element
@@ -118,7 +106,7 @@ XMLElement.prototype.render = function(parentElement, recursive, relativeToXMLEl
 // Render children elements
 // recursive - if false, then only the immediate children will be rendered
 XMLElement.prototype.renderChildren = function(recursive) {
-	this.childCount = 0;
+	this.nodeCount = 0;
 	this.domNode.children("." + xmlElementClass).remove();
 	
 	var elementsArray = this.objectType.elements;
@@ -171,7 +159,7 @@ XMLElement.prototype.childRemoved = function(childElement) {
  */
 XMLElement.prototype.updateChildrenCount = function(childElement, delta) {
 	var self = this;
-	this.childCount += delta;
+	this.nodeCount += delta;
 	var childName = childElement.objectType.ns + ":" + childElement.objectType.localName;
 	var choiceList = self.objectType.choices;
 	// Update child type counts
@@ -348,8 +336,7 @@ XMLElement.prototype.addNodeContainer = function (recursive) {
 	this.nodeContainer = $(container);
 	this.domNode[0].appendChild(container);
 
-	this.childCount = 0;
-	this.textCount = 0;
+	this.nodeCount = 0;
 
 	var textContainsChildren = this.xmlNode[0].children && this.xmlNode[0].children.length > 0;
 	var textAllowed = this.objectType.type != null && this.objectType.type != "mixed";
@@ -367,6 +354,7 @@ XMLElement.prototype.addNodeContainer = function (recursive) {
 					this.renderText(childNode);
 				break;
 			case 4 : // cdata
+				this.renderCData(childNode);
 				break;
 			case 8 : // comment
 				break;
@@ -374,7 +362,7 @@ XMLElement.prototype.addNodeContainer = function (recursive) {
 	}
 
 	// Add in a default text node if applicable and none present
-	if (textAllowed && this.textCount == 0) {
+	if (textAllowed && this.nodeCount == 0) {
 		this.renderText();
 	}
 };
@@ -400,39 +388,18 @@ XMLElement.prototype.renderText = function(childNode) {
 	var textNode = new XMLTextNode(childNode, this.objectType.type, this.editor);
 	textNode.render(this);
 
-	this.textCount++;
+	this.nodeCount++;
 
 	return textNode;
 };
 
-XMLElement.prototype.addTextContainer = function () {
-	var container = document.createElement('div');
-	container.id = this.domNodeID + "_cont_text";
-	container.className = 'content_block';
-	this.domNode.append(container);
-	var textContainsChildren = this.xmlNode[0].children && this.xmlNode[0].children.length > 0;
-	
-	this.textInput = [];
-	if (textContainsChildren) {
-		var textInput = this.createElementInput(this.domNodeID + "_text", 
-				this.editor.xml2Str(this.xmlNode.children()), container);
-		textInput.addClass('element_text');
-		textInput.attr("disabled", "disabled");
-		this.textInput.push(textInput);
-	} else {
-		textValue = "";
-		var childNodes = this.xmlNode[0].childNodes;
-		for (var i in childNodes) {
-			var childNode = childNodes[i];
-			if (childNode.nodeType == 3) {
-				var textInput = this.createElementInput(this.domNodeID + "_text" + i, 
-						childNode.nodeValue, container);
-				textInput.addClass('element_text');
-				textInput.attr('data-node-index', i);
-				this.textInput.push(textInput);
-			}
-		}
-	}
+XMLElement.prototype.renderCData = function(childNode) {
+	var cdataNode = new XMLCDataNode(childNode, this.editor);
+	cdataNode.render(this);
+
+	this.nodeCount++;
+
+	return cdataNode;
 };
 
 XMLElement.prototype.addAttributeContainer = function () {
@@ -551,6 +518,10 @@ XMLElement.prototype.addTextNode = function () {
 	return this.renderText();
 };
 
+XMLElement.prototype.addCDataNode = function () {
+	return this.renderCData();
+};
+
 // Remove an attribute of type objectType from this element
 XMLElement.prototype.removeAttribute = function (objectType) {
 	this.xmlNode[0].removeAttribute(objectType.name);
@@ -565,14 +536,13 @@ XMLElement.prototype.getSelectedAttribute = function () {
 XMLElement.prototype.updated = function (event) {
 	if (this.domNode == null)
 		return;
-	this.childCount = 0;
+	this.nodeCount = 0;
 	this.attributeCount = 0;
-	this.textCount = 0;
 	
 	if (this.nodeContainer != null && this.objectType.elements) {
-		this.childCount = this.nodeContainer.children("." + xmlElementClass).length;
-		this.textCount = this.nodeContainer.children("." + xmlTextClass).length;
-		if (this.childCount > 0 || this.textCount > 0)
+		this.nodeCount = this.nodeContainer.children("." + xmlElementClass).length 
+				+ this.nodeContainer.children("." + xmlTextClass).length;
+		if (this.nodeCount > 0)
 			this.nodeContainer.show();
 		else this.nodeContainer.hide();
 	}
@@ -584,7 +554,7 @@ XMLElement.prototype.updated = function (event) {
 	}
 	
 	// Show or hide the instructional placeholder depending on if there are any contents in the element
-	if (this.childCount == 0 && this.textCount == 0 && this.attributeCount == 0) {
+	if (this.nodeCount == 0 && this.attributeCount == 0) {
 		this.placeholder.show();
 	} else {
 		this.placeholder.hide();
