@@ -480,8 +480,8 @@ $.widget( "xml.xmlEditor", {
 		// Inform the active editor of the newly added attribute
 		this.activeEditor.addAttributeEvent(data.target, data.objectType, $(instigator));
 	},
-	
-	addTextCallback: function(instigator) {
+
+	addNodeCallback: function(instigator, nodeType, prepend) {
 		if ($(instigator).hasClass("disabled"))
 			return;
 		// Synchronize xml document if there are unsynchronized changes in the text editor
@@ -495,28 +495,9 @@ $.widget( "xml.xmlEditor", {
 		}
 		// Create text on the targeted parent, and add its namespace if missing
 		var data = $(instigator).data('xml');
-		var textNode = data.target.addTextNode(data.objectType);
+		var nodeObject = data.target.addNode(nodeType, prepend);
 		// Inform the active editor of the newly added attribute
-		this.activeEditor.addTextEvent(data.target, textNode);
-	},
-
-	addCDataCallback: function(instigator) {
-		if ($(instigator).hasClass("disabled"))
-			return;
-		// Synchronize xml document if there are unsynchronized changes in the text editor
-		if (this.xmlState.changesNotSynced()) {
-			try {
-				this.setXMLFromEditor();
-			} catch (e) {
-				alert(e.message);
-				return;
-			}
-		}
-		// Create cdata on the targeted parent, and add its namespace if missing
-		var data = $(instigator).data('xml');
-		var textNode = data.target.addCDataNode();
-		// Inform the active editor of the newly added attribute
-		this.activeEditor.addCDataEvent(data.target, textNode);
+		this.activeEditor.addNodeEvent(data.target, nodeObject);
 	},
 
 	// Triggered when a document has been loaded or reloaded
@@ -802,6 +783,7 @@ $.widget( "xml.xmlEditor", {
 			// Tab, select the next input
 			if (e.keyCode == 9) {
 				e.preventDefault();
+				console.log("Tab time");
 				this.guiEditor.focusInput(e.shiftKey);
 				return false;
 			}
@@ -812,24 +794,31 @@ $.widget( "xml.xmlEditor", {
 				return false;
 			}
 			
-			if (e.keyCode > 36 && e.keyCode < 41 && focused.length == 0){
-				e.preventDefault();
-				if (e.altKey) {
+			if (e.keyCode > 36 && e.keyCode < 41){
+				if (e.altKey && (focused.length == 0 || focused.is("textarea"))) {
+					e.preventDefault();
 					// Alt + up or down move the element up and down in the document
 					this.guiEditor.moveSelected(e.keyCode == 38);
-				} else if (e.shiftKey) {
-					// If holding shift while pressing up or down, then jump to the next/prev sibling
-					if (e.keyCode == 40 || e.keyCode == 38) {
-						this.guiEditor.selectSibling(e.keyCode == 38);
-					} else if (e.keyCode == 37 || e.keyCode == 39) {
-						this.guiEditor.selectParent(e.keyCode == 39);
-					}
-				} else {
-					// If not holding shift while hitting up or down, go to the next/prev element
-					if (e.keyCode == 40 || e.keyCode == 38){
-						this.guiEditor.selectNext(e.keyCode == 38);
-					} else if (e.keyCode == 37 || e.keyCode == 39) {
-						this.guiEditor.selectAttribute(e.keyCode == 37);
+					if (focused.is("textarea"))
+						focused.focus();
+					return false;
+				}
+				if (focused.length == 0) {
+					e.preventDefault();
+					if (e.shiftKey) {
+						// If holding shift while pressing up or down, then jump to the next/prev sibling
+						if (e.keyCode == 40 || e.keyCode == 38) {
+							this.guiEditor.selectSibling(e.keyCode == 38);
+						} else if (e.keyCode == 37 || e.keyCode == 39) {
+							this.guiEditor.selectParent(e.keyCode == 39);
+						}
+					} else {
+						// If not holding shift while hitting up or down, go to the next/prev element
+						if (e.keyCode == 40 || e.keyCode == 38){
+							this.guiEditor.selectNext(e.keyCode == 38);
+						} else if (e.keyCode == 37 || e.keyCode == 39) {
+							this.guiEditor.selectAttribute(e.keyCode == 37);
+						}
 					}
 				}
 				return false;

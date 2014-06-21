@@ -20,14 +20,21 @@ XMLTextNode.prototype.syncText = function() {
 };
 
 XMLTextNode.prototype.select = function() {
-	
+	$(".selected").removeClass("selected");
+	this.domNode.closest("." + xmlElementClass).addClass("selected");
+	this.domNode.addClass("selected");
+
 };
 
-XMLTextNode.prototype.addXmlNode = function(relativeTo, prepend) {
+XMLTextNode.prototype.addXmlNode = function(prepend) {
 	var textValue = "";
 	if (!this.textNode) {
 		this.textNode = document.createTextNode("");
-		this.parentElement.xmlNode[0].appendChild(this.textNode);
+		if (prepend) {
+			this.parentElement.xmlNode.prepend(this.textNode);
+		} else {
+			this.parentElement.xmlNode[0].appendChild(this.textNode);
+		}
 		this.xmlNode = $(this.textNode);
 	} else {
 		textValue = this.textNode.nodeValue;
@@ -35,7 +42,7 @@ XMLTextNode.prototype.addXmlNode = function(relativeTo, prepend) {
 	return textValue;
 };
 
-XMLTextNode.prototype.render = function(parentElement, relativeTo, prepend) {
+XMLTextNode.prototype.render = function(parentElement, prepend) {
 	this.parentElement = parentElement;
 	this.domNodeID = this.guiEditor.nextIndex();
 	
@@ -45,13 +52,17 @@ XMLTextNode.prototype.render = function(parentElement, relativeTo, prepend) {
 	this.domNode.id = this.domNodeID;
 	this.domNode.className = xmlNodeClass + ' ' + xmlTextClass;
 	
-	this.parentElement.nodeContainer[0].appendChild(this.domNode);
+	if (prepend) {
+		this.parentElement.nodeContainer.prepend(this.domNode);
+	} else {
+		this.parentElement.nodeContainer[0].appendChild(this.domNode);
+	}
 
 	var inputColumn = document.createElement('div');
 	inputColumn.className = 'xml_input_column';
 	this.domNode.appendChild(inputColumn);
 
-	var textValue = this.addXmlNode(relativeTo, prepend);
+	var textValue = this.addXmlNode(prepend);
 
 	this.textInput = AbstractXMLObject.prototype.createElementInput.call(this,
 			this.domNodeID + "_text", textValue, inputColumn);
@@ -68,3 +79,14 @@ XMLTextNode.prototype.render = function(parentElement, relativeTo, prepend) {
 	return this.domNode;
 };
 
+XMLTextNode.prototype.swap = function(swapTarget) {
+	AbstractXMLObject.prototype.swap.call(this, swapTarget);
+};
+
+XMLTextNode.prototype.moveUp = function() {
+	AbstractXMLObject.prototype.moveUp.call(this);
+};
+
+XMLTextNode.prototype.moveDown = function() {
+	AbstractXMLObject.prototype.moveDown.call(this);
+};
