@@ -109,20 +109,23 @@ ModifyElementMenu.prototype.populate = function(xmlElement) {
 	var choiceList = parent.objectType.choices;
 	
 	// Iterate through the child element definitions and generate entries for each
-	$.each(this.target.objectType.elements, function(){
-		var xmlElement = this;
-		var elName = self.editor.xmlState.namespaces.getNamespacePrefix(xmlElement.namespace) + xmlElement.localName;
-		var addButton = $("<li/>").attr({
-			title : 'Add ' + elName
-		}).html(elName)
-		.data('xml', {
-				"target": self.target,
-				"objectType": xmlElement
-		}).appendTo(self.menuContent);
-		// Disable the entry if its parent won't allow any more of this element type.
-		if (!parent.childCanBeAdded(xmlElement))
-			addButton.addClass('disabled');
-	});
+	if (this.target.objectType.elements) {
+		$.each(this.target.objectType.elements, function(){
+			var xmlElement = this;
+			var elName = self.editor.xmlState.namespaces.getNamespacePrefix(xmlElement.namespace) + xmlElement.localName;
+			var addButton = $("<li/>").attr({
+				title : 'Add ' + elName
+			}).html(elName)
+			.data('xml', {
+					"target": self.target,
+					"objectType": xmlElement
+			}).appendTo(self.menuContent);
+			// Disable the entry if its parent won't allow any more of this element type.
+			if (!parent.childCanBeAdded(xmlElement))
+				addButton.addClass('disabled');
+		});
+	}
+	
 	if (this.expanded) {
 		var endingHeight = this.menuContent.outerHeight() + 1;
 		if (endingHeight == 0)

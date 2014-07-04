@@ -207,6 +207,15 @@ GUIEditor.prototype.addNodeEvent = function(parentElement, xmlObject) {
 	this.editor.resize();
 }
 
+GUIEditor.prototype.select = function(selected) {
+	var container = selected.closest("." + attributeContainerClass + ",." + xmlNodeClass);
+	if (container.is("." + attributeContainerClass)) {
+		container.data("xmlAttribute").select();
+	} else {
+		this.selectNode(selected);
+	}
+}
+
 // Select element selected and inform the editor state of this change
 GUIEditor.prototype.selectNode = function(selected) {
 	if (!selected || selected.length == 0) {
@@ -230,10 +239,10 @@ GUIEditor.prototype.selectNode = function(selected) {
 		this.selectedElement = selectedObject;
 		this.selectedNode.select();
 		if (selectedObject instanceof XMLElement) {
-			console.log("Unfocusing input while selecting element");
 			$("*:focus").blur();
-		} else {
+		} else if (!(selectedObject instanceof XMLElementStub)) {
 			this.selectedElement = selectedObject.parentElement;
+			console.log(this.selectedElement);
 			this.selectedNode.domNode.addClass("selected");
 		} 
 		
@@ -340,16 +349,19 @@ GUIEditor.prototype.moveNode = function(xmlObject, up) {
 // Update an elements position in the XML document to reflect its position in the editor
 GUIEditor.prototype.updateElementPosition = function(moved) {
 	var movedElement = moved.data('xmlObject');
-	
-	var sibling = moved.prev('.' + xmlNodeClass);
-	if (sibling.length == 0) {
-		sibling = moved.next('.' + xmlNodeClass);
-		movedElement.xmlNode.detach().insertBefore(sibling.data('xmlObject').xmlNode);
-	} else {
-		movedElement.xmlNode.detach().insertAfter(sibling.data('xmlObject').xmlNode);
+
+	if (movedElement.xmlNode) {
+		var sibling = moved.prev('.' + xmlNodeClass);
+		if (sibling.length == 0) {
+			sibling = moved.next('.' + xmlNodeClass);
+			movedElement.xmlNode.detach().insertBefore(sibling.data('xmlObject').xmlNode);
+		} else {
+			movedElement.xmlNode.detach().insertAfter(sibling.data('xmlObject').xmlNode);
+		}
+		this.editor.xmlState.documentChangedEvent();
 	}
+	
 	this.selectNode(moved);
-	this.editor.xmlState.documentChangedEvent();
 };
 
 // Select the next or previous sibling element of the selected element
@@ -459,16 +471,16 @@ GUIEditor.prototype.focusSelectedText = function() {
 // Find and focus the nearest input field in the selected element or its children.  If the 
 // input field focused belonged to a child, then select that child.
 GUIEditor.prototype.focusInput = function(reverse) {
-	var focused = $("input:focus, textarea:focus, select:focus");
+	var focused = $("input:focus, textarea:focus, select:focus, .edit_title:focus");
 	if (focused.length == 0 && this.selectedNode == null) {
 		if (reverse)
 			return this;
 		// Nothing is selected or focused, so grab the first available input
-		focused = this.xmlContent.find("input[type=text]:visible, textarea:visible, select:visible").first().focus();
+		focused = this.xmlContent.find("input[type=text]:visible, textarea:visible, select:visible, .edit_title:visible").first().focus();
 	} else {
 		// When an input is already focused, tabbing selects the next input
 		var foundFocus = false;
-		var inputsSelector = "input[type=text]:visible, textarea:visible, select:visible";
+		var inputsSelector = "input[type=text]:visible, textarea:visible, select:visible, .edit_title:visible";
 		// If no inputs are focused but an element is selected, seek the next input near this element
 		if (this.selectedNode != null && focused.length == 0) {
 			inputsSelector += ", ." + xmlElementClass;
@@ -490,6 +502,8 @@ GUIEditor.prototype.focusInput = function(reverse) {
 			}
 		});
 	}
+
+	this.select(focused);
 	return this;
 };
 

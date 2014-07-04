@@ -103,27 +103,6 @@ XMLElement.prototype.render = function(parentElement, recursive, relativeToXMLEl
 	return this.domNode;
 };
 
-// Render children elements
-// recursive - if false, then only the immediate children will be rendered
-XMLElement.prototype.renderChildren = function(recursive) {
-	this.nodeCount = 0;
-	this.domNode.children("." + xmlElementClass).remove();
-	
-	var elementsArray = this.objectType.elements;
-	var self = this;
-	this.xmlNode.children().each(function() {
-		for ( var i = 0; i < elementsArray.length; i++) {
-			var prefix = self.editor.xmlState.namespaces.getNamespacePrefix(elementsArray[i].namespace);
-			if (prefix + elementsArray[i].localName == this.nodeName) {
-				var childElement = new XMLElement($(this), elementsArray[i], self.editor);
-				childElement.render(self, recursive);
-				self.addChildrenCount(childElement);
-				return;
-			}
-		}
-	});
-};
-
 // Render all present attributes for this elements
 XMLElement.prototype.renderAttributes = function () {
 	var self = this;
@@ -293,8 +272,6 @@ XMLElement.prototype.addContentContainers = function (recursive) {
 	var placeholder = document.createElement('div');
 	placeholder.className = 'placeholder';
 
-	var allowAttributes
-
 	if (this.allowText) {
 		if (this.allowAttributes) {
 			if (this.allowChildren) {
@@ -332,7 +309,7 @@ XMLElement.prototype.addContentContainers = function (recursive) {
 XMLElement.prototype.addNodeContainer = function (recursive) {
 	var container = document.createElement('div');
 	container.id = this.domNodeID + "_cont_nodes";
-	container.className = 'content_block';
+	container.className = 'content_block xml_children';
 	this.nodeContainer = $(container);
 	this.domNode[0].appendChild(container);
 
@@ -383,6 +360,11 @@ XMLElement.prototype.renderChild = function(childNode, recursive) {
 			return;
 		}
 	}
+
+	// Handle children that do not have a definition
+	// var childElement = new XMLElement($(childNode), {elements : [], type : ""}, this.editor);
+	// childElement.render(this, recursive);
+	// this.addChildrenCount(childElement);
 };
 
 XMLElement.prototype.renderText = function(childNode, prepend) {
@@ -405,6 +387,15 @@ XMLElement.prototype.renderCData = function(childNode, prepend) {
 
 XMLElement.prototype.renderComment = function(childNode, prepend) {
 	var node = new XMLCommentNode(childNode, this.editor);
+	node.render(this, prepend);
+
+	this.nodeCount++;
+
+	return node;
+};
+
+XMLElement.prototype.renderElementStub = function(prepend) {
+	var node = new XMLElementStub(this.editor);
 	node.render(this, prepend);
 
 	this.nodeCount++;
@@ -495,6 +486,7 @@ XMLElement.prototype.addNode = function (nodeType, prepend) {
 		case "text" : return this.renderText(null, prepend);
 		case "cdata" : return this.renderCData(null, prepend);
 		case "comment" : return this.renderComment(null, prepend);
+		case "element" : return this.renderElementStub(null, prepend);
 	}
 	return null;
 };

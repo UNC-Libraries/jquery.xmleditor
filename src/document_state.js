@@ -140,9 +140,6 @@ DocumentState.prototype.setXMLFromString = function(xmlString) {
 		nsHeaderIndex = xmlString.indexOf('/>', nsHeaderIndex);
 		xmlString = xmlString.substring(nsHeaderIndex + 2);
 	}
-	if (this.editor.options.prettyXML) {
-		xmlString = vkbeautify.xml(xmlString);
-	}
 	// parseXML doesn't return any info on why a document is invalid, so do it the old fashion way.
 	if (this.domParser) {
 		xmlDoc = this.domParser.parseFromString(xmlString, "application/xml");

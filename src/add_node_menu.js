@@ -37,6 +37,11 @@ AddNodeMenu.prototype.populate = function(xmlElement) {
 	var startingHeight = this.menuContent.outerHeight();
 	this.menuContent.empty();
 
+	$("<li>Add Element</li>").data('xml', {
+		target : xmlElement,
+		nodeType : "element"
+	}).appendTo(this.menuContent);
+
 	$("<li>Add CDATA</li>").data('xml', {
 		target : xmlElement,
 		nodeType : "cdata"
@@ -54,14 +59,6 @@ AddNodeMenu.prototype.populate = function(xmlElement) {
 			target : xmlElement,
 			nodeType : "text"
 		}).appendTo(this.menuContent);
-	}
-
-	// Add comment button
-
-	// Add arbitrary tag button
-
-	if (xmlElement.objectType.type != "mixed" || !this.editor.guiEditor.active) {
-		//this.menuContent.hide();
 	}
 
 	if (this.expanded) {

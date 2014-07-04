@@ -170,8 +170,8 @@ function MenuBar(editor) {
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
 			label : 'Pretty XML Formatting',
-			enabled : (vkbeautify !== undefined),
-			checked : vkbeautify && self.editor.options.prettyXML,
+			enabled : true,
+			checked : self.editor.options.prettyXML,
 			action : function() {
 				self.editor.options.prettyXML = !self.editor.options.prettyXML;
 				self.checkEntry(this, self.editor.options.prettyXML);
