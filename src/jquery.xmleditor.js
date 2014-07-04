@@ -26,7 +26,6 @@
  *   jquery.ui 1.7+
  *   ajax ace editor
  *   jquery.autosize.js (optional)
- *   vkbeautify.js (optional)
  * 
  * @author Ben Pennell
  */
@@ -160,8 +159,6 @@ $.widget( "xml.xmlEditor", {
 		// Detect optional features
 		if (!$.isFunction($.fn.autosize))
 			this.options.expandingTextAreas = false;
-		if (!vkbeautify)
-			this.options.prettyXML = false;
 		
 		if (typeof(this.options.schema) != 'function') {
 			// Turn relative paths into absolute paths for the sake of web workers
@@ -440,7 +437,7 @@ $.widget( "xml.xmlEditor", {
 		if (this.textEditor.active) {
 			if (this.xmlState.changesNotSynced()) {
 				try {
-					this.setXMLFromEditor();
+					this.setXMLFromEditor();f
 				} catch (e) {
 					this.addProblem("Unable to add element, please fix existing XML syntax first.", e);
 					return;
@@ -448,16 +445,22 @@ $.widget( "xml.xmlEditor", {
 			}
 		}
 		
+		this.addChildElement(xmlElement, objectType, relativeTo, prepend);
+	},
+
+	addChildElement: function(parentElement, objectType, relativeTo, prepend) {
 		// Determine if it is valid to add this child element to the given parent element
-		if (!xmlElement.childCanBeAdded(objectType))
+		if (!parentElement.childCanBeAdded(objectType))
 			return;
 		
 		// Add the namespace of the new element to the root if it is not already present
 		this.xmlState.addNamespace(objectType);
 		// Create the new element as a child of its parent
-		var newElement = xmlElement.addElement(objectType, relativeTo, prepend);
+		var newElement = parentElement.addElement(objectType, relativeTo, prepend);
 		// Trigger post element creation event in the currently active editor to handle UI updates
-		this.activeEditor.addElementEvent(xmlElement, newElement);
+		this.activeEditor.addElementEvent(parentElement, newElement);
+
+		return newElement;
 	},
 	
 	// Event which adds an attribute to an element, as defined by an instigator such as a menu
@@ -689,22 +692,22 @@ $.widget( "xml.xmlEditor", {
 			xmlNodeObject = this.xmlState.xml;
 		var xmlNode = (xmlNodeObject instanceof jQuery? xmlNodeObject[0]: xmlNodeObject);
 		var xmlStr = "";
-		try {
-			// Gecko-based browsers, Safari, Opera.
-			xmlStr = (new XMLSerializer()).serializeToString(xmlNode);
-		} catch (e) {
+		if (this.options.prettyXML) {
+			return formatXML(xmlNode);
+		} else {
 			try {
-				// Internet Explorer.
-				xmlStr = xmlNode.xml;
+				// Gecko-based browsers, Safari, Opera.
+				return (new XMLSerializer()).serializeToString(xmlNode);
 			} catch (e) {
-				this.addProblem('Xmlserializer not supported', e);
-				return false;
+				try {
+					// Internet Explorer.
+					return xmlNode.xml;
+				} catch (e) {
+					this.addProblem('Xmlserializer not supported', e);
+					return false;
+				}
 			}
 		}
-		// Format the text if enabled
-		if (this.options.prettyXML)
-			xmlStr = vkbeautify.xml(xmlStr);
-		return xmlStr;
 	},
 	
 	// Add a error/problem message to the error display
@@ -769,7 +772,7 @@ $.widget( "xml.xmlEditor", {
 			if (e.keyCode == 27) {
 				if (focused.length > 0)
 					focused.blur();
-				else this.guiEditor.selectElement(null);
+				else this.guiEditor.selectNode(null);
 				return false;
 			}
 			
@@ -783,7 +786,6 @@ $.widget( "xml.xmlEditor", {
 			// Tab, select the next input
 			if (e.keyCode == 9) {
 				e.preventDefault();
-				console.log("Tab time");
 				this.guiEditor.focusInput(e.shiftKey);
 				return false;
 			}
