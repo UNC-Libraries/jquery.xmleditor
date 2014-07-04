@@ -75,8 +75,9 @@ XMLAttribute.prototype.changeValue = function(value) {
 };
 
 XMLAttribute.prototype.select = function() {
-	this.editor.guiEditor.selectElement(self.xmlElement);
-	this.domNode.addClass('selected');
+	this.editor.guiEditor.selectNode(this.xmlElement);
+	this.domNode.addClass("selected");
+	this.attributeInput.focus();
 };
 
 XMLAttribute.prototype.deselect = function() {
