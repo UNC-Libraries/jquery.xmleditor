@@ -8,12 +8,17 @@ function XMLUnspecifiedElement(xmlNode, editor) {
 		type : "mixed"
 	};
 
-	AbstractXMLObject.call(this, objectType, editor);
+	AbstractXMLObject.call(this, unspecifiedType, editor);
 	// jquery object reference to the xml node represented by this object in the active xml document
 	this.xmlNode = $(xmlNode);
 	this.isRootElement = this.xmlNode[0].parentNode === this.xmlNode[0].ownerDocument;
 	// Flag indicating if this element is a child of the root node
 	this.isTopLevel = this.xmlNode[0].parentNode.parentNode === this.xmlNode[0].ownerDocument;
+	this.allowChildren = true;
+	// Flag indicating if any attributes can be added to this element
+	this.allowAttributes = true;
+	// Should this element allow text nodes to be added
+	this.allowText = true;
 	// dom element header for this element
 	this.elementHeader = null;
 	// dom element which contains the display of child nodes
@@ -60,12 +65,7 @@ XMLUnspecifiedElement.prototype.render = function(parentElement, recursive, rela
 	elementNameContainer.className = 'element_name';
 	this.elementHeader.appendChild(elementNameContainer);
 
-	if (this.objectType.schema)
-		this.elementName = this.xmlNode[0].tagName;
-	else {
-		this.elementName = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace) 
-		+ this.objectType.localName;
-	}
+	this.elementName = this.xmlNode[0].tagName;
 	
 	// set up element title and entry field if appropriate
 	var titleElement = document.createElement('span');
@@ -89,7 +89,6 @@ XMLUnspecifiedElement.prototype.render = function(parentElement, recursive, rela
 	return this.domNode;
 };
 
-
 XMLUnspecifiedElement.prototype.addContentContainers = function (recursive) {
 	var attributesArray = this.objectType.attributes;
 	var elementsArray = this.objectType.elements;
@@ -105,4 +104,8 @@ XMLUnspecifiedElement.prototype.addContentContainers = function (recursive) {
 	this.addAttributeContainer();
 
 	this.addNodeContainer(recursive);
+};
+
+XMLUnspecifiedElement.prototype.updateChildrenCount = function(childElement, delta) {
+	this.nodeCount += delta;
 };
