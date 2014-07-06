@@ -448,15 +448,45 @@ $.widget( "xml.xmlEditor", {
 		this.addChildElement(xmlElement, objectType, relativeTo, prepend);
 	},
 
-	addChildElement: function(parentElement, objectType, relativeTo, prepend) {
-		// Determine if it is valid to add this child element to the given parent element
-		if (!parentElement.childCanBeAdded(objectType))
-			return;
-		
-		// Add the namespace of the new element to the root if it is not already present
-		this.xmlState.addNamespace(objectType);
+	addChildElement: function(parentElement, newElementDefinition, relativeTo, prepend) {
+		if (!parentElement.allowChildren)
+			return null;
+
+		var objectType;
+		if (typeof newElementDefinition == 'string' || newElementDefinition instanceof String) {
+			var defs = parentElement.objectType.elements;
+			
+			for (var index in defs)  {
+				var definition = defs[index];
+				var elementName = this.xmlState.namespaces.getNamespacePrefix(definition.namespace) 
+						+ definition.localName;
+				if (elementName == newElementDefinition) {
+					objectType = definition;
+					break;
+				}
+			}
+		} else {
+			objectType = newElementDefinition;
+		}
+
 		// Create the new element as a child of its parent
-		var newElement = parentElement.addElement(objectType, relativeTo, prepend);
+		var newElement;
+		if (objectType) {
+			// Determine if it is valid to add this child element to the given parent element
+			if (!parentElement.childCanBeAdded(objectType))
+				return;
+			
+			// Add the namespace of the new element to the root if it is not already present
+			this.xmlState.addNamespace(objectType);
+			newElement = parentElement.addElement(objectType, relativeTo, prepend);
+		} else {
+			newElement = parentElement.addNonschemaElement(newElementDefinition, relativeTo, prepend);
+		}
+		
+		if (newElement == null) {
+			return null;
+		}
+		
 		// Trigger post element creation event in the currently active editor to handle UI updates
 		this.activeEditor.addElementEvent(parentElement, newElement);
 
@@ -3432,7 +3462,7 @@ XMLElement.prototype = Object.create( AbstractXMLObject.prototype );
 // parentElement - the XMLElement parent of this element
 // recursive - Boolean which indicates whether to render this elements subelements
 // Returns the newly created GUI dom element
-XMLElement.prototype.render = function(parentElement, recursive, relativeToXMLElement, prepend) {
+XMLElement.prototype.render = function(parentElement, recursive, relativeTo, prepend) {
 	this.parentElement = parentElement;
 	this.domNodeID = this.guiEditor.nextIndex();
 	
@@ -3446,11 +3476,11 @@ XMLElement.prototype.render = function(parentElement, recursive, relativeToXMLEl
 	if (this.isRootElement)
 		this.domNode.className += ' xml_root_element';
 	if (this.parentElement) {
-		if (relativeToXMLElement) {
+		if (relativeTo) {
 			if (prepend)
-				$domNode.insertBefore(relativeToXMLElement.domNode);
+				$domNode.insertBefore(relativeTo.domNode);
 			else
-				$domNode.insertAfter(relativeToXMLElement.domNode);
+				$domNode.insertAfter(relativeTo.domNode);
 		} else {
 			if (prepend)
 				this.parentElement.nodeContainer.prepend(this.domNode);
@@ -3720,7 +3750,7 @@ XMLElement.prototype.addNodeContainer = function (recursive) {
 				this.renderChild(childNode, recursive);
 				break;
 			case 3 : // text
-				if (textAllowed)
+				if (textAllowed && childNode.nodeValue.trim())
 					this.renderText(childNode);
 				break;
 			case 4 : // cdata
@@ -3744,20 +3774,22 @@ XMLElement.prototype.renderChild = function(childNode, recursive) {
 	
 	var elementsArray = this.objectType.elements;
 
-	for ( var i = 0; i < elementsArray.length; i++) {
-		var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(elementsArray[i].namespace);
-		if (prefix + elementsArray[i].localName == childNode.nodeName) {
-			var childElement = new XMLElement($(childNode), elementsArray[i], this.editor);
-			childElement.render(this, recursive);
-			this.addChildrenCount(childElement);
-			return;
+	if (elementsArray) {
+		for ( var i = 0; i < elementsArray.length; i++) {
+			var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(elementsArray[i].namespace);
+			if (prefix + elementsArray[i].localName == childNode.nodeName) {
+				var childElement = new XMLElement($(childNode), elementsArray[i], this.editor);
+				childElement.render(this, recursive);
+				this.addChildrenCount(childElement);
+				return;
+			}
 		}
 	}
 
 	// Handle children that do not have a definition
-	// var childElement = new XMLElement($(childNode), {elements : [], type : ""}, this.editor);
-	// childElement.render(this, recursive);
-	// this.addChildrenCount(childElement);
+	var childElement = new XMLUnspecifiedElement($(childNode), this.editor);
+	childElement.render(this, recursive);
+	this.addChildrenCount(childElement);
 };
 
 XMLElement.prototype.renderText = function(childNode, prepend) {
@@ -3807,10 +3839,40 @@ XMLElement.prototype.addAttributeContainer = function () {
 };
 
 // Add a child element of type objectType and update the interface
-XMLElement.prototype.addElement = function(objectType, relativeToXMLElement, prepend) {
-	if (!this.allowChildren)
+XMLElement.prototype.addNonschemaElement = function(tagName, relativeTo, prepend) {
+
+	var xmlDocument = this.editor.xmlState.xml[0];
+	var newElement;
+	try {
+		newElement = xmlDocument.createElement(tagName);
+	} catch(e) {
+		// Name was probably invalid
 		return null;
+	}
+
+	if (relativeTo) {
+		if (prepend)
+			$(newElement).insertBefore(relativeTo.xmlNode);
+		else
+			$(newElement).insertAfter(relativeTo.xmlNode);
+	} else {
+		if (prepend)
+			this.xmlNode.prepend(newElement);
+		else
+			this.xmlNode[0].appendChild(newElement);
+	}
+
+	var childElement = new XMLUnspecifiedElement(newElement, this.editor);
+	this.addChildrenCount(childElement);
+	if (this.domNode != null)
+		childElement.render(this, true, relativeTo, prepend);
 	
+	return childElement;
+
+};
+
+// Add a child element of type objectType and update the interface
+XMLElement.prototype.addElement = function(objectType, relativeTo, prepend) {
 	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(objectType.namespace);
 	
 	// Create the new element in the target namespace with the matching prefix
@@ -3829,11 +3891,11 @@ XMLElement.prototype.addElement = function(objectType, relativeToXMLElement, pre
 	}
 	if (defaultValue)
 		newElement.appendChild(xmlDocument.createTextNode(defaultValue));
-	if (relativeToXMLElement) {
+	if (relativeTo) {
 		if (prepend)
-			$(newElement).insertBefore(relativeToXMLElement.xmlNode);
+			$(newElement).insertBefore(relativeTo.xmlNode);
 		else
-			$(newElement).insertAfter(relativeToXMLElement.xmlNode);
+			$(newElement).insertAfter(relativeTo.xmlNode);
 	} else {
 		if (prepend)
 			this.xmlNode.prepend(newElement);
@@ -3844,7 +3906,7 @@ XMLElement.prototype.addElement = function(objectType, relativeToXMLElement, pre
 	var childElement = new XMLElement(newElement, objectType, this.editor);
 	this.addChildrenCount(childElement);
 	if (this.domNode != null)
-		childElement.render(this, true, relativeToXMLElement, prepend);
+		childElement.render(this, true, relativeTo, prepend);
 	childElement.populateChildren();
 	
 	return childElement;
@@ -3901,14 +3963,14 @@ XMLElement.prototype.updated = function (event) {
 	this.nodeCount = 0;
 	this.attributeCount = 0;
 	
-	if (this.nodeContainer != null && this.objectType.elements) {
+	if (this.nodeContainer != null) {
 		this.nodeCount = this.nodeContainer.children("." + xmlElementClass).length 
 				+ this.nodeContainer.children("." + xmlTextClass).length;
 		if (this.nodeCount > 0)
 			this.nodeContainer.show();
 		else this.nodeContainer.hide();
 	}
-	if (this.attributeContainer != null && this.objectType.attributes) {
+	if (this.attributeContainer != null) {
 		this.attributeCount = this.attributeContainer[0].children.length;
 		if (this.attributeCount > 0)
 			this.attributeContainer.show();
@@ -4057,31 +4119,13 @@ XMLElementStub.prototype.remove = function() {
 XMLElementStub.prototype.create = function() {
 	var tagName = this.titleElement.text();
 
-	var action;
 	var nextSiblings = this.domNode.next(".xml_node");
 	var relativeTo = null;
-	if (nextSiblings.length == 0) {
-		action = "appendToParent";
-	} else {
-		action = "beforeNext";
+	if (nextSiblings.length > 0) {
 		relativeTo = nextSiblings.first().data("xmlObject");
 	}
 
-	// See if the tag name matches a definition defined by the parent
-	var defs = this.parentElement.objectType.elements;
-	var objectType;
-	for (var index in defs)  {
-		var definition = defs[index];
-		var elementName = this.editor.xmlState.namespaces.getNamespacePrefix(definition.namespace) 
-				+ definition.localName;
-		if (elementName == tagName) {
-			objectType = definition;
-		}
-	}
-
-	if (objectType) {
-		var newElement = this.editor.addChildElement(this.parentElement, objectType, relativeTo, relativeTo != null);
-	}
+	this.editor.addChildElement(this.parentElement, tagName, relativeTo, relativeTo != null);
 
 	this.remove();
 };
@@ -4192,12 +4236,17 @@ function XMLUnspecifiedElement(xmlNode, editor) {
 		type : "mixed"
 	};
 
-	AbstractXMLObject.call(this, objectType, editor);
+	AbstractXMLObject.call(this, unspecifiedType, editor);
 	// jquery object reference to the xml node represented by this object in the active xml document
 	this.xmlNode = $(xmlNode);
 	this.isRootElement = this.xmlNode[0].parentNode === this.xmlNode[0].ownerDocument;
 	// Flag indicating if this element is a child of the root node
 	this.isTopLevel = this.xmlNode[0].parentNode.parentNode === this.xmlNode[0].ownerDocument;
+	this.allowChildren = true;
+	// Flag indicating if any attributes can be added to this element
+	this.allowAttributes = true;
+	// Should this element allow text nodes to be added
+	this.allowText = true;
 	// dom element header for this element
 	this.elementHeader = null;
 	// dom element which contains the display of child nodes
@@ -4244,12 +4293,7 @@ XMLUnspecifiedElement.prototype.render = function(parentElement, recursive, rela
 	elementNameContainer.className = 'element_name';
 	this.elementHeader.appendChild(elementNameContainer);
 
-	if (this.objectType.schema)
-		this.elementName = this.xmlNode[0].tagName;
-	else {
-		this.elementName = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace) 
-		+ this.objectType.localName;
-	}
+	this.elementName = this.xmlNode[0].tagName;
 	
 	// set up element title and entry field if appropriate
 	var titleElement = document.createElement('span');
@@ -4273,7 +4317,6 @@ XMLUnspecifiedElement.prototype.render = function(parentElement, recursive, rela
 	return this.domNode;
 };
 
-
 XMLUnspecifiedElement.prototype.addContentContainers = function (recursive) {
 	var attributesArray = this.objectType.attributes;
 	var elementsArray = this.objectType.elements;
@@ -4289,5 +4332,9 @@ XMLUnspecifiedElement.prototype.addContentContainers = function (recursive) {
 	this.addAttributeContainer();
 
 	this.addNodeContainer(recursive);
+};
+
+XMLUnspecifiedElement.prototype.updateChildrenCount = function(childElement, delta) {
+	this.nodeCount += delta;
 };
 })(jQuery);

@@ -448,15 +448,45 @@ $.widget( "xml.xmlEditor", {
 		this.addChildElement(xmlElement, objectType, relativeTo, prepend);
 	},
 
-	addChildElement: function(parentElement, objectType, relativeTo, prepend) {
-		// Determine if it is valid to add this child element to the given parent element
-		if (!parentElement.childCanBeAdded(objectType))
-			return;
-		
-		// Add the namespace of the new element to the root if it is not already present
-		this.xmlState.addNamespace(objectType);
+	addChildElement: function(parentElement, newElementDefinition, relativeTo, prepend) {
+		if (!parentElement.allowChildren)
+			return null;
+
+		var objectType;
+		if (typeof newElementDefinition == 'string' || newElementDefinition instanceof String) {
+			var defs = parentElement.objectType.elements;
+			
+			for (var index in defs)  {
+				var definition = defs[index];
+				var elementName = this.xmlState.namespaces.getNamespacePrefix(definition.namespace) 
+						+ definition.localName;
+				if (elementName == newElementDefinition) {
+					objectType = definition;
+					break;
+				}
+			}
+		} else {
+			objectType = newElementDefinition;
+		}
+
 		// Create the new element as a child of its parent
-		var newElement = parentElement.addElement(objectType, relativeTo, prepend);
+		var newElement;
+		if (objectType) {
+			// Determine if it is valid to add this child element to the given parent element
+			if (!parentElement.childCanBeAdded(objectType))
+				return;
+			
+			// Add the namespace of the new element to the root if it is not already present
+			this.xmlState.addNamespace(objectType);
+			newElement = parentElement.addElement(objectType, relativeTo, prepend);
+		} else {
+			newElement = parentElement.addNonschemaElement(newElementDefinition, relativeTo, prepend);
+		}
+		
+		if (newElement == null) {
+			return null;
+		}
+		
 		// Trigger post element creation event in the currently active editor to handle UI updates
 		this.activeEditor.addElementEvent(parentElement, newElement);
 

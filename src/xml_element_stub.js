@@ -114,31 +114,13 @@ XMLElementStub.prototype.remove = function() {
 XMLElementStub.prototype.create = function() {
 	var tagName = this.titleElement.text();
 
-	var action;
 	var nextSiblings = this.domNode.next(".xml_node");
 	var relativeTo = null;
-	if (nextSiblings.length == 0) {
-		action = "appendToParent";
-	} else {
-		action = "beforeNext";
+	if (nextSiblings.length > 0) {
 		relativeTo = nextSiblings.first().data("xmlObject");
 	}
 
-	// See if the tag name matches a definition defined by the parent
-	var defs = this.parentElement.objectType.elements;
-	var objectType;
-	for (var index in defs)  {
-		var definition = defs[index];
-		var elementName = this.editor.xmlState.namespaces.getNamespacePrefix(definition.namespace) 
-				+ definition.localName;
-		if (elementName == tagName) {
-			objectType = definition;
-		}
-	}
-
-	if (objectType) {
-		var newElement = this.editor.addChildElement(this.parentElement, objectType, relativeTo, relativeTo != null);
-	}
+	this.editor.addChildElement(this.parentElement, tagName, relativeTo, relativeTo != null);
 
 	this.remove();
 };
