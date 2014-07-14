@@ -464,8 +464,11 @@ $.widget( "xml.xmlEditor", {
 			if (!selectedElement || selectedElement.length == 0 || selectedElement.isRootElement) 
 				return null;
 			var currentElement = selectedElement;
-			while (!currentElement.isTopLevel)
+			while (currentElement.parentElement != null) {
+				if (currentElement.parentElement.isRootElement)
+					break;
 				currentElement = currentElement.parentElement;
+			}
 			if (currentElement != null)
 				return currentElement;
 			return null;
@@ -498,24 +501,24 @@ $.widget( "xml.xmlEditor", {
 		var xmlElement = $(instigator).data("xml").target;
 		var objectType = $(instigator).data("xml").objectType;
 		
-		// If in the text editor view, synchronous the text to the xml model and ensure wellformedness
-		if (this.textEditor.active) {
-			if (this.xmlState.changesNotSynced()) {
-				try {
-					this.setXMLFromEditor();f
-				} catch (e) {
-					this.addProblem("Unable to add element, please fix existing XML syntax first.", e);
-					return;
-				}
-			}
-		}
-		
 		this.addChildElement(xmlElement, objectType, relativeTo, prepend);
 	},
 
 	addChildElement: function(parentElement, newElementDefinition, relativeTo, prepend) {
 		if (!parentElement.allowChildren)
 			return null;
+
+		// If in the text editor view, synchronous the text to the xml model and ensure wellformedness
+		if (this.textEditor.active) {
+			if (this.xmlState.changesNotSynced()) {
+				try {
+					this.setXMLFromEditor();
+				} catch (e) {
+					this.addProblem("Unable to add element, please fix existing XML syntax first.", e);
+					return;
+				}
+			}
+		}
 
 		var objectType;
 		if (typeof newElementDefinition == 'string' || newElementDefinition instanceof String) {
@@ -582,6 +585,16 @@ $.widget( "xml.xmlEditor", {
 	addNodeCallback: function(instigator, nodeType, prepend) {
 		if ($(instigator).hasClass("disabled"))
 			return;
+
+		var data = $(instigator).data('xml');
+
+		this.addNode(data.target, nodeType, prepend);
+	},
+
+	addNode: function(parentElement, nodeType, prepend, relativeTo) {
+
+		if (nodeType == "text")
+
 		// Synchronize xml document if there are unsynchronized changes in the text editor
 		if (this.xmlState.changesNotSynced()) {
 			try {
@@ -591,11 +604,15 @@ $.widget( "xml.xmlEditor", {
 				return;
 			}
 		}
-		// Create text on the targeted parent, and add its namespace if missing
-		var data = $(instigator).data('xml');
-		var nodeObject = data.target.addNode(nodeType, prepend);
+
+		// Create node on the targeted parent
+		var nodeObject = parentElement.addNode(nodeType, prepend, relativeTo);
 		// Inform the active editor of the newly added attribute
-		this.activeEditor.addNodeEvent(data.target, nodeObject);
+		if (nodeObject) {
+			this.guiEditor.selectNode(nodeObject);
+			nodeObject.focus();
+			this.activeEditor.addNodeEvent(parentElement, nodeObject);
+		}
 	},
 
 	// Triggered when a document has been loaded or reloaded
@@ -862,7 +879,7 @@ $.widget( "xml.xmlEditor", {
 			var focused = $("input:focus, textarea:focus, select:focus");
 			
 			// Escape key, blur the currently selected input or deselect selected element
-			if (e.keyCode == 27) {
+			if (e.which == 27) {
 				if (focused.length > 0)
 					focused.blur();
 				else this.guiEditor.selectNode(null);
@@ -870,30 +887,30 @@ $.widget( "xml.xmlEditor", {
 			}
 			
 			// Enter, focus the first visible input
-			if (e.keyCode == 13 && focused.length == 0) {
+			if (e.which == 13 && focused.length == 0) {
 				e.preventDefault();
 				this.guiEditor.focusSelectedText();
 				return false;
 			}
 			
 			// Tab, select the next input
-			if (e.keyCode == 9) {
+			if (e.which == 9) {
 				e.preventDefault();
 				this.guiEditor.focusInput(e.shiftKey);
 				return false;
 			}
 			
 			// Delete key press while item selected but nothing is focused.
-			if (e.keyCode == 46 && focused.length == 0) {
+			if (e.which == 46 && focused.length == 0) {
 				this.guiEditor.deleteSelected();
 				return false;
 			}
 			
-			if (e.keyCode > 36 && e.keyCode < 41){
+			if (e.which > 36 && e.which < 41){
 				if (e.altKey && (focused.length == 0 || focused.is("textarea"))) {
 					e.preventDefault();
 					// Alt + up or down move the element up and down in the document
-					this.guiEditor.moveSelected(e.keyCode == 38);
+					this.guiEditor.moveSelected(e.which == 38);
 					if (focused.is("textarea"))
 						focused.focus();
 					return false;
@@ -902,55 +919,107 @@ $.widget( "xml.xmlEditor", {
 					e.preventDefault();
 					if (e.shiftKey) {
 						// If holding shift while pressing up or down, then jump to the next/prev sibling
-						if (e.keyCode == 40 || e.keyCode == 38) {
-							this.guiEditor.selectSibling(e.keyCode == 38);
-						} else if (e.keyCode == 37 || e.keyCode == 39) {
-							this.guiEditor.selectParent(e.keyCode == 39);
+						if (e.which == 40 || e.which == 38) {
+							this.guiEditor.selectSibling(e.which == 38);
+						} else if (e.which == 37 || e.which == 39) {
+							this.guiEditor.selectParent(e.which == 39);
 						}
 					} else {
 						// If not holding shift while hitting up or down, go to the next/prev element
-						if (e.keyCode == 40 || e.keyCode == 38){
-							this.guiEditor.selectNext(e.keyCode == 38);
-						} else if (e.keyCode == 37 || e.keyCode == 39) {
-							this.guiEditor.selectAttribute(e.keyCode == 37);
+						if (e.which == 40 || e.which == 38){
+							this.guiEditor.selectNext(e.which == 38);
+						} else if (e.which == 37 || e.which == 39) {
+							this.guiEditor.selectAttribute(e.which == 37);
 						}
 					}
 				}
 				return false;
 			}
 			
-			if ((e.metaKey || e.ctrlKey) && focused.length == 0 && e.keyCode == 'Z'.charCodeAt(0)) {
+			if ((e.metaKey || e.ctrlKey) && focused.length == 0 && e.which == 'Z'.charCodeAt(0)) {
 				// Undo
 				this.undoHistory.changeHead(e.shiftKey? 1: -1);
 				return false;
-			} else if ((e.metaKey || e.ctrlKey) && focused.length == 0 && e.keyCode == 'Y'.charCodeAt(0)){
+			} else if ((e.metaKey || e.ctrlKey) && focused.length == 0 && e.which == 'Y'.charCodeAt(0)){
 				// Redo
 				this.undoHistory.changeHead(1);
 				return false;
 			}
 		}
 		
-		// Save, on either tab.
-		if (e.altKey && e.shiftKey && e.keyCode == 'S'.charCodeAt(0)) {
-			$("." + submitButtonClass).click();
-			return false;
+		if (e.altKey && e.ctrlKey) {
+			// Save, on either tab.
+			if (e.which == 'S'.charCodeAt(0)) {
+				$("." + submitButtonClass).click();
+				return false;
+			}
+			
+			if (e.which == 'E'.charCodeAt(0)) {
+				this.exportXML();
+				return false;
+			}
+			
+			// Switch to the GUI editor
+			if (e.which == '1'.charCodeAt(0)) {
+				this.modeChange(0);
+				return false;
+			}
+			
+			// Switch to the text editor
+			if (e.which == '2'.charCodeAt(0)) {
+				this.modeChange(1);
+				return false;
+			}
 		}
-		
-		if (e.altKey && e.shiftKey && e.keyCode == 'E'.charCodeAt(0)) {
-			this.exportXML();
-			return false;
-		}
-		
-		// Switch to the GUI editor
-		if (e.altKey && e.shiftKey && e.keyCode == 'X'.charCodeAt(0)) {
-			this.modeChange(0);
-			return false;
-		}
-		
-		// Switch to the text editor
-		if (e.altKey && e.shiftKey && e.keyCode == 'T'.charCodeAt(0)) {
-			this.modeChange(1);
-			return false;
+
+		if (this.guiEditor.active) {
+			if (e.altKey) {
+				var prepend = this.options.prependNewElements;
+				if (e.shiftKey) prepend = !prepend;
+
+				var selected = this.guiEditor.selectedElement;
+
+				if (e.which == 'E'.charCodeAt(0)) {
+					if (selected instanceof XMLElement)
+						this.addNode(selected, "element", prepend);
+					return false;
+				}
+
+				if (e.which == 'S'.charCodeAt(0)) {
+					if (selected)
+						this.addNode(selected.parentElement, "element", prepend, selected);
+					return false;
+				}
+
+				if (e.which == 'P'.charCodeAt(0)) {
+					if (selected)
+						this.addNode(selected.parentElement, "element", prepend);
+					return false;
+				}
+
+				if (e.which == 'R'.charCodeAt(0)) {
+					this.addNode(this.guiEditor.rootElement, "element", prepend);
+					return false;
+				}
+
+				if (e.which == 'T'.charCodeAt(0)) {
+					if (selected)
+						this.addNode(selected, "text", prepend);
+					return false;
+				}
+
+				if (e.which == 191) {
+					if (selected)
+						this.addNode(selected, "comment", prepend);
+					return false;
+				}
+
+				if (e.which == 188) {
+					if (selected)
+						this.addNode(selected, "cdata", prepend);
+					return false;
+				}
+			}
 		}
 		
 		return true;

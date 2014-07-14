@@ -8,7 +8,6 @@ function GUIEditor(editor) {
 	this.elementIndex = 0;
 	this.rootElement = null;
 	this.active = false;
-	this.h = null;
 }
 
 GUIEditor.prototype.initialize = function(parentContainer) {
@@ -242,7 +241,6 @@ GUIEditor.prototype.selectNode = function(selected) {
 			$("*:focus").blur();
 		} else if (!(selectedObject instanceof XMLElementStub)) {
 			this.selectedElement = selectedObject.parentElement;
-			console.log(this.selectedElement);
 			this.selectedNode.domNode.addClass("selected");
 		} 
 		
@@ -258,8 +256,9 @@ GUIEditor.prototype.deselect = function() {
 		selectedAttributes.removeClass('selected');
 		return this;
 	}
-	$("." + xmlElementClass + ".selected").removeClass("selected");
+	$("." + xmlNodeClass + ".selected").removeClass("selected");
 	this.selectedNode = null;
+	this.selectedElement = null;
 	if (this.editor.modifyMenu != null)
 		this.editor.modifyMenu.clearContextualMenus();
 	return this;
@@ -271,22 +270,24 @@ GUIEditor.prototype.deleteSelected = function() {
 		return this;
 	try {
 		var selectedAttribute = this.selectedNode.getSelectedAttribute();
-	} catch(error) {
-		// Attribute container undefined
-		var selectedAttribute = [];
-		selectedAttribute.length = 0;
-	}
-	if (selectedAttribute.length > 0) {
+		if (selectedAttribute.length > 0) {
 		this.selectAttribute(true);
 		var newSelection = selectedAttribute.prev('.' + attributeContainerClass);
 		if (newSelection.length == 0)
 			newSelection = selectedAttribute.next('.' + attributeContainerClass);
-		newSelection.addClass("selected");
-		
-		var xmlAttribute = selectedAttribute.data("xmlAttribute");
-		xmlAttribute.remove();
-	} else {
+			newSelection.addClass("selected");
+			
+			var xmlAttribute = selectedAttribute.data("xmlAttribute");
+			xmlAttribute.remove();
+			return this;
+		}
+	} catch(error) {
+		// Attribute container undefined
+	}
+	if (this.selectedNode instanceof XMLElement) {
 		this.deleteElement(this.selectedNode);
+	} else {
+		this.deleteText(this.selectedNode);
 	}
 	return this;
 };
@@ -300,12 +301,7 @@ GUIEditor.prototype.deleteElement = function(xmlElement) {
 	parent.childRemoved(xmlElement);
 	var isSelected = xmlElement.isSelected();
 	if (isSelected) {
-		var afterDeleteSelection = xmlElement.domNode.next("." + xmlElementClass);
-		if (afterDeleteSelection.length == 0)
-			afterDeleteSelection = xmlElement.domNode.prev("." + xmlElementClass);
-		if (afterDeleteSelection.length == 0)
-			afterDeleteSelection = xmlElement.domNode.parents("." + xmlElementClass).first();
-		this.selectNode(afterDeleteSelection);
+		this.selectNode(this.afterDeleteSelection(xmlElement));
 	} else if (parent.isSelected && parent != this.rootElement) {
 		this.editor.modifyMenu.refreshContextualMenus(parent);
 	}
@@ -319,11 +315,25 @@ GUIEditor.prototype.deleteElement = function(xmlElement) {
 };
 
 GUIEditor.prototype.deleteText = function(xmlText) {
+	var isSelected = xmlText.isSelected();
+	if (isSelected) {
+		this.selectNode(this.afterDeleteSelection(xmlText));
+	}
+
 	xmlText.remove();
 
 	xmlText.parentElement.updated({action : 'textRemoved', target : xmlText});
 	this.editor.xmlState.documentChangedEvent();
 	return this;
+};
+
+GUIEditor.prototype.afterDeleteSelection = function(xmlNode) {
+	var afterDeleteSelection = xmlNode.domNode.next("." + xmlNodeClass);
+	if (afterDeleteSelection.length == 0)
+		afterDeleteSelection = xmlNode.domNode.prev("." + xmlNodeClass);
+	if (afterDeleteSelection.length == 0)
+		afterDeleteSelection = xmlNode.domNode.parent().closest("." + xmlNodeClass);
+	return afterDeleteSelection;
 };
 
 // Move the currently selected element by x number of positions
@@ -497,7 +507,7 @@ GUIEditor.prototype.focusInput = function(reverse) {
 			if (foundFocus && !$(this).hasClass(xmlElementClass)) {
 				focused = $(this).focus();
 				return false;
-			} else if (this.id == focused.attr('id')) {
+			} else if (this === focused.get(0)) {
 				foundFocus = true;
 			}
 		});

@@ -30,37 +30,27 @@ function XMLUnspecifiedElement(xmlNode, editor) {
 XMLUnspecifiedElement.prototype.constructor = XMLUnspecifiedElement;
 XMLUnspecifiedElement.prototype = Object.create( XMLElement.prototype );
 
-XMLUnspecifiedElement.prototype.render = function(parentElement, recursive, relativeToXMLElement, prepend) {
+XMLUnspecifiedElement.prototype.render = function(parentElement, recursive, relativeTo, prepend) {
 	this.parentElement = parentElement;
 	this.domNodeID = this.guiEditor.nextIndex();
 	
 	// Create the element and add it to the container
-	this.domNode = document.createElement('div');
-	var $domNode = $(this.domNode);
-	this.domNode.id = this.domNodeID;
-	this.domNode.className = 'xml_node ' + xmlElementClass;
+	this.domElement = document.createElement('div');
+	this.domNode = $(this.domElement);
+
+	this.domElement.id = this.domNodeID;
+	this.domElement.className = 'xml_node ' + xmlElementClass;
 	if (this.isTopLevel)
-		this.domNode.className += ' ' + topLevelContainerClass;
+		this.domElement.className += ' ' + topLevelContainerClass;
 	if (this.isRootElement)
-		this.domNode.className += ' xml_root_element';
-	if (this.parentElement) {
-		if (relativeToXMLElement) {
-			if (prepend)
-				$domNode.insertBefore(relativeToXMLElement.domNode);
-			else
-				$domNode.insertAfter(relativeToXMLElement.domNode);
-		} else {
-			if (prepend)
-				this.parentElement.nodeContainer.prepend(this.domNode);
-			else
-				this.parentElement.nodeContainer[0].appendChild(this.domNode);
-		}
-	}
+		this.domElement.className += ' xml_root_element';
+
+	this.insertDOMNode(relativeTo, prepend);
 	
 	// Begin building contents
 	this.elementHeader = document.createElement('ul');
 	this.elementHeader.className = 'element_header';
-	this.domNode.appendChild(this.elementHeader);
+	this.domElement.appendChild(this.elementHeader);
 	var elementNameContainer = document.createElement('li');
 	elementNameContainer.className = 'element_name';
 	this.elementHeader.appendChild(elementNameContainer);
@@ -73,7 +63,6 @@ XMLUnspecifiedElement.prototype.render = function(parentElement, recursive, rela
 	elementNameContainer.appendChild(titleElement);
 	
 	// Switch gui element over to a jquery object
-	this.domNode = $domNode;
 	this.domNode.data("xmlObject", this);
 
 	// Add the subsections for the elements content next.
@@ -108,4 +97,8 @@ XMLUnspecifiedElement.prototype.addContentContainers = function (recursive) {
 
 XMLUnspecifiedElement.prototype.updateChildrenCount = function(childElement, delta) {
 	this.nodeCount += delta;
+};
+
+XMLUnspecifiedElement.prototype.childCanBeRemoved = function(childType) {
+	return true;
 };

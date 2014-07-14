@@ -26,15 +26,21 @@ function MenuBar(editor) {
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
 				label : 'Submit to Server',
+<<<<<<< HEAD
 				enabled : defaultSubmitConfig != null,
 				binding : "alt+shift+s",
 				action : function() {
 					self.editor.uploadXML.call(self.editor, defaultSubmitConfig);
 				}
+=======
+				enabled : (self.editor.options.ajaxOptions.xmlUploadPath != null),
+				binding : "ctrl+alt+s",
+				action : $.proxy(self.editor.submitXML, self.editor)
+>>>>>>> key bindings and menu for adding nodes.  Many bug fixes and improvements to node adding
 			}, {
 				label : 'Export',
 				enabled : (typeof(Blob) !== undefined),
-				binding : "alt+shift+e",
+				binding : "ctrl+alt+e",
 				action : $.proxy(self.editor.exportXML, self.editor)
 			} ]
 	}, {
@@ -146,20 +152,86 @@ function MenuBar(editor) {
 				}
 			} ]
 	}, {
+		label : 'Insert',
+		enabled : true,
+		action : function(event) {self.activateMenu(event);}, 
+		items : [ {
+				label : 'Add child element',
+				enabled : true,
+				binding : "alt+e",
+				action : function(){
+					var selected = self.editor.guiEditor.selectedElement;
+					if (selected instanceof XMLElement)
+						self.editor.addNode(selected, "element", false);
+				}
+			},{
+				label : 'Add sibling element',
+				enabled : true,
+				binding : "alt+s",
+				action : function(){
+					var selected = self.editor.guiEditor.selectedElement;
+					if (selected)
+						self.editor.addNode(selected.parentElement, "element", false, selected);
+				}
+			}, {
+				label : 'Add element to parent',
+				enabled : true,
+				binding : "alt+p",
+				action : function(){
+					var selected = self.editor.guiEditor.selectedElement;
+					if (selected)
+						self.editor.addNode(selected.parentElement, "element", false);
+				}
+			}, {
+				label : 'Add element to root',
+				enabled : true,
+				binding : "alt+r",
+				action : function(){
+					self.editor.addNode(self.editor.guiEditor.rootElement, "element", false);
+				}
+			}, {
+				label : 'Add text to element',
+				enabled : true,
+				binding : "alt+t",
+				action : function(){
+					var selected = self.editor.guiEditor.selectedElement;
+					if (selected)
+						self.editor.addNode(selected, "text", false);
+				}
+			}, {
+				label : 'Add comment to element',
+				enabled : true,
+				binding : "alt+/",
+				action : function(){
+					var selected = self.editor.guiEditor.selectedElement;
+					if (selected)
+						self.editor.addNode(selected, "comment", false);
+				}
+			}, {
+				label : 'Add CDATA to element',
+				enabled : true,
+				binding : "alt+,",
+				action : function(){
+					var selected = self.editor.guiEditor.selectedElement;
+					if (selected)
+						self.editor.addNode(selected, "cdata", false);
+				}
+			} ]
+	}, {
 		label : 'View',
 		enabled : true,
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
 			label : 'Switch to XML View',
 			enabled : true,
-			binding : "alt+shift+x",
+			binding : "ctrl+alt+1",
 			action : function() {
 				self.editor.modeChange(0);
 			}
 		}, {
 			label : 'Switch to Text View',
 			enabled : true,
-			binding : "alt+shift+t",
+			binding : "ctrl+alt+2",
 			action : function() {
 				self.editor.modeChange(1);
 			}

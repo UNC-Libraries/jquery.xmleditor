@@ -12,7 +12,7 @@ function XMLElementStub(editor) {
 	this.tagName = "";
 }
 
-XMLElementStub.prototype.render = function(parentElement, recursive, relativeToXMLElement, prepend) {
+XMLElementStub.prototype.render = function(parentElement, prepend, relativeToXMLElement) {
 	this.parentElement = parentElement;
 	this.domNodeID = this.guiEditor.nextIndex();
 	
@@ -51,7 +51,7 @@ XMLElementStub.prototype.render = function(parentElement, recursive, relativeToX
 
 	var self = this;
 
-	var createLink = $("<span class='create_element'>create</span>").appendTo(elementNameContainer).mouseup(function(e){
+	var createLink = $("<span class='create_element'>create element</span>").appendTo(elementNameContainer).mouseup(function(e){
 		self.create();
 	});
 
@@ -65,6 +65,7 @@ XMLElementStub.prototype.render = function(parentElement, recursive, relativeToX
 		// escape, cancel
 		if (e.keyCode == 27) {
 			self.remove();
+			self.guiEditor.selectNode(self.parentElement);
 			return false;
 		}
 		
@@ -79,18 +80,19 @@ XMLElementStub.prototype.render = function(parentElement, recursive, relativeToX
 			return false;
 		}
 
-		e.stopPropagation();
+		if (e.which == 37 || e.which == 39) {
+			e.stopPropagation();
+		}
 	});
 
 	this.titleElement.focus(function(e) {
 		self.guiEditor.selectNode(self);
+		e.stopPropagation();
 	})
 	.mousedown(function(e) {
 		self.titleElement.focus();
 		e.stopPropagation();
 	});
-
-	this.titleElement.focus();
 };
 
 XMLElementStub.prototype.addTopActions = function () {
@@ -114,17 +116,32 @@ XMLElementStub.prototype.remove = function() {
 XMLElementStub.prototype.create = function() {
 	var tagName = this.titleElement.text();
 
-	var nextSiblings = this.domNode.next(".xml_node");
+	var nextSiblings = this.domNode.nextAll(".xml_node:not(.xml_stub)");
 	var relativeTo = null;
 	if (nextSiblings.length > 0) {
 		relativeTo = nextSiblings.first().data("xmlObject");
 	}
 
-	this.editor.addChildElement(this.parentElement, tagName, relativeTo, relativeTo != null);
+	var newElement = this.editor.addChildElement(this.parentElement, tagName, relativeTo, relativeTo != null);
+	// Move new element to match display position of the stub, in case it was misplaced because of its siblings being stubs
+	newElement.domNode.detach();
+	this.domNode.after(newElement.domNode);
 
 	this.remove();
 };
 
+XMLElementStub.prototype.getSelectedAttribute = function () {
+	return [];
+};
+
 XMLElementStub.prototype.select = function() {
 	this.domNode.addClass("selected");
+};
+
+XMLElementStub.prototype.isSelected = function() {
+	return this.domNode.hasClass("selected");
+};
+
+XMLElementStub.prototype.focus = function() {
+	this.titleElement.focus();
 };

@@ -97,8 +97,10 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 
 // Change the editors focus to this xml object
 AbstractXMLObject.prototype.focus = function() {
-	if (this.getDomNode() != null)
-		this.guiEditor.focusObject(this.getDomNode());
+	if (this.domNode != null)
+		this.guiEditor.focusObject(this.domNode);
+	if (this.textInput)
+		this.textInput.focus();
 };
 
 AbstractXMLObject.prototype.getDomNode = function () {
@@ -149,4 +151,12 @@ AbstractXMLObject.prototype.moveDown = function() {
 	} else {
 		return false;
 	}
+};
+
+AbstractXMLObject.prototype.select = function() {
+	this.domNode.addClass("selected");
+};
+
+AbstractXMLObject.prototype.isSelected = function() {
+	return this.domNode.hasClass("selected");
 };
