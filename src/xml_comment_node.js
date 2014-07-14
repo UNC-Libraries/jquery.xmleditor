@@ -65,3 +65,11 @@ XMLCommentNode.prototype.moveUp = function() {
 XMLCommentNode.prototype.moveDown = function() {
 	AbstractXMLObject.prototype.moveDown.call(this);
 };
+
+XMLCommentNode.prototype.focus = function() {
+	AbstractXMLObject.prototype.focus.call(this);
+};
+
+XMLCommentNode.prototype.isSelected = function() {
+	return AbstractXMLObject.prototype.isSelected.call(this);
+};

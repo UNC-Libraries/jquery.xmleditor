@@ -29,13 +29,17 @@ AddNodeMenu.prototype.initEventHandlers = function() {
 };
 
 AddNodeMenu.prototype.populate = function(xmlElement) {
-	if (!this.editor.guiEditor.active)
-		return;
 
 	if (this.expanded)
 		this.menuContent.css("height", "auto");
 	var startingHeight = this.menuContent.outerHeight();
 	this.menuContent.empty();
+
+	if (!this.editor.guiEditor.active || !(xmlElement instanceof XMLElement)){
+		this.menuHeader.addClass("disabled");
+		this.enabled = false;
+		return;
+	}
 
 	$("<li>Add Element</li>").data('xml', {
 		target : xmlElement,

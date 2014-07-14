@@ -44,32 +44,22 @@ XMLElement.prototype.render = function(parentElement, recursive, relativeTo, pre
 	this.domNodeID = this.guiEditor.nextIndex();
 	
 	// Create the element and add it to the container
-	this.domNode = document.createElement('div');
-	var $domNode = $(this.domNode);
-	this.domNode.id = this.domNodeID;
-	this.domNode.className = this.objectType.ns + "_" + this.objectType.localName + 'Instance xml_node ' + xmlElementClass;
+	this.domElement = document.createElement('div');
+	this.domNode = $(this.domElement);
+
+	this.domElement.id = this.domNodeID;
+	this.domElement.className = this.objectType.ns + "_" + this.objectType.localName + 'Instance xml_node ' + xmlElementClass;
 	if (this.isTopLevel)
-		this.domNode.className += ' ' + topLevelContainerClass;
+		this.domElement.className += ' ' + topLevelContainerClass;
 	if (this.isRootElement)
-		this.domNode.className += ' xml_root_element';
-	if (this.parentElement) {
-		if (relativeTo) {
-			if (prepend)
-				$domNode.insertBefore(relativeTo.domNode);
-			else
-				$domNode.insertAfter(relativeTo.domNode);
-		} else {
-			if (prepend)
-				this.parentElement.nodeContainer.prepend(this.domNode);
-			else
-				this.parentElement.nodeContainer[0].appendChild(this.domNode);
-		}
-	}
+		this.domElement.className += ' xml_root_element';
+	
+	this.insertDOMNode(relativeTo, prepend);
 	
 	// Begin building contents
 	this.elementHeader = document.createElement('ul');
 	this.elementHeader.className = 'element_header';
-	this.domNode.appendChild(this.elementHeader);
+	this.domElement.appendChild(this.elementHeader);
 	var elementNameContainer = document.createElement('li');
 	elementNameContainer.className = 'element_name';
 	this.elementHeader.appendChild(elementNameContainer);
@@ -87,7 +77,6 @@ XMLElement.prototype.render = function(parentElement, recursive, relativeTo, pre
 	elementNameContainer.appendChild(titleElement);
 	
 	// Switch gui element over to a jquery object
-	this.domNode = $domNode;
 	this.domNode.data("xmlObject", this);
 
 	// Add the subsections for the elements content next.
@@ -101,6 +90,22 @@ XMLElement.prototype.render = function(parentElement, recursive, relativeTo, pre
 	this.updated({action : 'render'});
 	
 	return this.domNode;
+};
+
+XMLElement.prototype.insertDOMNode = function (relativeTo, prepend) {
+	if (this.parentElement) {
+		if (relativeTo) {
+			if (prepend)
+				this.domNode.insertBefore(relativeTo.domNode);
+			else
+				this.domNode.insertAfter(relativeTo.domNode);
+		} else {
+			if (prepend)
+				this.parentElement.nodeContainer.prepend(this.domNode);
+			else
+				this.parentElement.nodeContainer[0].appendChild(this.domElement);
+		}
+	}
 };
 
 // Render all present attributes for this elements
@@ -316,7 +321,6 @@ XMLElement.prototype.addNodeContainer = function (recursive) {
 	this.nodeCount = 0;
 
 	var textContainsChildren = this.xmlNode[0].children && this.xmlNode[0].children.length > 0;
-	var textAllowed = this.objectType.type != null;
 
 	var childNodes = this.xmlNode[0].childNodes;
 	for (var i in childNodes) {
@@ -327,7 +331,7 @@ XMLElement.prototype.addNodeContainer = function (recursive) {
 				this.renderChild(childNode, recursive);
 				break;
 			case 3 : // text
-				if (textAllowed && childNode.nodeValue.trim())
+				if (this.allowText && childNode.nodeValue.trim())
 					this.renderText(childNode);
 				break;
 			case 4 : // cdata
@@ -340,7 +344,7 @@ XMLElement.prototype.addNodeContainer = function (recursive) {
 	}
 
 	// Add in a default text node if applicable and none present
-	if (textAllowed && this.nodeCount == 0 && this.objectType.type != "mixed") {
+	if (this.allowText && this.nodeCount == 0 && this.objectType.type != "mixed") {
 		this.renderText();
 	}
 };
@@ -396,9 +400,9 @@ XMLElement.prototype.renderComment = function(childNode, prepend) {
 	return node;
 };
 
-XMLElement.prototype.renderElementStub = function(prepend) {
+XMLElement.prototype.renderElementStub = function(prepend, relativeTo) {
 	var node = new XMLElementStub(this.editor);
-	node.render(this, prepend);
+	node.render(this, prepend, relativeTo);
 
 	this.nodeCount++;
 
@@ -427,17 +431,7 @@ XMLElement.prototype.addNonschemaElement = function(tagName, relativeTo, prepend
 		return null;
 	}
 
-	if (relativeTo) {
-		if (prepend)
-			$(newElement).insertBefore(relativeTo.xmlNode);
-		else
-			$(newElement).insertAfter(relativeTo.xmlNode);
-	} else {
-		if (prepend)
-			this.xmlNode.prepend(newElement);
-		else
-			this.xmlNode[0].appendChild(newElement);
-	}
+	this.insertXMLNode(newElement, relativeTo, prepend);
 
 	var childElement = new XMLUnspecifiedElement(newElement, this.editor);
 	this.addChildrenCount(childElement);
@@ -468,17 +462,8 @@ XMLElement.prototype.addElement = function(objectType, relativeTo, prepend) {
 	}
 	if (defaultValue)
 		newElement.appendChild(xmlDocument.createTextNode(defaultValue));
-	if (relativeTo) {
-		if (prepend)
-			$(newElement).insertBefore(relativeTo.xmlNode);
-		else
-			$(newElement).insertAfter(relativeTo.xmlNode);
-	} else {
-		if (prepend)
-			this.xmlNode.prepend(newElement);
-		else
-			this.xmlNode[0].appendChild(newElement);
-	}
+	
+	this.insertXMLNode(newElement, relativeTo, prepend);
 	
 	var childElement = new XMLElement(newElement, objectType, this.editor);
 	this.addChildrenCount(childElement);
@@ -487,6 +472,30 @@ XMLElement.prototype.addElement = function(objectType, relativeTo, prepend) {
 	childElement.populateChildren();
 	
 	return childElement;
+};
+
+XMLElement.prototype.insertXMLNode = function (newElement, relativeTo, prepend) {
+	if (relativeTo) {
+		if (relativeTo instanceof XMLElementStub) {
+			// Stubs don't have an xml node, so need to position based off nearest real node
+			var nextSiblings = this.domNode.nextAll(".xml_node:not(.xml_stub)");
+			if (nextSiblings.length > 0) {
+				$(newElement).insertBefore(nextSiblings.first().data("xmlObject").xmlNode);
+			} else {
+				this.xmlNode[0].appendChild(newElement);
+			}
+		} else {
+			if (prepend)
+				$(newElement).insertBefore(relativeTo.xmlNode);
+			else
+				$(newElement).insertAfter(relativeTo.xmlNode);
+		}
+	} else {
+		if (prepend)
+			this.xmlNode.prepend(newElement);
+		else
+			this.xmlNode[0].appendChild(newElement);
+	}
 };
 
 // Add a new attribute of type objectType to this element
@@ -513,12 +522,16 @@ XMLElement.prototype.addAttribute = function (objectType) {
 
 
 
-XMLElement.prototype.addNode = function (nodeType, prepend) {
+XMLElement.prototype.addNode = function (nodeType, prepend, relativeTo) {
+	this.nodeContainer.show();
 	switch (nodeType) {
-		case "text" : return this.renderText(null, prepend);
-		case "cdata" : return this.renderCData(null, prepend);
-		case "comment" : return this.renderComment(null, prepend);
-		case "element" : return this.renderElementStub(null, prepend);
+		case "text" :
+			if (this.allowText)
+				return this.renderText(null, prepend, relativeTo);
+			else return null;
+		case "cdata" : return this.renderCData(null, prepend, relativeTo);
+		case "comment" : return this.renderComment(null, prepend, relativeTo);
+		case "element" : return this.renderElementStub(prepend, relativeTo);
 	}
 	return null;
 };
@@ -563,14 +576,6 @@ XMLElement.prototype.updated = function (event) {
 	
 	if (this.editor.options.elementUpdated)
 		this.editor.options.elementUpdated.call(this, event);
-};
-
-XMLElement.prototype.select = function() {
-	this.domNode.addClass("selected");
-};
-
-XMLElement.prototype.isSelected = function() {
-	return this.domNode.hasClass("selected");
 };
 
 XMLElement.prototype.getAttributeContainer = function() {

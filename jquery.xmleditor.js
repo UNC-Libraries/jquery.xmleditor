@@ -396,8 +396,11 @@ $.widget( "xml.xmlEditor", {
 			if (!selectedElement || selectedElement.length == 0 || selectedElement.isRootElement) 
 				return null;
 			var currentElement = selectedElement;
-			while (!currentElement.isTopLevel)
+			while (currentElement.parentElement != null) {
+				if (currentElement.parentElement.isRootElement)
+					break;
 				currentElement = currentElement.parentElement;
+			}
 			if (currentElement != null)
 				return currentElement;
 			return null;
@@ -433,24 +436,24 @@ $.widget( "xml.xmlEditor", {
 		var xmlElement = $(instigator).data("xml").target;
 		var objectType = $(instigator).data("xml").objectType;
 		
-		// If in the text editor view, synchronous the text to the xml model and ensure wellformedness
-		if (this.textEditor.active) {
-			if (this.xmlState.changesNotSynced()) {
-				try {
-					this.setXMLFromEditor();f
-				} catch (e) {
-					this.addProblem("Unable to add element, please fix existing XML syntax first.", e);
-					return;
-				}
-			}
-		}
-		
 		this.addChildElement(xmlElement, objectType, relativeTo, prepend);
 	},
 
 	addChildElement: function(parentElement, newElementDefinition, relativeTo, prepend) {
 		if (!parentElement.allowChildren)
 			return null;
+
+		// If in the text editor view, synchronous the text to the xml model and ensure wellformedness
+		if (this.textEditor.active) {
+			if (this.xmlState.changesNotSynced()) {
+				try {
+					this.setXMLFromEditor();
+				} catch (e) {
+					this.addProblem("Unable to add element, please fix existing XML syntax first.", e);
+					return;
+				}
+			}
+		}
 
 		var objectType;
 		if (typeof newElementDefinition == 'string' || newElementDefinition instanceof String) {
@@ -517,6 +520,16 @@ $.widget( "xml.xmlEditor", {
 	addNodeCallback: function(instigator, nodeType, prepend) {
 		if ($(instigator).hasClass("disabled"))
 			return;
+
+		var data = $(instigator).data('xml');
+
+		this.addNode(data.target, nodeType, prepend);
+	},
+
+	addNode: function(parentElement, nodeType, prepend, relativeTo) {
+
+		if (nodeType == "text")
+
 		// Synchronize xml document if there are unsynchronized changes in the text editor
 		if (this.xmlState.changesNotSynced()) {
 			try {
@@ -526,11 +539,15 @@ $.widget( "xml.xmlEditor", {
 				return;
 			}
 		}
-		// Create text on the targeted parent, and add its namespace if missing
-		var data = $(instigator).data('xml');
-		var nodeObject = data.target.addNode(nodeType, prepend);
+
+		// Create node on the targeted parent
+		var nodeObject = parentElement.addNode(nodeType, prepend, relativeTo);
 		// Inform the active editor of the newly added attribute
-		this.activeEditor.addNodeEvent(data.target, nodeObject);
+		if (nodeObject) {
+			this.guiEditor.selectNode(nodeObject);
+			nodeObject.focus();
+			this.activeEditor.addNodeEvent(parentElement, nodeObject);
+		}
 	},
 
 	// Triggered when a document has been loaded or reloaded
@@ -799,7 +816,7 @@ $.widget( "xml.xmlEditor", {
 			var focused = $("input:focus, textarea:focus, select:focus");
 			
 			// Escape key, blur the currently selected input or deselect selected element
-			if (e.keyCode == 27) {
+			if (e.which == 27) {
 				if (focused.length > 0)
 					focused.blur();
 				else this.guiEditor.selectNode(null);
@@ -807,30 +824,30 @@ $.widget( "xml.xmlEditor", {
 			}
 			
 			// Enter, focus the first visible input
-			if (e.keyCode == 13 && focused.length == 0) {
+			if (e.which == 13 && focused.length == 0) {
 				e.preventDefault();
 				this.guiEditor.focusSelectedText();
 				return false;
 			}
 			
 			// Tab, select the next input
-			if (e.keyCode == 9) {
+			if (e.which == 9) {
 				e.preventDefault();
 				this.guiEditor.focusInput(e.shiftKey);
 				return false;
 			}
 			
 			// Delete key press while item selected but nothing is focused.
-			if (e.keyCode == 46 && focused.length == 0) {
+			if (e.which == 46 && focused.length == 0) {
 				this.guiEditor.deleteSelected();
 				return false;
 			}
 			
-			if (e.keyCode > 36 && e.keyCode < 41){
+			if (e.which > 36 && e.which < 41){
 				if (e.altKey && (focused.length == 0 || focused.is("textarea"))) {
 					e.preventDefault();
 					// Alt + up or down move the element up and down in the document
-					this.guiEditor.moveSelected(e.keyCode == 38);
+					this.guiEditor.moveSelected(e.which == 38);
 					if (focused.is("textarea"))
 						focused.focus();
 					return false;
@@ -839,55 +856,107 @@ $.widget( "xml.xmlEditor", {
 					e.preventDefault();
 					if (e.shiftKey) {
 						// If holding shift while pressing up or down, then jump to the next/prev sibling
-						if (e.keyCode == 40 || e.keyCode == 38) {
-							this.guiEditor.selectSibling(e.keyCode == 38);
-						} else if (e.keyCode == 37 || e.keyCode == 39) {
-							this.guiEditor.selectParent(e.keyCode == 39);
+						if (e.which == 40 || e.which == 38) {
+							this.guiEditor.selectSibling(e.which == 38);
+						} else if (e.which == 37 || e.which == 39) {
+							this.guiEditor.selectParent(e.which == 39);
 						}
 					} else {
 						// If not holding shift while hitting up or down, go to the next/prev element
-						if (e.keyCode == 40 || e.keyCode == 38){
-							this.guiEditor.selectNext(e.keyCode == 38);
-						} else if (e.keyCode == 37 || e.keyCode == 39) {
-							this.guiEditor.selectAttribute(e.keyCode == 37);
+						if (e.which == 40 || e.which == 38){
+							this.guiEditor.selectNext(e.which == 38);
+						} else if (e.which == 37 || e.which == 39) {
+							this.guiEditor.selectAttribute(e.which == 37);
 						}
 					}
 				}
 				return false;
 			}
 			
-			if ((e.metaKey || e.ctrlKey) && focused.length == 0 && e.keyCode == 'Z'.charCodeAt(0)) {
+			if ((e.metaKey || e.ctrlKey) && focused.length == 0 && e.which == 'Z'.charCodeAt(0)) {
 				// Undo
 				this.undoHistory.changeHead(e.shiftKey? 1: -1);
 				return false;
-			} else if ((e.metaKey || e.ctrlKey) && focused.length == 0 && e.keyCode == 'Y'.charCodeAt(0)){
+			} else if ((e.metaKey || e.ctrlKey) && focused.length == 0 && e.which == 'Y'.charCodeAt(0)){
 				// Redo
 				this.undoHistory.changeHead(1);
 				return false;
 			}
 		}
 		
-		// Save, on either tab.
-		if (e.altKey && e.shiftKey && e.keyCode == 'S'.charCodeAt(0)) {
-			$("." + submitButtonClass).click();
-			return false;
+		if (e.altKey && e.ctrlKey) {
+			// Save, on either tab.
+			if (e.which == 'S'.charCodeAt(0)) {
+				$("." + submitButtonClass).click();
+				return false;
+			}
+			
+			if (e.which == 'E'.charCodeAt(0)) {
+				this.exportXML();
+				return false;
+			}
+			
+			// Switch to the GUI editor
+			if (e.which == '1'.charCodeAt(0)) {
+				this.modeChange(0);
+				return false;
+			}
+			
+			// Switch to the text editor
+			if (e.which == '2'.charCodeAt(0)) {
+				this.modeChange(1);
+				return false;
+			}
 		}
-		
-		if (e.altKey && e.shiftKey && e.keyCode == 'E'.charCodeAt(0)) {
-			this.exportXML();
-			return false;
-		}
-		
-		// Switch to the GUI editor
-		if (e.altKey && e.shiftKey && e.keyCode == 'X'.charCodeAt(0)) {
-			this.modeChange(0);
-			return false;
-		}
-		
-		// Switch to the text editor
-		if (e.altKey && e.shiftKey && e.keyCode == 'T'.charCodeAt(0)) {
-			this.modeChange(1);
-			return false;
+
+		if (this.guiEditor.active) {
+			if (e.altKey) {
+				var prepend = this.options.prependNewElements;
+				if (e.shiftKey) prepend = !prepend;
+
+				var selected = this.guiEditor.selectedElement;
+
+				if (e.which == 'E'.charCodeAt(0)) {
+					if (selected instanceof XMLElement)
+						this.addNode(selected, "element", prepend);
+					return false;
+				}
+
+				if (e.which == 'S'.charCodeAt(0)) {
+					if (selected)
+						this.addNode(selected.parentElement, "element", prepend, selected);
+					return false;
+				}
+
+				if (e.which == 'P'.charCodeAt(0)) {
+					if (selected)
+						this.addNode(selected.parentElement, "element", prepend);
+					return false;
+				}
+
+				if (e.which == 'R'.charCodeAt(0)) {
+					this.addNode(this.guiEditor.rootElement, "element", prepend);
+					return false;
+				}
+
+				if (e.which == 'T'.charCodeAt(0)) {
+					if (selected)
+						this.addNode(selected, "text", prepend);
+					return false;
+				}
+
+				if (e.which == 191) {
+					if (selected)
+						this.addNode(selected, "comment", prepend);
+					return false;
+				}
+
+				if (e.which == 188) {
+					if (selected)
+						this.addNode(selected, "cdata", prepend);
+					return false;
+				}
+			}
 		}
 		
 		return true;
@@ -1019,8 +1088,10 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 
 // Change the editors focus to this xml object
 AbstractXMLObject.prototype.focus = function() {
-	if (this.getDomNode() != null)
-		this.guiEditor.focusObject(this.getDomNode());
+	if (this.domNode != null)
+		this.guiEditor.focusObject(this.domNode);
+	if (this.textInput)
+		this.textInput.focus();
 };
 
 AbstractXMLObject.prototype.getDomNode = function () {
@@ -1072,6 +1143,14 @@ AbstractXMLObject.prototype.moveDown = function() {
 		return false;
 	}
 };
+
+AbstractXMLObject.prototype.select = function() {
+	this.domNode.addClass("selected");
+};
+
+AbstractXMLObject.prototype.isSelected = function() {
+	return this.domNode.hasClass("selected");
+};
 function AddNodeMenu(menuID, label, expanded, enabled, owner, editor) {
 	this.menuID = menuID;
 	// Refence to jquery object which contains the menu options
@@ -1103,13 +1182,17 @@ AddNodeMenu.prototype.initEventHandlers = function() {
 };
 
 AddNodeMenu.prototype.populate = function(xmlElement) {
-	if (!this.editor.guiEditor.active)
-		return;
 
 	if (this.expanded)
 		this.menuContent.css("height", "auto");
 	var startingHeight = this.menuContent.outerHeight();
 	this.menuContent.empty();
+
+	if (!this.editor.guiEditor.active || !(xmlElement instanceof XMLElement)){
+		this.menuHeader.addClass("disabled");
+		this.enabled = false;
+		return;
+	}
 
 	$("<li>Add Element</li>").data('xml', {
 		target : xmlElement,
@@ -1513,7 +1596,6 @@ function GUIEditor(editor) {
 	this.elementIndex = 0;
 	this.rootElement = null;
 	this.active = false;
-	this.h = null;
 }
 
 GUIEditor.prototype.initialize = function(parentContainer) {
@@ -1747,7 +1829,6 @@ GUIEditor.prototype.selectNode = function(selected) {
 			$("*:focus").blur();
 		} else if (!(selectedObject instanceof XMLElementStub)) {
 			this.selectedElement = selectedObject.parentElement;
-			console.log(this.selectedElement);
 			this.selectedNode.domNode.addClass("selected");
 		} 
 		
@@ -1763,8 +1844,9 @@ GUIEditor.prototype.deselect = function() {
 		selectedAttributes.removeClass('selected');
 		return this;
 	}
-	$("." + xmlElementClass + ".selected").removeClass("selected");
+	$("." + xmlNodeClass + ".selected").removeClass("selected");
 	this.selectedNode = null;
+	this.selectedElement = null;
 	if (this.editor.modifyMenu != null)
 		this.editor.modifyMenu.clearContextualMenus();
 	return this;
@@ -1776,22 +1858,24 @@ GUIEditor.prototype.deleteSelected = function() {
 		return this;
 	try {
 		var selectedAttribute = this.selectedNode.getSelectedAttribute();
-	} catch(error) {
-		// Attribute container undefined
-		var selectedAttribute = [];
-		selectedAttribute.length = 0;
-	}
-	if (selectedAttribute.length > 0) {
+		if (selectedAttribute.length > 0) {
 		this.selectAttribute(true);
 		var newSelection = selectedAttribute.prev('.' + attributeContainerClass);
 		if (newSelection.length == 0)
 			newSelection = selectedAttribute.next('.' + attributeContainerClass);
-		newSelection.addClass("selected");
-		
-		var xmlAttribute = selectedAttribute.data("xmlAttribute");
-		xmlAttribute.remove();
-	} else {
+			newSelection.addClass("selected");
+			
+			var xmlAttribute = selectedAttribute.data("xmlAttribute");
+			xmlAttribute.remove();
+			return this;
+		}
+	} catch(error) {
+		// Attribute container undefined
+	}
+	if (this.selectedNode instanceof XMLElement) {
 		this.deleteElement(this.selectedNode);
+	} else {
+		this.deleteText(this.selectedNode);
 	}
 	return this;
 };
@@ -1805,12 +1889,7 @@ GUIEditor.prototype.deleteElement = function(xmlElement) {
 	parent.childRemoved(xmlElement);
 	var isSelected = xmlElement.isSelected();
 	if (isSelected) {
-		var afterDeleteSelection = xmlElement.domNode.next("." + xmlElementClass);
-		if (afterDeleteSelection.length == 0)
-			afterDeleteSelection = xmlElement.domNode.prev("." + xmlElementClass);
-		if (afterDeleteSelection.length == 0)
-			afterDeleteSelection = xmlElement.domNode.parents("." + xmlElementClass).first();
-		this.selectNode(afterDeleteSelection);
+		this.selectNode(this.afterDeleteSelection(xmlElement));
 	} else if (parent.isSelected && parent != this.rootElement) {
 		this.editor.modifyMenu.refreshContextualMenus(parent);
 	}
@@ -1824,11 +1903,25 @@ GUIEditor.prototype.deleteElement = function(xmlElement) {
 };
 
 GUIEditor.prototype.deleteText = function(xmlText) {
+	var isSelected = xmlText.isSelected();
+	if (isSelected) {
+		this.selectNode(this.afterDeleteSelection(xmlText));
+	}
+
 	xmlText.remove();
 
 	xmlText.parentElement.updated({action : 'textRemoved', target : xmlText});
 	this.editor.xmlState.documentChangedEvent();
 	return this;
+};
+
+GUIEditor.prototype.afterDeleteSelection = function(xmlNode) {
+	var afterDeleteSelection = xmlNode.domNode.next("." + xmlNodeClass);
+	if (afterDeleteSelection.length == 0)
+		afterDeleteSelection = xmlNode.domNode.prev("." + xmlNodeClass);
+	if (afterDeleteSelection.length == 0)
+		afterDeleteSelection = xmlNode.domNode.parent().closest("." + xmlNodeClass);
+	return afterDeleteSelection;
 };
 
 // Move the currently selected element by x number of positions
@@ -2002,7 +2095,7 @@ GUIEditor.prototype.focusInput = function(reverse) {
 			if (foundFocus && !$(this).hasClass(xmlElementClass)) {
 				focused = $(this).focus();
 				return false;
-			} else if (this.id == focused.attr('id')) {
+			} else if (this === focused.get(0)) {
 				foundFocus = true;
 			}
 		});
@@ -2054,12 +2147,12 @@ function MenuBar(editor) {
 		items : [ {
 				label : 'Submit to Server',
 				enabled : (self.editor.options.ajaxOptions.xmlUploadPath != null),
-				binding : "alt+shift+s",
+				binding : "ctrl+alt+s",
 				action : $.proxy(self.editor.submitXML, self.editor)
 			}, {
 				label : 'Export',
 				enabled : (typeof(Blob) !== undefined),
-				binding : "alt+shift+e",
+				binding : "ctrl+alt+e",
 				action : $.proxy(self.editor.exportXML, self.editor)
 			} ]
 	}, {
@@ -2171,20 +2264,86 @@ function MenuBar(editor) {
 				}
 			} ]
 	}, {
+		label : 'Insert',
+		enabled : true,
+		action : function(event) {self.activateMenu(event);}, 
+		items : [ {
+				label : 'Add child element',
+				enabled : true,
+				binding : "alt+e",
+				action : function(){
+					var selected = self.editor.guiEditor.selectedElement;
+					if (selected instanceof XMLElement)
+						self.editor.addNode(selected, "element", false);
+				}
+			},{
+				label : 'Add sibling element',
+				enabled : true,
+				binding : "alt+s",
+				action : function(){
+					var selected = self.editor.guiEditor.selectedElement;
+					if (selected)
+						self.editor.addNode(selected.parentElement, "element", false, selected);
+				}
+			}, {
+				label : 'Add element to parent',
+				enabled : true,
+				binding : "alt+p",
+				action : function(){
+					var selected = self.editor.guiEditor.selectedElement;
+					if (selected)
+						self.editor.addNode(selected.parentElement, "element", false);
+				}
+			}, {
+				label : 'Add element to root',
+				enabled : true,
+				binding : "alt+r",
+				action : function(){
+					self.editor.addNode(self.editor.guiEditor.rootElement, "element", false);
+				}
+			}, {
+				label : 'Add text to element',
+				enabled : true,
+				binding : "alt+t",
+				action : function(){
+					var selected = self.editor.guiEditor.selectedElement;
+					if (selected)
+						self.editor.addNode(selected, "text", false);
+				}
+			}, {
+				label : 'Add comment to element',
+				enabled : true,
+				binding : "alt+/",
+				action : function(){
+					var selected = self.editor.guiEditor.selectedElement;
+					if (selected)
+						self.editor.addNode(selected, "comment", false);
+				}
+			}, {
+				label : 'Add CDATA to element',
+				enabled : true,
+				binding : "alt+,",
+				action : function(){
+					var selected = self.editor.guiEditor.selectedElement;
+					if (selected)
+						self.editor.addNode(selected, "cdata", false);
+				}
+			} ]
+	}, {
 		label : 'View',
 		enabled : true,
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
 			label : 'Switch to XML View',
 			enabled : true,
-			binding : "alt+shift+x",
+			binding : "ctrl+alt+1",
 			action : function() {
 				self.editor.modeChange(0);
 			}
 		}, {
 			label : 'Switch to Text View',
 			enabled : true,
-			binding : "alt+shift+t",
+			binding : "ctrl+alt+2",
 			action : function() {
 				self.editor.modeChange(1);
 			}
@@ -3353,6 +3512,14 @@ XMLCDataNode.prototype.moveUp = function() {
 XMLCDataNode.prototype.moveDown = function() {
 	AbstractXMLObject.prototype.moveDown.call(this);
 };
+
+XMLCDataNode.prototype.focus = function() {
+	AbstractXMLObject.prototype.focus.call(this);
+};
+
+XMLCDataNode.prototype.isSelected = function() {
+	return AbstractXMLObject.prototype.isSelected.call(this);
+};
 function XMLCommentNode(cdataNode, editor) {
 	var nodeType = {
 		comment : true,
@@ -3420,6 +3587,14 @@ XMLCommentNode.prototype.moveUp = function() {
 XMLCommentNode.prototype.moveDown = function() {
 	AbstractXMLObject.prototype.moveDown.call(this);
 };
+
+XMLCommentNode.prototype.focus = function() {
+	AbstractXMLObject.prototype.focus.call(this);
+};
+
+XMLCommentNode.prototype.isSelected = function() {
+	return AbstractXMLObject.prototype.isSelected.call(this);
+};
 /**
  * Stores data related to a single xml element as it is represented in both the base XML 
  * document and GUI
@@ -3467,32 +3642,22 @@ XMLElement.prototype.render = function(parentElement, recursive, relativeTo, pre
 	this.domNodeID = this.guiEditor.nextIndex();
 	
 	// Create the element and add it to the container
-	this.domNode = document.createElement('div');
-	var $domNode = $(this.domNode);
-	this.domNode.id = this.domNodeID;
-	this.domNode.className = this.objectType.ns + "_" + this.objectType.localName + 'Instance xml_node ' + xmlElementClass;
+	this.domElement = document.createElement('div');
+	this.domNode = $(this.domElement);
+
+	this.domElement.id = this.domNodeID;
+	this.domElement.className = this.objectType.ns + "_" + this.objectType.localName + 'Instance xml_node ' + xmlElementClass;
 	if (this.isTopLevel)
-		this.domNode.className += ' ' + topLevelContainerClass;
+		this.domElement.className += ' ' + topLevelContainerClass;
 	if (this.isRootElement)
-		this.domNode.className += ' xml_root_element';
-	if (this.parentElement) {
-		if (relativeTo) {
-			if (prepend)
-				$domNode.insertBefore(relativeTo.domNode);
-			else
-				$domNode.insertAfter(relativeTo.domNode);
-		} else {
-			if (prepend)
-				this.parentElement.nodeContainer.prepend(this.domNode);
-			else
-				this.parentElement.nodeContainer[0].appendChild(this.domNode);
-		}
-	}
+		this.domElement.className += ' xml_root_element';
+	
+	this.insertDOMNode(relativeTo, prepend);
 	
 	// Begin building contents
 	this.elementHeader = document.createElement('ul');
 	this.elementHeader.className = 'element_header';
-	this.domNode.appendChild(this.elementHeader);
+	this.domElement.appendChild(this.elementHeader);
 	var elementNameContainer = document.createElement('li');
 	elementNameContainer.className = 'element_name';
 	this.elementHeader.appendChild(elementNameContainer);
@@ -3510,7 +3675,6 @@ XMLElement.prototype.render = function(parentElement, recursive, relativeTo, pre
 	elementNameContainer.appendChild(titleElement);
 	
 	// Switch gui element over to a jquery object
-	this.domNode = $domNode;
 	this.domNode.data("xmlObject", this);
 
 	// Add the subsections for the elements content next.
@@ -3524,6 +3688,22 @@ XMLElement.prototype.render = function(parentElement, recursive, relativeTo, pre
 	this.updated({action : 'render'});
 	
 	return this.domNode;
+};
+
+XMLElement.prototype.insertDOMNode = function (relativeTo, prepend) {
+	if (this.parentElement) {
+		if (relativeTo) {
+			if (prepend)
+				this.domNode.insertBefore(relativeTo.domNode);
+			else
+				this.domNode.insertAfter(relativeTo.domNode);
+		} else {
+			if (prepend)
+				this.parentElement.nodeContainer.prepend(this.domNode);
+			else
+				this.parentElement.nodeContainer[0].appendChild(this.domElement);
+		}
+	}
 };
 
 // Render all present attributes for this elements
@@ -3739,7 +3919,6 @@ XMLElement.prototype.addNodeContainer = function (recursive) {
 	this.nodeCount = 0;
 
 	var textContainsChildren = this.xmlNode[0].children && this.xmlNode[0].children.length > 0;
-	var textAllowed = this.objectType.type != null;
 
 	var childNodes = this.xmlNode[0].childNodes;
 	for (var i in childNodes) {
@@ -3750,7 +3929,7 @@ XMLElement.prototype.addNodeContainer = function (recursive) {
 				this.renderChild(childNode, recursive);
 				break;
 			case 3 : // text
-				if (textAllowed && childNode.nodeValue.trim())
+				if (this.allowText && childNode.nodeValue.trim())
 					this.renderText(childNode);
 				break;
 			case 4 : // cdata
@@ -3763,7 +3942,7 @@ XMLElement.prototype.addNodeContainer = function (recursive) {
 	}
 
 	// Add in a default text node if applicable and none present
-	if (textAllowed && this.nodeCount == 0 && this.objectType.type != "mixed") {
+	if (this.allowText && this.nodeCount == 0 && this.objectType.type != "mixed") {
 		this.renderText();
 	}
 };
@@ -3819,9 +3998,9 @@ XMLElement.prototype.renderComment = function(childNode, prepend) {
 	return node;
 };
 
-XMLElement.prototype.renderElementStub = function(prepend) {
+XMLElement.prototype.renderElementStub = function(prepend, relativeTo) {
 	var node = new XMLElementStub(this.editor);
-	node.render(this, prepend);
+	node.render(this, prepend, relativeTo);
 
 	this.nodeCount++;
 
@@ -3850,17 +4029,7 @@ XMLElement.prototype.addNonschemaElement = function(tagName, relativeTo, prepend
 		return null;
 	}
 
-	if (relativeTo) {
-		if (prepend)
-			$(newElement).insertBefore(relativeTo.xmlNode);
-		else
-			$(newElement).insertAfter(relativeTo.xmlNode);
-	} else {
-		if (prepend)
-			this.xmlNode.prepend(newElement);
-		else
-			this.xmlNode[0].appendChild(newElement);
-	}
+	this.insertXMLNode(newElement, relativeTo, prepend);
 
 	var childElement = new XMLUnspecifiedElement(newElement, this.editor);
 	this.addChildrenCount(childElement);
@@ -3891,17 +4060,8 @@ XMLElement.prototype.addElement = function(objectType, relativeTo, prepend) {
 	}
 	if (defaultValue)
 		newElement.appendChild(xmlDocument.createTextNode(defaultValue));
-	if (relativeTo) {
-		if (prepend)
-			$(newElement).insertBefore(relativeTo.xmlNode);
-		else
-			$(newElement).insertAfter(relativeTo.xmlNode);
-	} else {
-		if (prepend)
-			this.xmlNode.prepend(newElement);
-		else
-			this.xmlNode[0].appendChild(newElement);
-	}
+	
+	this.insertXMLNode(newElement, relativeTo, prepend);
 	
 	var childElement = new XMLElement(newElement, objectType, this.editor);
 	this.addChildrenCount(childElement);
@@ -3910,6 +4070,30 @@ XMLElement.prototype.addElement = function(objectType, relativeTo, prepend) {
 	childElement.populateChildren();
 	
 	return childElement;
+};
+
+XMLElement.prototype.insertXMLNode = function (newElement, relativeTo, prepend) {
+	if (relativeTo) {
+		if (relativeTo instanceof XMLElementStub) {
+			// Stubs don't have an xml node, so need to position based off nearest real node
+			var nextSiblings = this.domNode.nextAll(".xml_node:not(.xml_stub)");
+			if (nextSiblings.length > 0) {
+				$(newElement).insertBefore(nextSiblings.first().data("xmlObject").xmlNode);
+			} else {
+				this.xmlNode[0].appendChild(newElement);
+			}
+		} else {
+			if (prepend)
+				$(newElement).insertBefore(relativeTo.xmlNode);
+			else
+				$(newElement).insertAfter(relativeTo.xmlNode);
+		}
+	} else {
+		if (prepend)
+			this.xmlNode.prepend(newElement);
+		else
+			this.xmlNode[0].appendChild(newElement);
+	}
 };
 
 // Add a new attribute of type objectType to this element
@@ -3936,12 +4120,16 @@ XMLElement.prototype.addAttribute = function (objectType) {
 
 
 
-XMLElement.prototype.addNode = function (nodeType, prepend) {
+XMLElement.prototype.addNode = function (nodeType, prepend, relativeTo) {
+	this.nodeContainer.show();
 	switch (nodeType) {
-		case "text" : return this.renderText(null, prepend);
-		case "cdata" : return this.renderCData(null, prepend);
-		case "comment" : return this.renderComment(null, prepend);
-		case "element" : return this.renderElementStub(null, prepend);
+		case "text" :
+			if (this.allowText)
+				return this.renderText(null, prepend, relativeTo);
+			else return null;
+		case "cdata" : return this.renderCData(null, prepend, relativeTo);
+		case "comment" : return this.renderComment(null, prepend, relativeTo);
+		case "element" : return this.renderElementStub(prepend, relativeTo);
 	}
 	return null;
 };
@@ -3988,14 +4176,6 @@ XMLElement.prototype.updated = function (event) {
 		this.editor.options.elementUpdated.call(this, event);
 };
 
-XMLElement.prototype.select = function() {
-	this.domNode.addClass("selected");
-};
-
-XMLElement.prototype.isSelected = function() {
-	return this.domNode.hasClass("selected");
-};
-
 XMLElement.prototype.getAttributeContainer = function() {
 	return this.attributeContainer;
 };
@@ -4017,7 +4197,7 @@ function XMLElementStub(editor) {
 	this.tagName = "";
 }
 
-XMLElementStub.prototype.render = function(parentElement, recursive, relativeToXMLElement, prepend) {
+XMLElementStub.prototype.render = function(parentElement, prepend, relativeToXMLElement) {
 	this.parentElement = parentElement;
 	this.domNodeID = this.guiEditor.nextIndex();
 	
@@ -4056,7 +4236,7 @@ XMLElementStub.prototype.render = function(parentElement, recursive, relativeToX
 
 	var self = this;
 
-	var createLink = $("<span class='create_element'>create</span>").appendTo(elementNameContainer).mouseup(function(e){
+	var createLink = $("<span class='create_element'>create element</span>").appendTo(elementNameContainer).mouseup(function(e){
 		self.create();
 	});
 
@@ -4070,6 +4250,7 @@ XMLElementStub.prototype.render = function(parentElement, recursive, relativeToX
 		// escape, cancel
 		if (e.keyCode == 27) {
 			self.remove();
+			self.guiEditor.selectNode(self.parentElement);
 			return false;
 		}
 		
@@ -4084,18 +4265,19 @@ XMLElementStub.prototype.render = function(parentElement, recursive, relativeToX
 			return false;
 		}
 
-		e.stopPropagation();
+		if (e.which == 37 || e.which == 39) {
+			e.stopPropagation();
+		}
 	});
 
 	this.titleElement.focus(function(e) {
 		self.guiEditor.selectNode(self);
+		e.stopPropagation();
 	})
 	.mousedown(function(e) {
 		self.titleElement.focus();
 		e.stopPropagation();
 	});
-
-	this.titleElement.focus();
 };
 
 XMLElementStub.prototype.addTopActions = function () {
@@ -4119,19 +4301,34 @@ XMLElementStub.prototype.remove = function() {
 XMLElementStub.prototype.create = function() {
 	var tagName = this.titleElement.text();
 
-	var nextSiblings = this.domNode.next(".xml_node");
+	var nextSiblings = this.domNode.nextAll(".xml_node:not(.xml_stub)");
 	var relativeTo = null;
 	if (nextSiblings.length > 0) {
 		relativeTo = nextSiblings.first().data("xmlObject");
 	}
 
-	this.editor.addChildElement(this.parentElement, tagName, relativeTo, relativeTo != null);
+	var newElement = this.editor.addChildElement(this.parentElement, tagName, relativeTo, relativeTo != null);
+	// Move new element to match display position of the stub, in case it was misplaced because of its siblings being stubs
+	newElement.domNode.detach();
+	this.domNode.after(newElement.domNode);
 
 	this.remove();
 };
 
+XMLElementStub.prototype.getSelectedAttribute = function () {
+	return [];
+};
+
 XMLElementStub.prototype.select = function() {
 	this.domNode.addClass("selected");
+};
+
+XMLElementStub.prototype.isSelected = function() {
+	return this.domNode.hasClass("selected");
+};
+
+XMLElementStub.prototype.focus = function() {
+	this.titleElement.focus();
 };
 function XMLTextNode(textNode, dataType, editor) {
 	var textType = {
@@ -4225,6 +4422,14 @@ XMLTextNode.prototype.moveUp = function() {
 XMLTextNode.prototype.moveDown = function() {
 	AbstractXMLObject.prototype.moveDown.call(this);
 };
+
+XMLTextNode.prototype.focus = function() {
+	AbstractXMLObject.prototype.focus.call(this);
+};
+
+XMLTextNode.prototype.isSelected = function() {
+	return AbstractXMLObject.prototype.isSelected.call(this);
+};
 /**
  * Stores data related to a single xml element as it is represented in both the base XML 
  * document and GUI
@@ -4258,37 +4463,27 @@ function XMLUnspecifiedElement(xmlNode, editor) {
 XMLUnspecifiedElement.prototype.constructor = XMLUnspecifiedElement;
 XMLUnspecifiedElement.prototype = Object.create( XMLElement.prototype );
 
-XMLUnspecifiedElement.prototype.render = function(parentElement, recursive, relativeToXMLElement, prepend) {
+XMLUnspecifiedElement.prototype.render = function(parentElement, recursive, relativeTo, prepend) {
 	this.parentElement = parentElement;
 	this.domNodeID = this.guiEditor.nextIndex();
 	
 	// Create the element and add it to the container
-	this.domNode = document.createElement('div');
-	var $domNode = $(this.domNode);
-	this.domNode.id = this.domNodeID;
-	this.domNode.className = 'xml_node ' + xmlElementClass;
+	this.domElement = document.createElement('div');
+	this.domNode = $(this.domElement);
+
+	this.domElement.id = this.domNodeID;
+	this.domElement.className = 'xml_node ' + xmlElementClass;
 	if (this.isTopLevel)
-		this.domNode.className += ' ' + topLevelContainerClass;
+		this.domElement.className += ' ' + topLevelContainerClass;
 	if (this.isRootElement)
-		this.domNode.className += ' xml_root_element';
-	if (this.parentElement) {
-		if (relativeToXMLElement) {
-			if (prepend)
-				$domNode.insertBefore(relativeToXMLElement.domNode);
-			else
-				$domNode.insertAfter(relativeToXMLElement.domNode);
-		} else {
-			if (prepend)
-				this.parentElement.nodeContainer.prepend(this.domNode);
-			else
-				this.parentElement.nodeContainer[0].appendChild(this.domNode);
-		}
-	}
+		this.domElement.className += ' xml_root_element';
+
+	this.insertDOMNode(relativeTo, prepend);
 	
 	// Begin building contents
 	this.elementHeader = document.createElement('ul');
 	this.elementHeader.className = 'element_header';
-	this.domNode.appendChild(this.elementHeader);
+	this.domElement.appendChild(this.elementHeader);
 	var elementNameContainer = document.createElement('li');
 	elementNameContainer.className = 'element_name';
 	this.elementHeader.appendChild(elementNameContainer);
@@ -4301,7 +4496,6 @@ XMLUnspecifiedElement.prototype.render = function(parentElement, recursive, rela
 	elementNameContainer.appendChild(titleElement);
 	
 	// Switch gui element over to a jquery object
-	this.domNode = $domNode;
 	this.domNode.data("xmlObject", this);
 
 	// Add the subsections for the elements content next.
@@ -4336,5 +4530,9 @@ XMLUnspecifiedElement.prototype.addContentContainers = function (recursive) {
 
 XMLUnspecifiedElement.prototype.updateChildrenCount = function(childElement, delta) {
 	this.nodeCount += delta;
+};
+
+XMLUnspecifiedElement.prototype.childCanBeRemoved = function(childType) {
+	return true;
 };
 })(jQuery);

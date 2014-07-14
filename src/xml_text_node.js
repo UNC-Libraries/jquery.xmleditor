@@ -90,3 +90,11 @@ XMLTextNode.prototype.moveUp = function() {
 XMLTextNode.prototype.moveDown = function() {
 	AbstractXMLObject.prototype.moveDown.call(this);
 };
+
+XMLTextNode.prototype.focus = function() {
+	AbstractXMLObject.prototype.focus.call(this);
+};
+
+XMLTextNode.prototype.isSelected = function() {
+	return AbstractXMLObject.prototype.isSelected.call(this);
+};
