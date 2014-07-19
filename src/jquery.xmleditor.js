@@ -23,7 +23,7 @@
  * 
  * Dependencies:
  *   jquery 1.7+
- *   jquery.ui 1.7+
+ *   jquery.ui 1.9+
  *   ajax ace editor
  *   jquery.autosize.js (optional)
  * 
@@ -350,8 +350,7 @@ $.widget( "xml.xmlEditor", {
 		// Join back up asynchronous loading of document and schema
 		if (!this.schemaTree || !this.xmlState)
 			return;
-		this.xmlState.namespaces.namespaceURIs = $.extend({}, this.schemaTree.namespaces.namespaceURIs, this.xmlState.namespaces.namespaceURIs);
-		this.xmlState.namespaces.namespaceToPrefix = $.extend({}, this.schemaTree.namespaces.namespaceToPrefix, this.xmlState.namespaces.namespaceToPrefix);
+
 		this.targetPrefix = this.xmlState.namespaces.getNamespacePrefix(this.options.targetNS);
 		
 		this.constructEditor();
@@ -468,6 +467,11 @@ $.widget( "xml.xmlEditor", {
 					break;
 				}
 			}
+
+			// No matching child definition and parent doesn't allow "any", so can't add child
+			if (!objectType && !parentElement.objectType.any) {
+				return "Could not add child " + newElementDefinition + ", it is not a valid child of " + parentElement.objectType.localName;
+			}
 		} else {
 			objectType = newElementDefinition;
 		}
@@ -483,11 +487,13 @@ $.widget( "xml.xmlEditor", {
 			this.xmlState.addNamespace(objectType);
 			newElement = parentElement.addElement(objectType, relativeTo, prepend);
 		} else {
+			var nameParts = newElementDefinition.split(":");
+			this.xmlState.addNamespace(nameParts.length > 1? nameParts[0] : "");
 			newElement = parentElement.addNonschemaElement(newElementDefinition, relativeTo, prepend);
 		}
 		
 		if (newElement == null) {
-			return null;
+			return "Failed to add child of type " + newElementDefinition;
 		}
 		
 		// Trigger post element creation event in the currently active editor to handle UI updates
@@ -565,6 +571,9 @@ $.widget( "xml.xmlEditor", {
 			return this;
 			
 		if (mode == 0) {
+			$("*:focus").blur();
+			$(".xml_editor_container *:focus").blur();
+
 			if (this.textEditor.isInitialized() && this.xmlState.isChanged()) {
 				// Try to reconstruct the xml object before changing tabs.  Cancel change if parse error to avoid losing changes.
 				//try {
@@ -929,7 +938,7 @@ $.widget( "xml.xmlEditor", {
 				}
 
 				if (e.which == 'P'.charCodeAt(0)) {
-					if (selected)
+					if (selected && selected.parentElement.objectType)
 						this.addNode(selected.parentElement, "element", prepend);
 					return false;
 				}

@@ -23,7 +23,7 @@
  * 
  * Dependencies:
  *   jquery 1.7+
- *   jquery.ui 1.7+
+ *   jquery.ui 1.9+
  *   ajax ace editor
  *   jquery.autosize.js (optional)
  * 
@@ -350,8 +350,7 @@ $.widget( "xml.xmlEditor", {
 		// Join back up asynchronous loading of document and schema
 		if (!this.schemaTree || !this.xmlState)
 			return;
-		this.xmlState.namespaces.namespaceURIs = $.extend({}, this.schemaTree.namespaces.namespaceURIs, this.xmlState.namespaces.namespaceURIs);
-		this.xmlState.namespaces.namespaceToPrefix = $.extend({}, this.schemaTree.namespaces.namespaceToPrefix, this.xmlState.namespaces.namespaceToPrefix);
+
 		this.targetPrefix = this.xmlState.namespaces.getNamespacePrefix(this.options.targetNS);
 		
 		this.constructEditor();
@@ -468,6 +467,11 @@ $.widget( "xml.xmlEditor", {
 					break;
 				}
 			}
+
+			// No matching child definition and parent doesn't allow "any", so can't add child
+			if (!objectType && !parentElement.objectType.any) {
+				return "Could not add child " + newElementDefinition + ", it is not a valid child of " + parentElement.objectType.localName;
+			}
 		} else {
 			objectType = newElementDefinition;
 		}
@@ -483,11 +487,13 @@ $.widget( "xml.xmlEditor", {
 			this.xmlState.addNamespace(objectType);
 			newElement = parentElement.addElement(objectType, relativeTo, prepend);
 		} else {
+			var nameParts = newElementDefinition.split(":");
+			this.xmlState.addNamespace(nameParts.length > 1? nameParts[0] : "");
 			newElement = parentElement.addNonschemaElement(newElementDefinition, relativeTo, prepend);
 		}
 		
 		if (newElement == null) {
-			return null;
+			return "Failed to add child of type " + newElementDefinition;
 		}
 		
 		// Trigger post element creation event in the currently active editor to handle UI updates
@@ -565,6 +571,9 @@ $.widget( "xml.xmlEditor", {
 			return this;
 			
 		if (mode == 0) {
+			$("*:focus").blur();
+			$(".xml_editor_container *:focus").blur();
+
 			if (this.textEditor.isInitialized() && this.xmlState.isChanged()) {
 				// Try to reconstruct the xml object before changing tabs.  Cancel change if parse error to avoid losing changes.
 				//try {
@@ -929,7 +938,7 @@ $.widget( "xml.xmlEditor", {
 				}
 
 				if (e.which == 'P'.charCodeAt(0)) {
-					if (selected)
+					if (selected && selected.parentElement.objectType)
 						this.addNode(selected.parentElement, "element", prepend);
 					return false;
 				}
@@ -1399,27 +1408,44 @@ DocumentState.prototype.updateStateMessage = function () {
 // Register a namespace and prefix to the document if it is not already present
 // The namespace will be recorded on the root element if possible
 DocumentState.prototype.addNamespace = function(prefixOrType, namespace) {
+	if (prefixOrType == null && !namespace)
+		return;
+
 	var prefix;
 	if (typeof prefixOrType === "object"){
 		// When adding a ns from a schema definition, use schema prefix
 		namespace = prefixOrType.namespace;
-		prefix = this.editor.schemaTree.namespaces.getNamespacePrefix(namespace);
+		prefix = this.editor.schemaTree.namespaces.namespaceToPrefix[namespace];
 	} else {
 		prefix = prefixOrType;
 	}
-		
+
+	// If prefix or namespace already exist, don't add anything
 	if (this.namespaces.containsURI(namespace))
 		return;
-	if (!prefix)
-		prefix = "ns";
+
+	var prefixExists = this.namespaces.containsPrefix(prefix);
+
 	var nsPrefix = prefix;
-	var i = 0;
-	while (nsPrefix in this.namespaces.namespaceURIs)
-		nsPrefix = prefix + (++i);
-	
+	// have a prefix but no namespace, then generate one
+	if (prefix != null && !namespace) {
+		namespace = ("urn:ns:local:xxxxxx-" + (new Date().getTime() % 0x1000000).toString(16)).replace(/x/g, function(c) {
+			return (Math.random()*16|0).toString(16);
+		});
+	} else if (namespace && (prefix == null || prefixExists)) {
+		// No prefix or duplicate, so generate an incremented prefix
+		if (!prefix)
+			nsPrefix = "ns";
+		var i = 0;
+		while (nsPrefix in this.namespaces.namespaceURIs)
+			nsPrefix = prefix + (++i);
+	}
+
 	var documentElement = this.xml[0].documentElement;
-	if (documentElement.setAttributeNS)
-		documentElement.setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:' + nsPrefix, namespace);
+	if (documentElement.setAttributeNS) {
+		documentElement.setAttributeNS('http://www.w3.org/2000/xmlns/', 
+			"xmlns" + (nsPrefix? ':' : '') + nsPrefix, namespace);
+	}
 	else documentElement.setAttribute('xmlns:' + nsPrefix, namespace);
 	this.namespaces.addNamespace(namespace, nsPrefix);
 }
@@ -2851,7 +2877,7 @@ NamespaceList.prototype.containsURI = function(nsURI) {
 	return nsURI in this.namespaceToPrefix;
 };
 
-NamespaceList.prototype.containsPrefix = function(namespacePrefix) {
+NamespaceList.prototype.containsPrefix = function(nsPrefix) {
 	return nsPrefix in this.namespaceURIs;
 };
 
@@ -3445,6 +3471,50 @@ XMLAttribute.prototype.select = function() {
 XMLAttribute.prototype.deselect = function() {
 	this.domNode.removeClass('selected');
 };
+$.widget( "custom.xml_autocomplete", $.ui.autocomplete, {
+
+	_create: function() {
+		this._super();
+		this.menu.element.addClass("xml_autocomplete");
+	},
+
+	_resizeMenu: function() {
+		var matchWidth = this.options.matchSize.outerWidth();
+		this.menu.element.outerWidth(matchWidth);
+	},
+
+	_renderMenu: function( ul, items ) {
+		var self = this;
+
+		// Sort suggestions by proximity of search term to the beginning of the item
+		var rankMap = [];
+		$.each(items, function(index, item) {
+			rankMap.push([item.value.toLowerCase().indexOf(self.term.toLowerCase()), item]);
+		});
+
+		rankMap.sort(function(a, b) {
+			return a[0] - b[0];
+		});
+
+		$.each(rankMap, function(index, item) {
+			self._renderItemData(ul, item[1]);
+		});
+	},
+
+	_renderItem : function(ul, item) {
+		var re = new RegExp("((" + this.term + ")+)");
+		var label = item.label.replace(re, "<span>$1</span>");
+		return $("<li></li>")
+			.data("item.autocomplete", item)
+			.append("<a>" + label + "</a>")
+			.appendTo(ul);
+	},
+
+	_move: function( direction, event ) {
+		this._super(direction, event);
+		this._resizeMenu();
+	}
+});
 function XMLCDataNode(cdataNode, editor) {
 	var nodeType = {
 		cdata : true,
@@ -3608,7 +3678,7 @@ function XMLElement(xmlNode, objectType, editor) {
 	// Flag indicating if this element is a child of the root node
 	this.isTopLevel = this.xmlNode[0].parentNode.parentNode === this.xmlNode[0].ownerDocument;
 	// Flag indicating if any children nodes can be added to this element
-	this.allowChildren = this.objectType.elements.length > 0;
+	this.allowChildren = this.objectType.elements.length > 0 || this.objectType.any;
 	// Flag indicating if any attributes can be added to this element
 	this.allowAttributes = this.objectType.attributes && this.objectType.attributes.length > 0;
 	// Should this element allow text nodes to be added
@@ -3765,6 +3835,10 @@ XMLElement.prototype.updateChildrenCount = function(childElement, delta) {
 
 // Returns true if any more children of type childType can be added to this element
 XMLElement.prototype.childCanBeAdded = function(childType) {
+	if (!this.allowChildren)
+		return false;
+	
+	// Verify that this new child definition would not violate occurrance limits
 	if (!this.editor.options.enforceOccurs) return true;
 	var childName = childType.ns + ":" + childType.localName;
 	var presentCount = this.presentChildren[childName] || 0;
@@ -4245,12 +4319,18 @@ XMLElementStub.prototype.render = function(parentElement, prepend, relativeToXML
 
 	this.domNode = $domNode;
 	this.domNode.data("xmlObject", this);
+
+	var autocompleteEnabled = false;
 	
-	this.domNode.keydown(function(e) {
+	this.titleElement.keydown(function(e) {
 		// escape, cancel
 		if (e.keyCode == 27) {
-			self.remove();
-			self.guiEditor.selectNode(self.parentElement);
+			if (autocompleteEnabled && $(self.titleElement.xml_autocomplete('widget')).is(':visible')) {
+				self.titleElement.xml_autocomplete('close');
+			} else {
+				self.remove();
+				self.guiEditor.selectNode(self.parentElement);
+			}
 			return false;
 		}
 		
@@ -4265,13 +4345,30 @@ XMLElementStub.prototype.render = function(parentElement, prepend, relativeToXML
 			return false;
 		}
 
-		if (e.which == 37 || e.which == 39) {
+		// Block propagation of text editing keys
+		if (e.which >= 37 && e.which <= 40 || e.which == 46) {
 			e.stopPropagation();
 		}
 	});
 
+	// Activate autocompletion dropdown for possible child elements defined in schema
+	if (parentElement.objectType.elements && parentElement.objectType.elements.length > 0) {
+		var elementNames = [];
+		var namespaces = this.editor.xmlState.namespaces;
+
+		for (var i in parentElement.objectType.elements) {
+			var element = parentElement.objectType.elements[i];
+			elementNames.push(namespaces.getNamespacePrefix(element.namespace) + element.localName);
+		}
+
+		this.titleElement.xml_autocomplete({ source : elementNames, minLength: 0, delay: 0, matchSize : this.titleElement});
+		autocompleteEnabled = true;
+	}
+
 	this.titleElement.focus(function(e) {
 		self.guiEditor.selectNode(self);
+		if (autocompleteEnabled)
+			self.titleElement.xml_autocomplete("search", self.titleElement.text());
 		e.stopPropagation();
 	})
 	.mousedown(function(e) {
@@ -4308,11 +4405,15 @@ XMLElementStub.prototype.create = function() {
 	}
 
 	var newElement = this.editor.addChildElement(this.parentElement, tagName, relativeTo, relativeTo != null);
-	// Move new element to match display position of the stub, in case it was misplaced because of its siblings being stubs
-	newElement.domNode.detach();
-	this.domNode.after(newElement.domNode);
+	if (newElement instanceof AbstractXMLObject) {
+		// Move new element to match display position of the stub, in case it was misplaced because of its siblings being stubs
+		newElement.domNode.detach();
+		this.domNode.after(newElement.domNode);
 
-	this.remove();
+		this.remove();
+	} else {
+		console.log(newElement);
+	}
 };
 
 XMLElementStub.prototype.getSelectedAttribute = function () {
