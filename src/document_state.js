@@ -75,27 +75,44 @@ DocumentState.prototype.updateStateMessage = function () {
 // Register a namespace and prefix to the document if it is not already present
 // The namespace will be recorded on the root element if possible
 DocumentState.prototype.addNamespace = function(prefixOrType, namespace) {
+	if (prefixOrType == null && !namespace)
+		return;
+
 	var prefix;
 	if (typeof prefixOrType === "object"){
 		// When adding a ns from a schema definition, use schema prefix
 		namespace = prefixOrType.namespace;
-		prefix = this.editor.schemaTree.namespaces.getNamespacePrefix(namespace);
+		prefix = this.editor.schemaTree.namespaces.namespaceToPrefix[namespace];
 	} else {
 		prefix = prefixOrType;
 	}
-		
+
+	// If prefix or namespace already exist, don't add anything
 	if (this.namespaces.containsURI(namespace))
 		return;
-	if (!prefix)
-		prefix = "ns";
+
+	var prefixExists = this.namespaces.containsPrefix(prefix);
+
 	var nsPrefix = prefix;
-	var i = 0;
-	while (nsPrefix in this.namespaces.namespaceURIs)
-		nsPrefix = prefix + (++i);
-	
+	// have a prefix but no namespace, then generate one
+	if (prefix != null && !namespace) {
+		namespace = ("urn:ns:local:xxxxxx-" + (new Date().getTime() % 0x1000000).toString(16)).replace(/x/g, function(c) {
+			return (Math.random()*16|0).toString(16);
+		});
+	} else if (namespace && (prefix == null || prefixExists)) {
+		// No prefix or duplicate, so generate an incremented prefix
+		if (!prefix)
+			nsPrefix = "ns";
+		var i = 0;
+		while (nsPrefix in this.namespaces.namespaceURIs)
+			nsPrefix = prefix + (++i);
+	}
+
 	var documentElement = this.xml[0].documentElement;
-	if (documentElement.setAttributeNS)
-		documentElement.setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:' + nsPrefix, namespace);
+	if (documentElement.setAttributeNS) {
+		documentElement.setAttributeNS('http://www.w3.org/2000/xmlns/', 
+			"xmlns" + (nsPrefix? ':' : '') + nsPrefix, namespace);
+	}
 	else documentElement.setAttribute('xmlns:' + nsPrefix, namespace);
 	this.namespaces.addNamespace(namespace, nsPrefix);
 }

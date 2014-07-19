@@ -60,12 +60,18 @@ XMLElementStub.prototype.render = function(parentElement, prepend, relativeToXML
 
 	this.domNode = $domNode;
 	this.domNode.data("xmlObject", this);
+
+	var autocompleteEnabled = false;
 	
-	this.domNode.keydown(function(e) {
+	this.titleElement.keydown(function(e) {
 		// escape, cancel
 		if (e.keyCode == 27) {
-			self.remove();
-			self.guiEditor.selectNode(self.parentElement);
+			if (autocompleteEnabled && $(self.titleElement.xml_autocomplete('widget')).is(':visible')) {
+				self.titleElement.xml_autocomplete('close');
+			} else {
+				self.remove();
+				self.guiEditor.selectNode(self.parentElement);
+			}
 			return false;
 		}
 		
@@ -80,13 +86,30 @@ XMLElementStub.prototype.render = function(parentElement, prepend, relativeToXML
 			return false;
 		}
 
-		if (e.which == 37 || e.which == 39) {
+		// Block propagation of text editing keys
+		if (e.which >= 37 && e.which <= 40 || e.which == 46) {
 			e.stopPropagation();
 		}
 	});
 
+	// Activate autocompletion dropdown for possible child elements defined in schema
+	if (parentElement.objectType.elements && parentElement.objectType.elements.length > 0) {
+		var elementNames = [];
+		var namespaces = this.editor.xmlState.namespaces;
+
+		for (var i in parentElement.objectType.elements) {
+			var element = parentElement.objectType.elements[i];
+			elementNames.push(namespaces.getNamespacePrefix(element.namespace) + element.localName);
+		}
+
+		this.titleElement.xml_autocomplete({ source : elementNames, minLength: 0, delay: 0, matchSize : this.titleElement});
+		autocompleteEnabled = true;
+	}
+
 	this.titleElement.focus(function(e) {
 		self.guiEditor.selectNode(self);
+		if (autocompleteEnabled)
+			self.titleElement.xml_autocomplete("search", self.titleElement.text());
 		e.stopPropagation();
 	})
 	.mousedown(function(e) {
@@ -123,11 +146,15 @@ XMLElementStub.prototype.create = function() {
 	}
 
 	var newElement = this.editor.addChildElement(this.parentElement, tagName, relativeTo, relativeTo != null);
-	// Move new element to match display position of the stub, in case it was misplaced because of its siblings being stubs
-	newElement.domNode.detach();
-	this.domNode.after(newElement.domNode);
+	if (newElement instanceof AbstractXMLObject) {
+		// Move new element to match display position of the stub, in case it was misplaced because of its siblings being stubs
+		newElement.domNode.detach();
+		this.domNode.after(newElement.domNode);
 
-	this.remove();
+		this.remove();
+	} else {
+		console.log(newElement);
+	}
 };
 
 XMLElementStub.prototype.getSelectedAttribute = function () {

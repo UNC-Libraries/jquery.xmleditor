@@ -20,7 +20,7 @@ NamespaceList.prototype.containsURI = function(nsURI) {
 	return nsURI in this.namespaceToPrefix;
 };
 
-NamespaceList.prototype.containsPrefix = function(namespacePrefix) {
+NamespaceList.prototype.containsPrefix = function(nsPrefix) {
 	return nsPrefix in this.namespaceURIs;
 };
 

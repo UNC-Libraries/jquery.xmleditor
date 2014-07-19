@@ -371,7 +371,7 @@
 }
 
 .element_header .edit_title {
-	min-width: 100px;
+	min-width: 160px;
 	height: 1.3em;
 	padding: 2px 7px;
 	border: 1px solid #eee;
@@ -405,6 +405,24 @@
 	vertical-align: top;
 	text-decoration: underline;
 
+}
+
+.xml_autocomplete {
+	overflow-x: hidden;
+	max-height: 8em;
+	box-shadow: 4px 4px 5px 0 rgba(0, 0, 0, 0.15);
+}
+
+.xml_autocomplete .ui-menu-item {
+	padding: 2px 7px;
+}
+
+.xml_autocomplete .ui-menu-item span {
+	font-weight: bold;
+}
+
+.xml_autocomplete .ui-state-focus {
+	background-color: #eef;
 }
 
 /* Attributes */
