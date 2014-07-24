@@ -49,7 +49,7 @@ GUIEditor.prototype._initEventBindings = function() {
 	this.xmlContent.on('click', '.' + attributeContainerClass, function(event){
 		$(this).data('xmlAttribute').select();
 		event.stopPropagation();
-	}).on('click', '.' + attributeContainerClass + " > a", function(event){
+	}).on('click', '.' + attributeContainerClass + " > a:not(.create_attr)", function(event){
 		var attribute = $(this).parents('.' + attributeContainerClass).eq(0).data('xmlAttribute');
 		attribute.remove();
 		attribute.xmlElement.updated({action : 'attributeRemoved', target : attribute});
@@ -79,6 +79,9 @@ GUIEditor.prototype._initEventBindings = function() {
 		self.deleteElement($(this).parents('.' + xmlElementClass).eq(0).data('xmlObject'));
 		event.stopPropagation();
 	}).on('click', '.toggle_collapse', function(event){
+		$(this).parents('.' + xmlElementClass).first().data('xmlObject').toggleCollapsed();
+		event.stopPropagation();
+		return;
 		var $this = $(this);
 		var contentBlock = $this.closest('.' + xmlElementClass).find('.content_block');
 		if ($this.html() == "+") {
@@ -188,11 +191,11 @@ GUIEditor.prototype.addElementEvent = function(parentElement, newElement) {
 };
 
 // Inform the editor that a new attribute has been added
-GUIEditor.prototype.addAttributeEvent = function(parentElement, objectType, addButton) {
-	var attribute = new XMLAttribute(objectType, parentElement, this.editor);
-	attribute.render();
-	parentElement.updated({action : 'attributeAdded', target : objectType.name});
+GUIEditor.prototype.addAttributeEvent = function(parentElement, attribute, addButton) {
+
+	parentElement.updated({action : 'attributeAdded', target : attribute.objectType.name});
 	this.focusObject(attribute.domNode);
+	attribute.select();
 	addButton.addClass("disabled");
 	attribute.addButton = addButton;
 	this.editor.xmlState.documentChangedEvent();

@@ -81,14 +81,17 @@ XMLUnspecifiedElement.prototype.render = function(parentElement, recursive, rela
 XMLUnspecifiedElement.prototype.addContentContainers = function (recursive) {
 	var attributesArray = this.objectType.attributes;
 	var elementsArray = this.objectType.elements;
+
+	this.contentContainer = document.createElement("div");
+	this.domElement.appendChild(this.contentContainer);
 	
 	var placeholder = document.createElement('div');
 	placeholder.className = 'placeholder';
 
 	placeholder.appendChild(document.createTextNode('Use the menu to add contents.'));
 
+	this.contentContainer.appendChild(placeholder);
 	this.placeholder = $(placeholder);
-	this.domNode.append(this.placeholder);
 	
 	this.addAttributeContainer();
 

@@ -6,6 +6,7 @@ function DocumentState(baseXML, editor) {
 	this.xml = null;
 	this.changeState = 0;
 	this.editor = editor;
+	this.schemaTree = this.editor.schemaTree;
 	this.domParser = null;
 	if (window.DOMParser)
 		this.domParser = new DOMParser();
@@ -134,6 +135,14 @@ DocumentState.prototype.extractNamespacePrefixes = function() {
 			self.namespaces.addNamespace(value, prefix);
 		}
 	});
+};
+
+DocumentState.prototype.getNamespacePrefix = function(nsURI) {
+	var prefix = this.namespaces.getNamespacePrefix(nsURI);
+	if (prefix === undefined)
+		prefix = this.editor.schemaTree.namespaces.getNamespacePrefix(nsURI);
+
+	return prefix;
 };
 
 // Since there are many versions of DOM parsers in IE, try them until one works.

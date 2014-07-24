@@ -1,10 +1,5 @@
 /**
  * Menu object for adding new elements to an existing element or document
- * @param menuID
- * @param label
- * @param expanded
- * @param enabled
- * @returns
  */
 function ModifyElementMenu(menuID, label, expanded, enabled, owner, editor, getRelativeToFunction) {
 	this.menuID = menuID;
@@ -112,7 +107,7 @@ ModifyElementMenu.prototype.populate = function(xmlElement) {
 	if (this.target.objectType.elements) {
 		$.each(this.target.objectType.elements, function(){
 			var xmlElement = this;
-			var elName = self.editor.xmlState.namespaces.getNamespacePrefix(xmlElement.namespace) + xmlElement.localName;
+			var elName = self.editor.xmlState.getNamespacePrefix(xmlElement.namespace) + xmlElement.localName;
 			var addButton = $("<li/>").attr({
 				title : 'Add ' + elName
 			}).html(elName)

@@ -525,7 +525,7 @@ $.widget( "xml.xmlEditor", {
 			
 			for (var index in defs)  {
 				var definition = defs[index];
-				var elementName = this.xmlState.namespaces.getNamespacePrefix(definition.namespace) 
+				var elementName = this.xmlState.getNamespacePrefix(definition.namespace) 
 						+ definition.localName;
 				if (elementName == newElementDefinition) {
 					objectType = definition;
@@ -582,10 +582,52 @@ $.widget( "xml.xmlEditor", {
 		}
 		// Create attribute on the targeted parent, and add its namespace if missing
 		var data = $(instigator).data('xml');
-		this.xmlState.addNamespace(data.objectType);
-		data.target.addAttribute(data.objectType);
+
+		return this.addAttribute(data.target, data.objectType, instigator);
+	},
+
+	addAttribute: function(xmlElement, attrDefinition, instigator) {
+
+		var objectType;
+		if ($.type(attrDefinition) === "object") {
+			objectType = attrDefinition;
+		} else {
+			var defs = xmlElement.objectType.attributes;
+			
+			for (var index in defs)  {
+				var definition = defs[index];
+				var attrName = this.xmlState.getNamespacePrefix(definition.namespace) 
+						+ definition.localName;
+				if (attrName == attrDefinition) {
+					objectType = definition;
+					break;
+				}
+			}
+
+			if (!objectType && !xmlElement.objectType.any) {
+				return "Could not add attribute " + attrDefinition + ", it is not a valid for element " + xmlElement.objectType.localName;
+			}
+		}
+
+		// Verify that the attribute is not already present on the element
+		if (xmlElement.attributeExists(objectType || attrDefinition))
+			return "Could not add attribute " + attrDefinition + ", it is already present";
+
+		var newAttr;
+		if (objectType) {
+			this.xmlState.addNamespace(objectType);
+			newAttr = xmlElement.addAttribute(objectType);
+		} else {
+			var nameParts = attrDefinition.split(":");
+			if (nameParts.length > 1)
+				this.xmlState.addNamespace(nameParts[0]);
+			//newAttr = xmlElement.addNonschemaAttribute(newElementDefinition);
+		}
+
 		// Inform the active editor of the newly added attribute
-		this.activeEditor.addAttributeEvent(data.target, data.objectType, $(instigator));
+		this.activeEditor.addAttributeEvent(xmlElement, newAttr, $(instigator));
+
+		return newAttr;
 	},
 
 	addNodeCallback: function(instigator, nodeType, prepend) {
@@ -598,8 +640,6 @@ $.widget( "xml.xmlEditor", {
 	},
 
 	addNode: function(parentElement, nodeType, prepend, relativeTo) {
-
-		if (nodeType == "text")
 
 		// Synchronize xml document if there are unsynchronized changes in the text editor
 		if (this.xmlState.changesNotSynced()) {
@@ -689,8 +729,10 @@ $.widget( "xml.xmlEditor", {
 	setXMLFromEditor: function() {
 		var xmlString = this.textEditor.aceEditor.getValue();
 		this.xmlState.setXMLFromString(xmlString);
-		this.guiEditor.setRootElement(this.xmlState.xml.children()[0]);
-		this.addTopLevelMenu.populate(this.guiEditor.rootElement)
+		if (this.guiEditor.isActive) {
+			this.guiEditor.setRootElement(this.xmlState.xml.children()[0]);
+			this.addTopLevelMenu.populate(this.guiEditor.rootElement)
+		}
 	},
 	
 	// Callback for submit button pressing.  Performs a submit function and then uploads the 
@@ -1008,6 +1050,12 @@ $.widget( "xml.xmlEditor", {
 
 				if (e.which == 'R'.charCodeAt(0)) {
 					this.addNode(this.guiEditor.rootElement, "element", prepend);
+					return false;
+				}
+
+				if (e.which == 'A'.charCodeAt(0)) {
+					if (selected)
+						this.addNode(selected, "attribute", prepend);
 					return false;
 				}
 

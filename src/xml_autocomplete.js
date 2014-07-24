@@ -12,12 +12,20 @@ $.widget( "custom.xml_autocomplete", $.ui.autocomplete, {
 
 	_renderMenu: function( ul, items ) {
 		var self = this;
+		var validItemFunction = this.options.validItemFunction;
 
 		// Sort suggestions by proximity of search term to the beginning of the item
 		var rankMap = [];
 		$.each(items, function(index, item) {
+			if (validItemFunction && validItemFunction(item.value))
+				return true;
 			rankMap.push([item.value.toLowerCase().indexOf(self.term.toLowerCase()), item]);
 		});
+
+		if (rankMap.length == 0) {
+			this.close();
+			return;
+		}
 
 		rankMap.sort(function(a, b) {
 			return a[0] - b[0];

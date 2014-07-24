@@ -61,13 +61,18 @@ XMLElementStub.prototype.render = function(parentElement, prepend, relativeToXML
 	this.domNode = $domNode;
 	this.domNode.data("xmlObject", this);
 
+	stubNameInput.call(this, this.titleElement, parentElement.objectType.elements);
+};
+
+function stubNameInput(nameInput, suggestionList, validItemFunction) {
+	var self = this;
 	var autocompleteEnabled = false;
 	
-	this.titleElement.keydown(function(e) {
+	nameInput.keydown(function(e) {
 		// escape, cancel
 		if (e.keyCode == 27) {
-			if (autocompleteEnabled && $(self.titleElement.xml_autocomplete('widget')).is(':visible')) {
-				self.titleElement.xml_autocomplete('close');
+			if (autocompleteEnabled && $(nameInput.xml_autocomplete('widget')).is(':visible')) {
+				nameInput.xml_autocomplete('close');
 			} else {
 				self.remove();
 				self.guiEditor.selectNode(self.parentElement);
@@ -93,30 +98,31 @@ XMLElementStub.prototype.render = function(parentElement, prepend, relativeToXML
 	});
 
 	// Activate autocompletion dropdown for possible child elements defined in schema
-	if (parentElement.objectType.elements && parentElement.objectType.elements.length > 0) {
-		var elementNames = [];
-		var namespaces = this.editor.xmlState.namespaces;
+	if (suggestionList && suggestionList.length > 0) {
+		var suggDefs = [];
+		var xmlState = this.editor.xmlState;
 
-		for (var i in parentElement.objectType.elements) {
-			var element = parentElement.objectType.elements[i];
-			elementNames.push(namespaces.getNamespacePrefix(element.namespace) + element.localName);
+		for (var i in suggestionList) {
+			var definition = suggestionList[i];
+			suggDefs.push(xmlState.getNamespacePrefix(definition.namespace) + definition.localName);
 		}
 
-		this.titleElement.xml_autocomplete({ source : elementNames, minLength: 0, delay: 0, matchSize : this.titleElement});
+		nameInput.xml_autocomplete({ source : suggDefs, minLength: 0, delay: 0,
+			matchSize : nameInput, validItemFunction : validItemFunction});
 		autocompleteEnabled = true;
 	}
 
-	this.titleElement.focus(function(e) {
+	nameInput.focus(function(e) {
 		self.guiEditor.selectNode(self);
 		if (autocompleteEnabled)
-			self.titleElement.xml_autocomplete("search", self.titleElement.text());
+			nameInput.xml_autocomplete("search", nameInput.text());
 		e.stopPropagation();
 	})
 	.mousedown(function(e) {
-		self.titleElement.focus();
+		nameInput.focus();
 		e.stopPropagation();
 	});
-};
+}
 
 XMLElementStub.prototype.addTopActions = function () {
 	var self = this;
