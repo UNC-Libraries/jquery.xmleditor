@@ -253,6 +253,13 @@
 	margin-bottom: 12px;
 }
 
+.xml_element.collapsed .element_header {
+	margin-bottom: 0;
+	-webkit-border-radius: 6px 6px 6px 6px;
+	-moz-border-radius: 6px 6px 6px 6px;
+	border-radius: 6px 6px 6px 6px;
+}
+
 .xml_root_element > .element_header {
 	background-color: #eeeeee;
 	background: -webkit-gradient(linear, left top, left bottom, from(#FFFFFF), to(#eeeeee));
@@ -267,21 +274,21 @@
 	background: linear-gradient(to bottom,  #FFFFFF,  #dddddd);
 }
 
-.top_level_element_group > .xml_children > .xml_element > .element_header {
+.top_level_element_group > div > .xml_children > .xml_element > .element_header {
 	background-color: #e9e9eb;
 	background: -webkit-gradient(linear, left top, left bottom, from(#FAFFFF), to(#e9e9eb));
 	background: -moz-linear-gradient(top,  #FAFFFF,  #e9e9eb);
 	background: linear-gradient(to bottom,  #FAFFFF,  #e9e9eb);
 }
 
-.top_level_element_group > .xml_children > .xml_element > .xml_children > .xml_element > .element_header {
+.top_level_element_group > div > .xml_children > .xml_element > div > .xml_children > .xml_element > .element_header {
 	background-color: #f1f1f3;
 	background: -webkit-gradient(linear, left top, left bottom, from(#F5FFFF), to(#f1f1f3));
 	background: -moz-linear-gradient(top,  #F5FFFF,  #f1f1f3);
 	background: linear-gradient(to bottom,  #F5FFFF,  #f1f1f3);
 }
 
-.top_level_element_group > .xml_children > .xml_element > .xml_children > .xml_element > .xml_children > .xml_element > .element_header {
+.top_level_element_group > div > .xml_children > .xml_element > div > .xml_children > .xml_element > div > .xml_children > .xml_element > .element_header {
 	background-color: #f5f5f9;
 	background: -webkit-gradient(linear, left top, left bottom, from(#F0FFFF), to(#f5f5f9));
 	background: -moz-linear-gradient(top,  #F0FFFF,  #f5f5f9);
@@ -370,7 +377,7 @@
 	padding: 5px;
 }
 
-.element_header .edit_title {
+.element_header .edit_title, .xml_attr_stub label {
 	min-width: 160px;
 	height: 1.3em;
 	padding: 2px 7px;
@@ -404,7 +411,6 @@
 	color: #667;
 	vertical-align: top;
 	text-decoration: underline;
-
 }
 
 .xml_autocomplete {
@@ -423,6 +429,10 @@
 
 .xml_autocomplete .ui-state-focus {
 	background-color: #eef;
+}
+
+.xml_attr_stub .create_attr {	
+	text-decoration: underline;
 }
 
 /* Attributes */
@@ -468,7 +478,7 @@
 	*display: inline;
 }
 
-.attribute_container > a {
+.attribute_container > a, .attribute_container .create_attr {
 	color: #1C94C4;
 	vertical-align: 45%;
 	cursor: pointer;

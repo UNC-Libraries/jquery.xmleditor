@@ -46,6 +46,11 @@ AddNodeMenu.prototype.populate = function(xmlElement) {
 		nodeType : "element"
 	}).appendTo(this.menuContent);
 
+	$("<li>Add Attribute</li>").data('xml', {
+		target : xmlElement,
+		nodeType : "attribute"
+	}).appendTo(this.menuContent);
+
 	$("<li>Add CDATA</li>").data('xml', {
 		target : xmlElement,
 		nodeType : "cdata"

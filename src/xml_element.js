@@ -67,7 +67,7 @@ XMLElement.prototype.render = function(parentElement, recursive, relativeTo, pre
 	if (this.objectType.schema)
 		this.elementName = this.xmlNode[0].tagName;
 	else {
-		this.elementName = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace) 
+		this.elementName = this.editor.xmlState.getNamespacePrefix(this.objectType.namespace) 
 		+ this.objectType.localName;
 	}
 	
@@ -245,11 +245,11 @@ XMLElement.prototype.addTopActions = function () {
 	var topActionSpan = document.createElement('li');
 	topActionSpan.className = 'top_actions';
 	
-	var toggleCollapse = document.createElement('span');
-	toggleCollapse.className = 'toggle_collapse';
-	toggleCollapse.id = this.guiElementID + '_toggle_collapse';
-	toggleCollapse.appendChild(document.createTextNode('_'));
-	topActionSpan.appendChild(toggleCollapse);
+	this.toggleCollapse = document.createElement('span');
+	this.toggleCollapse.className = 'toggle_collapse';
+	this.toggleCollapse.id = this.guiElementID + '_toggle_collapse';
+	this.toggleCollapse.appendChild(document.createTextNode('_'));
+	topActionSpan.appendChild(this.toggleCollapse);
 	
 	var moveDown = document.createElement('span');
 	moveDown.className = 'move_down';
@@ -277,6 +277,9 @@ XMLElement.prototype.addTopActions = function () {
 XMLElement.prototype.addContentContainers = function (recursive) {
 	var attributesArray = this.objectType.attributes;
 	var elementsArray = this.objectType.elements;
+
+	this.contentContainer = document.createElement("div");
+	this.domElement.appendChild(this.contentContainer);
 	
 	var placeholder = document.createElement('div');
 	placeholder.className = 'placeholder';
@@ -305,8 +308,8 @@ XMLElement.prototype.addContentContainers = function (recursive) {
 		}
 	}
 
+	this.contentContainer.appendChild(placeholder);
 	this.placeholder = $(placeholder);
-	this.domNode.append(this.placeholder);
 	
 	if (attributesArray && attributesArray.length > 0) {
 		this.addAttributeContainer();
@@ -320,7 +323,7 @@ XMLElement.prototype.addNodeContainer = function (recursive) {
 	container.id = this.domNodeID + "_cont_nodes";
 	container.className = 'content_block xml_children';
 	this.nodeContainer = $(container);
-	this.domNode[0].appendChild(container);
+	this.contentContainer.appendChild(container);
 
 	this.nodeCount = 0;
 
@@ -361,7 +364,7 @@ XMLElement.prototype.renderChild = function(childNode, recursive) {
 
 	if (elementsArray) {
 		for ( var i = 0; i < elementsArray.length; i++) {
-			var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(elementsArray[i].namespace);
+			var prefix = this.editor.xmlState.getNamespacePrefix(elementsArray[i].namespace);
 			if (prefix + elementsArray[i].localName == childNode.nodeName) {
 				var childElement = new XMLElement($(childNode), elementsArray[i], this.editor);
 				childElement.render(this, recursive);
@@ -413,11 +416,20 @@ XMLElement.prototype.renderElementStub = function(prepend, relativeTo) {
 	return node;
 };
 
+XMLElement.prototype.renderAttributeStub = function(prepend, relativeTo) {
+	var node = new XMLAttributeStub(this, this.editor);
+	node.render();
+
+	this.attributeCount++;
+
+	return node;
+};
+
 XMLElement.prototype.addAttributeContainer = function () {
 	var container = document.createElement('div');
 	container.id = this.domNodeID + "_cont_attributes";
 	container.className = "content_block " + attributesContainerClass;
-	this.domNode[0].appendChild(container);
+	this.contentContainer.appendChild(container);
 	this.attributeContainer = $(container);
 
 	this.renderAttributes();
@@ -448,7 +460,7 @@ XMLElement.prototype.addNonschemaElement = function(tagName, relativeTo, prepend
 
 // Add a child element of type objectType and update the interface
 XMLElement.prototype.addElement = function(objectType, relativeTo, prepend) {
-	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(objectType.namespace);
+	var prefix = this.editor.xmlState.getNamespacePrefix(objectType.namespace);
 	
 	// Create the new element in the target namespace with the matching prefix
 	var xmlDocument = this.editor.xmlState.xml[0];
@@ -515,19 +527,40 @@ XMLElement.prototype.addAttribute = function (objectType) {
 	var prefix;
 	var attributeName = objectType.localName
 	if (objectType.namespace != this.objectType.namespace) {
-		prefix = this.editor.xmlState.namespaces.getNamespacePrefix(objectType.namespace);
+		prefix = this.editor.xmlState.getNamespacePrefix(objectType.namespace);
 		attributeName = prefix + attributeName;
 	}
 	if (node.setAttributeNS && prefix) {
 		node.setAttributeNS(objectType.namespace, attributeName, attributeValue);
 	} else this.xmlNode.attr(attributeName, attributeValue);
-	return attributeValue;
+
+	var attribute = new XMLAttribute(objectType, this, this.editor);
+	attribute.render();
+
+	return attribute;
 };
 
+XMLElement.prototype.attributeExists = function(attrDefinition) {
+	var attr;
+	if ($.type(attrDefinition) == "string") {
+		attr = attrDefinition;
+	} else {
+		if (attrDefinition.namespace != this.objectType.namespace) {
+			attr = this.editor.xmlState.getNamespacePrefix(attrDefinition.namespace) + attrDefinition.localName;
+		} else {
+			attr = attrDefinition.localName;
+		}
+	}
+	
+	attr = this.xmlNode.attr(attr);
+
+	return typeof attr !== typeof undefined && attr !== false;
+};
 
 
 XMLElement.prototype.addNode = function (nodeType, prepend, relativeTo) {
 	this.nodeContainer.show();
+	this.attributeContainer.show();
 	switch (nodeType) {
 		case "text" :
 			if (this.allowText)
@@ -536,6 +569,7 @@ XMLElement.prototype.addNode = function (nodeType, prepend, relativeTo) {
 		case "cdata" : return this.renderCData(null, prepend, relativeTo);
 		case "comment" : return this.renderComment(null, prepend, relativeTo);
 		case "element" : return this.renderElementStub(prepend, relativeTo);
+		case "attribute" : return this.renderAttributeStub();
 	}
 	return null;
 };
@@ -588,4 +622,24 @@ XMLElement.prototype.getAttributeContainer = function() {
 
 XMLElement.prototype.getChildContainer = function() {
 	return this.childContainer;
+};
+
+XMLElement.prototype.toggleCollapsed = function() {
+	var collapsed = this.domNode.hasClass("collapsed");
+	var contentBlock = $(this.contentContainer);
+
+	var $toggle = $(this.toggleCollapse);
+	var self = this;
+
+	if (collapsed) {
+		$toggle.html("_");
+		contentBlock.slideDown(150);
+		self.domNode.removeClass("collapsed");
+	} else {
+		$toggle.html("+");
+		
+		contentBlock.slideUp(150, function() {
+			self.domNode.addClass("collapsed");
+		});
+	}
 };

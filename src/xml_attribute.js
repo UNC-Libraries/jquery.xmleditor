@@ -15,7 +15,7 @@ function XMLAttribute(objectType, xmlElement, editor) {
 	this.attributeName = objectType.localName;
 	// Determine whether the attribute name should include a namespace prefix
 	if (this.xmlElement.objectType.namespace != this.objectType.namespace) {
-		prefix = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace);
+		prefix = this.editor.xmlState.getNamespacePrefix(this.objectType.namespace);
 		this.attributeName = prefix + this.attributeName;
 	}
 }
@@ -25,6 +25,9 @@ XMLAttribute.prototype = Object.create( AbstractXMLObject.prototype );
 
 // Render the gui representation of this attribute
 XMLAttribute.prototype.render = function (){
+	if (!this.xmlElement.domNode)
+		return;
+
 	this.domNodeID = this.xmlElement.domNodeID + "_" + this.objectType.ns + "_" + this.objectType.localName;
 	
 	this.domNode = $("<div/>").attr({
