@@ -1,3 +1,8 @@
+/*
+    Steven Spungin <steven@spungin.tv>
+    Use box sizing to cause (text input and area) to fit within parent div instead of using 99% width hack
+*/
+
 /* Layout helpers
 ----------------------------------*/
 .xml_editor_container .ui-helper-hidden { display: none; }
@@ -184,7 +189,7 @@
 }
 
 .xml_input {
-	width: 99%;
+	box-sizing: border-box;
 	height: 25px;
 }
 
@@ -195,7 +200,7 @@
 
 .xml_textarea, .textareaClone {
 	max-height: 18em;
-	width: 99%;
+	box-sizing: border-box;
 	resize: vertical;
 	font-size: 13px;
 	padding: 4px 0 0 5px;
