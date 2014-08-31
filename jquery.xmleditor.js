@@ -17,6 +17,7 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
 
+	Steven Spungin<steven@spungin.tv> - Changed case on sidebar items to match other items in list.
  */
 /*
  * jQuery xml Editor
@@ -1329,13 +1330,13 @@ AddNodeMenu.prototype.populate = function(xmlElement) {
 		nodeType : "cdata"
 	}).appendTo(this.menuContent);
 
-	$("<li>Add comment</li>").data('xml', {
+	$("<li>Add Comment</li>").data('xml', {
 		target : xmlElement,
 		nodeType : "comment"
 	}).appendTo(this.menuContent);
 
 	if (xmlElement.objectType.type != null) {
-		this.addButton = $("<li>Add text</li>").attr({
+		this.addButton = $("<li>Add Text</li>").attr({
 			title : 'Add text'
 		}).data('xml', {
 			target : xmlElement,
