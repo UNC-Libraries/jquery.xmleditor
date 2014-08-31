@@ -17,6 +17,9 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
 
+	Steven Spungin<steven@spungin.tv>
+		Changed case on sidebar items to match other items in list.
+		Mark document dirty after keypress instead of waiting for onChange event.  On change is only called after blur or single-line widget has enter pressed.
  */
 /*
  * jQuery xml Editor
@@ -1266,13 +1269,13 @@ AddNodeMenu.prototype.populate = function(xmlElement) {
 		nodeType : "cdata"
 	}).appendTo(this.menuContent);
 
-	$("<li>Add comment</li>").data('xml', {
+	$("<li>Add Comment</li>").data('xml', {
 		target : xmlElement,
 		nodeType : "comment"
 	}).appendTo(this.menuContent);
 
 	if (xmlElement.objectType.type != null) {
-		this.addButton = $("<li>Add text</li>").attr({
+		this.addButton = $("<li>Add Text</li>").attr({
 			title : 'Add text'
 		}).data('xml', {
 			target : xmlElement,
@@ -1728,7 +1731,7 @@ GUIEditor.prototype._initEventBindings = function() {
 		attribute.xmlElement.updated({action : 'attributeRemoved', target : attribute});
 		self.editor.xmlState.documentChangedEvent();
 		event.stopPropagation();
-	}).on('change', '.' + attributeContainerClass + ' > input,.' + attributeContainerClass + ' > textarea,'
+	}).on('change keypress', '.' + attributeContainerClass + ' > input,.' + attributeContainerClass + ' > textarea,'
 			+ '.' + attributeContainerClass + ' > select', function(event){
 		var attribute = $(this).parents('.' + attributeContainerClass).eq(0).data('xmlAttribute');
 		attribute.syncValue();
@@ -1765,7 +1768,7 @@ GUIEditor.prototype._initEventBindings = function() {
 			contentBlock.slideUp(200);
 		}
 		event.stopPropagation();
-	}).on('change', '.element_text', function(event){
+	}).on('change keypress', '.element_text', function(event){
 		var $this = $(this);
 		var xmlElement = $this.parents('.' + xmlElementClass).eq(0).data('xmlObject');
 		var textObject = $this.parents(".xml_node").first().data('xmlObject');
