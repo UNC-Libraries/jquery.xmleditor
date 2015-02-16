@@ -203,14 +203,14 @@ function MenuBar(editor) {
 			action : "http://www.loc.gov/standards/mods/mods-outline.html"
 		} ]
 	}*/, {
-		label : 'XML',
+		label : self.editor.options.xmlEditorLabel,
 		enabled : true, 
 		itemClass : 'header_mode_tab',
 		action : function() {
 			self.editor.modeChange(0);
 		}
 	}, {
-		label : 'Text',
+		label : self.editor.options.textEditorLabel,
 		enabled : true, 
 		itemClass : 'header_mode_tab',
 		action : function() {

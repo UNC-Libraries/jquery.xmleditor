@@ -95,6 +95,8 @@ $.widget( "xml.xmlEditor", {
 		addTopMenuHeaderText : 'Add Top Element',
 		addAttrMenuHeaderText : 'Add Attribute',
 		addElementMenuHeaderText : 'Add Subelement',
+		xmlEditorLabel : 'XML',
+		textEditorLabel : 'Text',
 		
 		// Set to false to get rid of the 
 		enableDocumentStatusPanel : true,
