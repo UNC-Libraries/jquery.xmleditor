@@ -513,10 +513,10 @@ $.widget( "xml.xmlEditor", {
 		}
 		if (mode == 0) {
 			this.activeEditor = this.guiEditor;
-			$("#" + xmlMenuHeaderPrefix + "XML").addClass("active_mode_tab");
+			$("#" + xmlMenuHeaderPrefix + this.options.xmlEditorLabel.replace(/ /g, "_")).addClass("active_mode_tab");
 		} else {
 			this.activeEditor = this.textEditor;
-			$("#" + xmlMenuHeaderPrefix + "Text").addClass("active_mode_tab");
+			$("#" + xmlMenuHeaderPrefix + this.options.textEditorLabel.replace(/ /g, "_")).addClass("active_mode_tab");
 		}
 		this.activeEditor.activate();
 		if (this.ready)
