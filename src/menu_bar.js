@@ -9,13 +9,14 @@ function MenuBar(editor) {
 	this.parentElement = null;
 	// Functions which are executed when the menu is activated for updating the menu state
 	this.updateFunctions = [];
-	
+
 	var self = this;
 	// Default menu entries
+	// TODO this would need to get changed to allow for anything in the ajax options hash toothis.editor.options.enableDocumentStatusPanel
 	this.headerMenuData = [ {
 		label : 'File',
 		enabled : true,
-		action : function(event) {self.activateMenu(event);}, 
+		action : function(event) {self.activateMenu(event);},
 		items : [ {
 				label : 'Submit to Server',
 				enabled : (self.editor.options.ajaxOptions.xmlUploadPath != null),
@@ -70,7 +71,7 @@ function MenuBar(editor) {
 	}, {
 		label : 'Select',
 		enabled : true,
-		action : function(event) {self.activateMenu(event);}, 
+		action : function(event) {self.activateMenu(event);},
 		items : [ {
 				label : 'Deselect',
 				enabled : true,
@@ -138,7 +139,7 @@ function MenuBar(editor) {
 	}, {
 		label : 'View',
 		enabled : true,
-		action : function(event) {self.activateMenu(event);}, 
+		action : function(event) {self.activateMenu(event);},
 		items : [ {
 			label : 'Switch to XML View',
 			enabled : true,
@@ -157,7 +158,7 @@ function MenuBar(editor) {
 	}, {
 		label : 'Options',
 		enabled : true,
-		action : function(event) {self.activateMenu(event);}, 
+		action : function(event) {self.activateMenu(event);},
 		items : [ {
 			label : 'Pretty XML Formatting',
 			enabled : (vkbeautify !== undefined),
@@ -195,7 +196,7 @@ function MenuBar(editor) {
 	}/*, {
 		label : 'Help',
 		enabled : true,
-		action : function(event) {self.activateMenu(event);}, 
+		action : function(event) {self.activateMenu(event);},
 		items : [ {
 			label : 'MODS Outline of Elements',
 			enabled : true,
@@ -204,14 +205,14 @@ function MenuBar(editor) {
 		} ]
 	}*/, {
 		label : self.editor.options.xmlEditorLabel,
-		enabled : true, 
+		enabled : true,
 		itemClass : 'header_mode_tab',
 		action : function() {
 			self.editor.modeChange(0);
 		}
 	}, {
 		label : self.editor.options.textEditorLabel,
-		enabled : true, 
+		enabled : true,
 		itemClass : 'header_mode_tab',
 		action : function() {
 			self.editor.modeChange(1);
@@ -240,11 +241,11 @@ MenuBar.prototype.activateMenu = function(event) {
 MenuBar.prototype.render = function(parentElement) {
 	this.parentElement = parentElement;
 	this.menuBarContainer = $("<div/>").addClass(xmlMenuBarClass).appendTo(parentElement);
-	
+
 	this.headerMenu = $("<ul/>");
 	this.menuBarContainer.append(this.headerMenu);
 	this.initEventHandlers();
-	
+
 	var menuBar = this;
 	$.each(this.headerMenuData, function() {
 		menuBar.generateMenuItem(this, menuBar.headerMenu);
@@ -264,7 +265,7 @@ MenuBar.prototype.initEventHandlers = function() {
 MenuBar.prototype.generateMenuItem = function(menuItemData, parentMenu) {
 	var menuItem = $("<li/>").appendTo(parentMenu);
 	var checkArea = $("<span/>").addClass("xml_menu_check").appendTo(menuItem);
-		
+
 	var menuItemLink = $("<a/>").appendTo(menuItem).html("<span>" + menuItemData.label + "</span>");
 	if (menuItemData.binding) {
 		menuItemLink.append("<span class='binding'>" + menuItemData.binding + "</span>");
@@ -279,7 +280,7 @@ MenuBar.prototype.generateMenuItem = function(menuItemData, parentMenu) {
 	if (menuItemData.itemClass) {
 		menuItem.addClass(menuItemData.itemClass);
 	}
-	
+
 	var menuBar = this;
 	menuItem.data("menuItemData", menuItemData).attr("id", xmlMenuHeaderPrefix + menuItemData.label.replace(/ /g, "_"));
 	if (menuItemData.items !== undefined && menuItemData.items.length > 0) {
@@ -288,7 +289,7 @@ MenuBar.prototype.generateMenuItem = function(menuItemData, parentMenu) {
 			menuBar.generateMenuItem(this, subMenu);
 		});
 	}
-	
+
 	if (menuItemData.checked)
 		this.checkEntry(menuItem, true);
 };
