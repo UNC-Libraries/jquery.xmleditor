@@ -2,7 +2,6 @@
 //= require_tree .
 
 /*
-
 	Copyright 2008 The University of North Carolina at Chapel Hill
 
 	Licensed under the Apache License, Version 2.0 (the "License");
@@ -82,7 +81,7 @@ $.widget( "xml.xmlEditor", {
 		libPath: null,
 		// Document retrieval and upload parameters
 		ajaxOptions : {
-			xmlUploadPath: null,
+			xmlUploadConfig: null,
 			xmlRetrievalPath: null,
 			xmlRetrievalParams : null
 		},
@@ -558,6 +557,7 @@ $.widget( "xml.xmlEditor", {
 	},
 
 	// Performs the default action for "saving" the contents of the editor, either to server or file
+	//pass an object with url, success and error functions.
 	saveXML: function(url) {
 		if (url) {
 			this.submitXML(url);
@@ -618,9 +618,7 @@ $.widget( "xml.xmlEditor", {
 			}
 			// convert XML DOM to string
 			var xmlString = this.xml2Str(this.xmlState.xml);
-
 			$("." + submissionStatusClass).html("Submitting...");
-
 			var self = this;
 			$.ajax({
 				'url' : url,
@@ -631,14 +629,13 @@ $.widget( "xml.xmlEditor", {
 					// Process the response from the server using the provided response handler
 					// If the result of the handler evaluates true, then it is assumed to be an error
 					var outcome = self.options.submitResponseHandler(response);
-		                        if ($("#errors").is(":visible")){
-		                            $("#errors").hide();
-		                         }
-		                         if ($("." + submissionStatusClass).hasClass("alert alert-danger")){
-		                         	$("." + submissionStatusClass).removeClass("alert alert-danger")
-		                         }
+	                        if ($("#errors").is(":visible")){
+	                            $("#errors").hide();
+	                         }
+	                         if ($("." + submissionStatusClass).hasClass("alert alert-danger")){
+	                         	$("." + submissionStatusClass).removeClass("alert alert-danger")
+	                         }
 					if (!outcome) {
-						//
 						self.xmlState.changesCommittedEvent();
 						self.clearProblemPanel();
 					} else {
@@ -646,7 +643,9 @@ $.widget( "xml.xmlEditor", {
 						$("." + submissionStatusClass).html("Failed to submit<br/>See errors at top").css("background-color", "#ffbbbb").animate({backgroundColor: "#ffffff"}, 1000);
 						self.addProblem("Failed to submit xml document", outcome);
 					}
-					document.location.href = response.localName
+					if (response.localName){
+						document.location.href = response.localName;
+					}
 				},
 				error : function(jqXHR, exception) {
 					if (jqXHR.status === 0) {
@@ -661,19 +660,19 @@ $.widget( "xml.xmlEditor", {
 						alert('Time out error.');
 					} else if (exception === 'abort') {
 						alert('Ajax request aborted.');
-	  		            } else if (jqXHR.getResponseHeader('X-Message')) {
-	  		            	$("." + submissionStatusClass).addClass("alert alert-danger")
-	  		            	$("." + submissionStatusClass).html("Errors! This record was not published. Details above.");
-	                              var msg = jqXHR.getResponseHeader('X-Message');
-	                              $(".container").prepend("<div id='errors' class='alert alert-danger'></div>");
-	                              $('#errors').append("<p>" + msg + "</p>");
+  		            }else if (jqXHR.getResponseHeader('X-Message')) {
+  		            	$("." + submissionStatusClass).addClass("alert alert-danger")
+  		            	$("." + submissionStatusClass).html("Errors! This record was not published. Details above.");
+                              var msg = jqXHR.getResponseHeader('X-Message');
+                              $(".container").prepend("<div id='errors' class='alert alert-danger'></div>");
+                              $('#errors').append("<p>" + msg + "</p>");
 					} else {
 						alert('Uncaught Error.\n' + jqXHR.responseText);
 					}
 				}
 			});
 		} else {
-			this.addProblem("Cannot submit because no url given to post");
+			this.addProblem("Cannot submit because no post Options");
 		}
 	},
 
