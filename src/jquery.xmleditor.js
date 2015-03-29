@@ -83,12 +83,13 @@ $.widget( "xml.xmlEditor", {
 		// Document retrieval and upload parameters
 		ajaxOptions : {
 			xmlUploadPath: null,
-			xmlUploadConfig: null,
 			xmlRetrievalPath: null,
 			xmlRetrievalParams : null
 		},
 		// Function triggered after uploading XML document, to interpret if the response was successful or not.  If upload failed, an error message should be returned.
 		submitResponseHandler : null,
+
+		submitButtonConfigs : null,
 		// Event function trigger after an xml element is update via the gui
 		elementUpdated : undefined,
 		// Title for the document, displayed in the header
@@ -180,8 +181,21 @@ $.widget( "xml.xmlEditor", {
 	},
  
 	_init: function() {
-		if (this.options.submitResponseHandler == null)
-			this.options.submitResponseHandler = this.swordSubmitResponseHandler;
+		if (this.options.submitButtonConfigs) {
+			// User provided button configuration
+			this.submitButtonConfigs = this.options.submitButtonConfigs;
+		} else {
+			// Simple button configuration, generate defaults
+			var exporting = !this.options.ajaxOptions.xmlUploadPath;
+
+			// Either an upload button or an export button
+			this.submitButtonConfigs = [{
+				url : this.options.ajaxOptions.xmlUploadPath,
+				label : exporting? "Export" : "Submit changes",
+				onSubmit : exporting? this.exportXML : null,
+				disabled : typeof(Blob) === undefined && exporting
+			}];
+		}
 		
 		// Retrieve the local xml content before we start populating the editor.
 		var localXMLContent = null;
@@ -411,17 +425,6 @@ $.widget( "xml.xmlEditor", {
 			$(window).bind('scroll', $.proxy(this.modifyMenu.setMenuPosition, this.modifyMenu));
 		}
 
-		if ( this.options.ajaxOptions.xmlUploadConfig != null ){
-			$.each( this.options.ajaxOptions.xmlUploadConfig, function(index, obj){
-				$("#" + obj["id"] ).click(function() {
-					self.saveXML(obj["url"]);
-				});
-			});
-		} else {
-			$("#" + submitButtonClass).click(function() {
-				self.saveXML(self.options.ajaxOptions.xmlUploadPath);
-			});
-		}
 		this.ready = true;
 	},
 	
@@ -558,14 +561,15 @@ $.widget( "xml.xmlEditor", {
 		this.addTopLevelMenu.populate(this.guiEditor.rootElement)
 	},
 	
-	// Performs the default action for "saving" the contents of the editor, either to server or file
-	//pass an object with url, success and error functions.
-	saveXML: function(url) {
-		if (url) {
-			this.submitXML(url);
-		} else {
-			// Implement later when there is more browser support for html5 File API
-			this.exportXML();
+	// Callback for submit button pressing.  Performs a submit function and then uploads the 
+	// document to the provided URL, if configured to do either
+	submitXML: function(config) {
+		if (config.onSubmit) {
+			config.onSubmit.call(this, config);
+		}
+
+		if (config.url) {
+			this.uploadXML(config);
 		}
 	},
 	
@@ -606,11 +610,16 @@ $.widget( "xml.xmlEditor", {
 	},
 
 	// Upload the contents of the editor to a path
-	submitXML: function(url) {
-		if (url) {
-			this.addProblem("Cannot submit because no post Options");
-			return;
+	uploadXML: function(config) {
+		if (!config || !config.url) {
+			if (this.submitButtonConfigs.length > 0 && this.submitButtonConfigs[0].url) {
+				config = this.submitButtonConfigs[0];
+			} else {
+				this.addProblem("Cannot submit because no post Options");
+				return;
+			}
 		}
+
 		if (this.textEditor.active) {
 			try {
 				this.setXMLFromEditor();
@@ -626,20 +635,15 @@ $.widget( "xml.xmlEditor", {
 		$("." + submissionStatusClass).html("Submitting...");
 		var self = this;
 		$.ajax({
-			'url' : url,
-			'contentType' : "application/xml",
-			'type' : "POST",
-			'data' : xmlString,
+			url : config.url,
+			contentType : "application/xml",
+			type : "POST",
+			data : xmlString,
 			success : function(response) {
 				// Process the response from the server using the provided response handler
 				// If the result of the handler evaluates true, then it is assumed to be an error
-				var outcome = self.options.submitResponseHandler(response);
-				if ($("#errors").is(":visible")) {
-					$("#errors").hide();
-				}
-				if ($("." + submissionStatusClass).hasClass("alert alert-danger")) {
-					$("." + submissionStatusClass).removeClass("alert alert-danger")
-				}
+				var outcome = config.responseHandler(response);
+
 				if (!outcome) {
 					self.xmlState.changesCommittedEvent();
 					self.clearProblemPanel();
@@ -648,11 +652,13 @@ $.widget( "xml.xmlEditor", {
 					$("." + submissionStatusClass).html("Failed to submit<br/>See errors at top").css("background-color", "#ffbbbb").animate({backgroundColor: "#ffffff"}, 1000);
 					self.addProblem("Failed to submit xml document", outcome);
 				}
-				if (response.localName){
-					document.location.href = response.localName;
-				}
 			},
 			error : function(jqXHR, exception) {
+				if (config.errorHandler) {
+					config.errorHandler(jqXHR, exception);
+					return;
+				}
+
 				if (jqXHR.status === 0) {
 					alert('Not connect.\n Verify Network.');
 				} else if (jqXHR.status == 404) {
@@ -665,12 +671,6 @@ $.widget( "xml.xmlEditor", {
 					alert('Time out error.');
 				} else if (exception === 'abort') {
 					alert('Ajax request aborted.');
-				} else if (jqXHR.getResponseHeader('X-Message')) {
-					$("." + submissionStatusClass).addClass("alert alert-danger")
-					$("." + submissionStatusClass).html("Errors! This record was not published. Details above.");
-					var msg = jqXHR.getResponseHeader('X-Message');
-					$(".container").prepend("<div id='errors' class='alert alert-danger'></div>");
-					$('#errors').append("<p>" + msg + "</p>");
 				} else {
 					alert('Uncaught Error.\n' + jqXHR.responseText);
 				}

@@ -19,32 +19,27 @@ ModifyMenuPanel.prototype.initialize = function (parentContainer) {
 		$("<span/>").addClass(submissionStatusClass).html("Document is unchanged")
 			.appendTo(documentStatusPanel);
 
-		if (self.editor.options.ajaxOptions.xmlUploadConfig != null){
-			$.each(self.editor.options.ajaxOptions.xmlUploadConfig, function(index, el){
-				if(el.createDomElement){
+		if (self.editor.submitButtonConfigs != null){
+			$.each(self.editor.submitButtonConfigs, function(index, config){
+				if (!('createDomElement' in config) || config.createDomElement){
 					var submitButton = $("<input/>").attr({
-						'id' : el.id,
+						id : config.id,
 						'type' : 'button',
-						'class' : el.cssClass,
-						'name' : 'submit',
-						'value' : el.linkText
+						'class' : config.cssClass || submitButtonClass,
+						name : config.name || 'submit',
+						value : config.label || 'Submit'
 					}).appendTo(documentStatusPanel);
+
+					if (!('responseHandler' in config) && config.url) {
+						config.responseHandler = this.options.submitResponseHandler
+							|| this.swordSubmitResponseHandler;
+					}
+
+					submitButton.click(function() {
+						self.editor.submitXML(config);
+					});
 				}
 			});
-		} else {
-			var submitButton = $("<input/>").attr({
-				'id' : submitButtonClass,
-				'type' : 'button',
-				'class' : 'send_xml',
-				'name' : 'submit',
-				'value' : 'Submit Changes'
-			}).appendTo(documentStatusPanel);
-
-			if (typeof(Blob) !== undefined){
-				submitButton.attr("value", "Export");
-			} else {
-				submitButton.attr("disabled", "disabled");
-			}
 		}
 		documentStatusPanel.appendTo(this.menuColumn);
 	}
