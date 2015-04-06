@@ -11,6 +11,14 @@ function MenuBar(editor) {
 	this.updateFunctions = [];
 	
 	var self = this;
+	var defaultSubmitConfig = null;
+	$.each(self.editor.submitButtonConfigs, function(index, config) {
+		if (config.url) {
+			defaultSubmitConfig = config;
+			return false;
+		}
+	});
+
 	// Default menu entries
 	this.headerMenuData = [ {
 		label : 'File',
@@ -18,9 +26,11 @@ function MenuBar(editor) {
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
 				label : 'Submit to Server',
-				enabled : (self.editor.options.ajaxOptions.xmlUploadPath != null),
+				enabled : defaultSubmitConfig != null,
 				binding : "alt+shift+s",
-				action : $.proxy(self.editor.submitXML, self.editor)
+				action : function() {
+					self.editor.uploadXML.call(self.editor, defaultSubmitConfig);
+				}
 			}, {
 				label : 'Export',
 				enabled : (typeof(Blob) !== undefined),
@@ -254,7 +264,7 @@ MenuBar.prototype.render = function(parentElement) {
 MenuBar.prototype.initEventHandlers = function() {
 	this.headerMenu.on("click", "li", { "menuBar" : this}, function(event) {
 		var menuItem = $(this).data("menuItemData");
-		if (Object.prototype.toString.call(menuItem.action) == '[object Function]'){
+		if (menuItem.enabled && Object.prototype.toString.call(menuItem.action) == '[object Function]'){
 			menuItem.action.call(this, event);
 		}
 	});

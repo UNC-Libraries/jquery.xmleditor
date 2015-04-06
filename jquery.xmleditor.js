@@ -88,6 +88,8 @@ $.widget( "xml.xmlEditor", {
 		},
 		// Function triggered after uploading XML document, to interpret if the response was successful or not.  If upload failed, an error message should be returned.
 		submitResponseHandler : null,
+
+		submitButtonConfigs : null,
 		// Event function trigger after an xml element is update via the gui
 		elementUpdated : undefined,
 		// Title for the document, displayed in the header
@@ -100,6 +102,7 @@ $.widget( "xml.xmlEditor", {
 		
 		// Set to false to get rid of the 
 		enableDocumentStatusPanel : true,
+		documentStatusPanelDomId : "<div>",
 		confirmExitWhenUnsubmitted : true,
 		enableGUIKeybindings : true,
 		floatingMenu : true,
@@ -150,7 +153,7 @@ $.widget( "xml.xmlEditor", {
 		this.modifyMenu = null;
 		// Flag indicating if the editor was initialized on a text area that will need to be updated
 		this.isTextAreaEditor = false;
-		
+
 		var url = document.location.href;
 		var index = url.lastIndexOf("/");
 		if (index != -1)
@@ -178,8 +181,21 @@ $.widget( "xml.xmlEditor", {
 	},
  
 	_init: function() {
-		if (this.options.submitResponseHandler == null)
-			this.options.submitResponseHandler = this.swordSubmitResponseHandler;
+		if (this.options.submitButtonConfigs) {
+			// User provided button configuration
+			this.submitButtonConfigs = this.options.submitButtonConfigs;
+		} else {
+			// Simple button configuration, generate defaults
+			var exporting = !this.options.ajaxOptions.xmlUploadPath;
+
+			// Either an upload button or an export button
+			this.submitButtonConfigs = [{
+				url : this.options.ajaxOptions.xmlUploadPath,
+				label : exporting? "Export" : "Submit changes",
+				onSubmit : exporting? this.exportXML : null,
+				disabled : typeof(Blob) === undefined && exporting
+			}];
+		}
 		
 		// Retrieve the local xml content before we start populating the editor.
 		var localXMLContent = null;
@@ -408,10 +424,7 @@ $.widget( "xml.xmlEditor", {
 		if (this.options.floatingMenu) {
 			$(window).bind('scroll', $.proxy(this.modifyMenu.setMenuPosition, this.modifyMenu));
 		}
-		
-		$("." + submitButtonClass).click(function() {
-			self.saveXML();
-		});
+
 		this.ready = true;
 	},
 	
@@ -548,13 +561,15 @@ $.widget( "xml.xmlEditor", {
 		this.addTopLevelMenu.populate(this.guiEditor.rootElement)
 	},
 	
-	// Performs the default action for "saving" the contents of the editor, either to server or file
-	saveXML: function() {
-		if (this.options.ajaxOptions.xmlUploadPath != null) {
-			this.submitXML();
-		} else {
-			// Implement later when there is more browser support for html5 File API
-			this.exportXML();
+	// Callback for submit button pressing.  Performs a submit function and then uploads the 
+	// document to the provided URL, if configured to do either
+	submitXML: function(config) {
+		if (config.onSubmit) {
+			config.onSubmit.call(this, config);
+		}
+
+		if (config.url) {
+			this.uploadXML(config);
 		}
 	},
 	
@@ -595,7 +610,16 @@ $.widget( "xml.xmlEditor", {
 	},
 
 	// Upload the contents of the editor to a path
-	submitXML: function() {
+	uploadXML: function(config) {
+		if (!config || !config.url) {
+			if (this.submitButtonConfigs.length > 0 && this.submitButtonConfigs[0].url) {
+				config = this.submitButtonConfigs[0];
+			} else {
+				this.addProblem("Cannot submit because no post Options");
+				return;
+			}
+		}
+
 		if (this.textEditor.active) {
 			try {
 				this.setXMLFromEditor();
@@ -606,25 +630,21 @@ $.widget( "xml.xmlEditor", {
 				return false;
 			}
 		}
-		
 		// convert XML DOM to string
 		var xmlString = this.xml2Str(this.xmlState.xml);
-
 		$("." + submissionStatusClass).html("Submitting...");
-		
 		var self = this;
 		$.ajax({
-			'url' : this.options.ajaxOptions.xmlUploadPath,
-			'contentType' : "application/xml",
-			'type' : "POST",
-			'data' : xmlString,
+			url : config.url,
+			contentType : "application/xml",
+			type : "POST",
+			data : xmlString,
 			success : function(response) {
 				// Process the response from the server using the provided response handler
 				// If the result of the handler evaluates true, then it is assumed to be an error
-				var outcome = self.options.submitResponseHandler(response);
-				
+				var outcome = config.responseHandler(response);
+
 				if (!outcome) {
-					// 
 					self.xmlState.changesCommittedEvent();
 					self.clearProblemPanel();
 				} else {
@@ -634,6 +654,11 @@ $.widget( "xml.xmlEditor", {
 				}
 			},
 			error : function(jqXHR, exception) {
+				if (config.errorHandler) {
+					config.errorHandler(jqXHR, exception);
+					return;
+				}
+
 				if (jqXHR.status === 0) {
 					alert('Not connect.\n Verify Network.');
 				} else if (jqXHR.status == 404) {
@@ -1695,6 +1720,14 @@ function MenuBar(editor) {
 	this.updateFunctions = [];
 	
 	var self = this;
+	var defaultSubmitConfig = null;
+	$.each(self.editor.submitButtonConfigs, function(index, config) {
+		if (config.url) {
+			defaultSubmitConfig = config;
+			return false;
+		}
+	});
+
 	// Default menu entries
 	this.headerMenuData = [ {
 		label : 'File',
@@ -1702,9 +1735,11 @@ function MenuBar(editor) {
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
 				label : 'Submit to Server',
-				enabled : (self.editor.options.ajaxOptions.xmlUploadPath != null),
+				enabled : defaultSubmitConfig != null,
 				binding : "alt+shift+s",
-				action : $.proxy(self.editor.submitXML, self.editor)
+				action : function() {
+					self.editor.uploadXML.call(self.editor, defaultSubmitConfig);
+				}
 			}, {
 				label : 'Export',
 				enabled : (typeof(Blob) !== undefined),
@@ -1938,7 +1973,7 @@ MenuBar.prototype.render = function(parentElement) {
 MenuBar.prototype.initEventHandlers = function() {
 	this.headerMenu.on("click", "li", { "menuBar" : this}, function(event) {
 		var menuItem = $(this).data("menuItemData");
-		if (Object.prototype.toString.call(menuItem.action) == '[object Function]'){
+		if (menuItem.enabled && Object.prototype.toString.call(menuItem.action) == '[object Function]'){
 			menuItem.action.call(this, event);
 		}
 	});
@@ -2161,34 +2196,44 @@ function ModifyMenuPanel(editor) {
 	this.menus = {};
 	this.menuColumn = null;
 	this.menuContainer = null;
-	
+
 }
 
 ModifyMenuPanel.prototype.initialize = function (parentContainer) {
 	this.menuColumn = $("<div/>").attr('class', menuColumnClass).appendTo(parentContainer);
-	
+
 	// Generate the document status panel, which shows a save/export button as well as if there are changes to the document
 	if (this.editor.options.enableDocumentStatusPanel) {
-		var documentStatusPanel = $("<div>");
+		var self = this;
+		var documentStatusPanel = $(self.editor.options.documentStatusPanelDomId);
 		$("<span/>").addClass(submissionStatusClass).html("Document is unchanged")
 			.appendTo(documentStatusPanel);
-		var submitButton = $("<input/>").attr({
-			'id' : submitButtonClass,
-			'type' : 'button',
-			'class' : 'send_xml',
-			'name' : 'submit',
-			'value' : 'Submit Changes'
-		}).appendTo(documentStatusPanel);
-		if (this.editor.options.ajaxOptions.xmlUploadPath == null) {
-			if (typeof(Blob) !== undefined){
-				submitButton.attr("value", "Export");
-			} else {
-				submitButton.attr("disabled", "disabled");
-			}
+
+		if (self.editor.submitButtonConfigs != null){
+			$.each(self.editor.submitButtonConfigs, function(index, config){
+				if (!('createDomElement' in config) || config.createDomElement){
+					var submitButton = $("<input/>").attr({
+						id : config.id,
+						'type' : 'button',
+						'class' : config.cssClass || submitButtonClass,
+						name : config.name || 'submit',
+						value : config.label || 'Submit'
+					}).appendTo(documentStatusPanel);
+
+					if (!('responseHandler' in config) && config.url) {
+						config.responseHandler = this.options.submitResponseHandler
+							|| this.swordSubmitResponseHandler;
+					}
+
+					submitButton.click(function() {
+						self.editor.submitXML(config);
+					});
+				}
+			});
 		}
 		documentStatusPanel.appendTo(this.menuColumn);
 	}
-	
+
 	this.menuContainer = $("<div class='" + menuContainerClass + "'/>").appendTo(this.menuColumn);
 	this.menuContainer.css({'max-height': $(window).height(), 'overflow-y': 'auto'});
 	return this;
@@ -2204,7 +2249,7 @@ ModifyMenuPanel.prototype.addMenu = function(menuID, label, expanded, enabled, c
 		getRelativeToFunction) {
 	var menu = new ModifyElementMenu(menuID, label, expanded, enabled, this, this.editor, getRelativeToFunction);
 	this.menus[menuID] = {
-			"menu" : menu, 
+			"menu" : menu,
 			"contextual": contextual
 		};
 	menu.render(this.menuContainer);
@@ -2218,7 +2263,7 @@ ModifyMenuPanel.prototype.addAttributeMenu = function(menuID, label, expanded, e
 		contextual = false;
 	var menu = new AttributeMenu(menuID, label, expanded, enabled, this, this.editor);
 	this.menus[menuID] = {
-			"menu" : menu, 
+			"menu" : menu,
 			"contextual": contextual
 		};
 	menu.render(this.menuContainer);
@@ -2257,7 +2302,7 @@ ModifyMenuPanel.prototype.refreshContextualMenus = function(targetElement) {
 ModifyMenuPanel.prototype.setMenuPosition = function(){
 	if (this.menuColumn == null || this.menuColumn.offset() == null)
 		return;
-	
+
 	var xmlWorkAreaContainer = this.editor.xmlWorkAreaContainer;
 	var xmlEditorContainer = this.editor.xmlEditorContainer;
 	var menuTop = xmlWorkAreaContainer.offset().top;
@@ -2282,14 +2327,14 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 			top : 0
 		});
 	}
-	
+
 	// Adjust the menu's height so that it doesn't run out of the editor container
-	
+
 	// Gap between the top of the column and the beginning of the actual menu
 	var menuOffset = this.menuContainer.offset().top - this.menuColumn.offset().top;
 	// Default height matches the height of the work area
 	var menuHeight = xmlWorkAreaContainer.height() - menuOffset;
-	
+
 	var workAreaOffset = this.menuColumn.offset().top - $(window).scrollTop();
 	if (workAreaOffset < 0)
 		workAreaOffset = 0;
@@ -2297,7 +2342,7 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 	if (menuHeight + menuOffset > $(window).height()) {
 		menuHeight = $(window).height() - menuOffset;
 	}
-	
+
 	// Prevent menu from exceeding editor height
 	if (menuHeight + menuOffset > xmlWorkAreaContainer.height() + xmlWorkAreaContainer.offset().top - $(window).scrollTop()) {
 		menuHeight = xmlWorkAreaContainer.height() + xmlWorkAreaContainer.offset().top - $(window).scrollTop() - menuOffset;

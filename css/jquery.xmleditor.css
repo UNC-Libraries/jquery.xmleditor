@@ -581,7 +581,7 @@
 	cursor: pointer;
 }
 
-.xml_menu_bar.active > ul > li > ul > .disabled > span {
+.xml_menu_bar.active > ul > li > ul > .disabled {
 	color: #B4B7BA;
 	cursor: default;
 }
