@@ -115,7 +115,7 @@ $.widget( "xml.xmlEditor", {
 		undoHistorySize: 20,
 		// Object containing additional entries to add to the header menu
 		menuEntries: undefined,
-		enforceOccurs: true,
+		enforceOccurs: false,
 		prependNewElements: false,
 		
 		targetNS: null
@@ -1895,7 +1895,7 @@ function MenuBar(editor) {
 			}
 		}, {
 			label : 'Enforce min/max occurs',
-			enabled : true,
+			enabled : self.editor.options.enforceOccurs,
 			checked : self.editor.options.enforceOccurs,
 			action : function() {
 				self.editor.options.enforceOccurs = !self.editor.options.enforceOccurs;

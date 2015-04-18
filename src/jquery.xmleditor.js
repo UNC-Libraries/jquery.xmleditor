@@ -115,7 +115,7 @@ $.widget( "xml.xmlEditor", {
 		undoHistorySize: 20,
 		// Object containing additional entries to add to the header menu
 		menuEntries: undefined,
-		enforceOccurs: true,
+		enforceOccurs: false,
 		prependNewElements: false,
 		
 		targetNS: null
