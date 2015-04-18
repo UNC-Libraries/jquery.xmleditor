@@ -6,34 +6,44 @@ function ModifyMenuPanel(editor) {
 	this.menus = {};
 	this.menuColumn = null;
 	this.menuContainer = null;
-	
+
 }
 
 ModifyMenuPanel.prototype.initialize = function (parentContainer) {
 	this.menuColumn = $("<div/>").attr('class', menuColumnClass).appendTo(parentContainer);
-	
+
 	// Generate the document status panel, which shows a save/export button as well as if there are changes to the document
 	if (this.editor.options.enableDocumentStatusPanel) {
-		var documentStatusPanel = $("<div>");
+		var self = this;
+		var documentStatusPanel = $(self.editor.options.documentStatusPanelDomId);
 		$("<span/>").addClass(submissionStatusClass).html("Document is unchanged")
 			.appendTo(documentStatusPanel);
-		var submitButton = $("<input/>").attr({
-			'id' : submitButtonClass,
-			'type' : 'button',
-			'class' : 'send_xml',
-			'name' : 'submit',
-			'value' : 'Submit Changes'
-		}).appendTo(documentStatusPanel);
-		if (this.editor.options.ajaxOptions.xmlUploadPath == null) {
-			if (typeof(Blob) !== undefined){
-				submitButton.attr("value", "Export");
-			} else {
-				submitButton.attr("disabled", "disabled");
-			}
+
+		if (self.editor.submitButtonConfigs != null){
+			$.each(self.editor.submitButtonConfigs, function(index, config){
+				if (!('createDomElement' in config) || config.createDomElement){
+					var submitButton = $("<input/>").attr({
+						id : config.id,
+						'type' : 'button',
+						'class' : config.cssClass || submitButtonClass,
+						name : config.name || 'submit',
+						value : config.label || 'Submit'
+					}).appendTo(documentStatusPanel);
+
+					if (!('responseHandler' in config) && config.url) {
+						config.responseHandler = this.options.submitResponseHandler
+							|| this.swordSubmitResponseHandler;
+					}
+
+					submitButton.click(function() {
+						self.editor.submitXML(config);
+					});
+				}
+			});
 		}
 		documentStatusPanel.appendTo(this.menuColumn);
 	}
-	
+
 	this.menuContainer = $("<div class='" + menuContainerClass + "'/>").appendTo(this.menuColumn);
 	this.menuContainer.css({'max-height': $(window).height(), 'overflow-y': 'auto'});
 	return this;
@@ -49,7 +59,7 @@ ModifyMenuPanel.prototype.addMenu = function(menuID, label, expanded, enabled, c
 		getRelativeToFunction) {
 	var menu = new ModifyElementMenu(menuID, label, expanded, enabled, this, this.editor, getRelativeToFunction);
 	this.menus[menuID] = {
-			"menu" : menu, 
+			"menu" : menu,
 			"contextual": contextual
 		};
 	menu.render(this.menuContainer);
@@ -63,7 +73,7 @@ ModifyMenuPanel.prototype.addAttributeMenu = function(menuID, label, expanded, e
 		contextual = false;
 	var menu = new AttributeMenu(menuID, label, expanded, enabled, this, this.editor);
 	this.menus[menuID] = {
-			"menu" : menu, 
+			"menu" : menu,
 			"contextual": contextual
 		};
 	menu.render(this.menuContainer);
@@ -102,7 +112,7 @@ ModifyMenuPanel.prototype.refreshContextualMenus = function(targetElement) {
 ModifyMenuPanel.prototype.setMenuPosition = function(){
 	if (this.menuColumn == null || this.menuColumn.offset() == null)
 		return;
-	
+
 	var xmlWorkAreaContainer = this.editor.xmlWorkAreaContainer;
 	var xmlEditorContainer = this.editor.xmlEditorContainer;
 	var menuTop = xmlWorkAreaContainer.offset().top;
@@ -127,14 +137,14 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 			top : 0
 		});
 	}
-	
+
 	// Adjust the menu's height so that it doesn't run out of the editor container
-	
+
 	// Gap between the top of the column and the beginning of the actual menu
 	var menuOffset = this.menuContainer.offset().top - this.menuColumn.offset().top;
 	// Default height matches the height of the work area
 	var menuHeight = xmlWorkAreaContainer.height() - menuOffset;
-	
+
 	var workAreaOffset = this.menuColumn.offset().top - $(window).scrollTop();
 	if (workAreaOffset < 0)
 		workAreaOffset = 0;
@@ -142,7 +152,7 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 	if (menuHeight + menuOffset > $(window).height()) {
 		menuHeight = $(window).height() - menuOffset;
 	}
-	
+
 	// Prevent menu from exceeding editor height
 	if (menuHeight + menuOffset > xmlWorkAreaContainer.height() + xmlWorkAreaContainer.offset().top - $(window).scrollTop()) {
 		menuHeight = xmlWorkAreaContainer.height() + xmlWorkAreaContainer.offset().top - $(window).scrollTop() - menuOffset;
