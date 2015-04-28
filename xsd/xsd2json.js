@@ -940,9 +940,11 @@ SchemaProcessor.prototype.build_simpleContent = function(node, definition) {
 SchemaProcessor.prototype.build_restriction = function(node, definition) {
 	var base = node.getAttribute("base");
 	
-	definition.type = this.getBuiltInType(base, definition);
-	if (definition.type == null) {
-		this.addTypeReference(definition, base);
+	if (base) {
+		definition.type = this.getBuiltInType(base, definition);
+		if (definition.type == null) {
+			this.addTypeReference(definition, base);
+		}
 	}
 	
 	var self = this;
