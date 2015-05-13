@@ -59,7 +59,7 @@ XMLElement.prototype.render = function(parentElement, recursive, relativeToXMLEl
 	this.domNode = document.createElement('div');
 	var $domNode = $(this.domNode);
 	this.domNode.id = this.domNodeID;
-	this.domNode.className = this.objectType.ns + "_" + this.objectType.localName + 'Instance ' + xmlElementClass;
+	this.domNode.className = this.objectType.localName + "_" + this.objectType.ns  + 'Instance ' + xmlElementClass;
 	if (this.isTopLevel)
 		this.domNode.className += ' ' + topLevelContainerClass;
 	if (this.isRootElement)
@@ -89,7 +89,7 @@ XMLElement.prototype.render = function(parentElement, recursive, relativeToXMLEl
 	if (this.objectType.schema)
 		this.elementName = this.xmlNode[0].tagName;
 	else {
-		this.elementName = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace) 
+		this.elementName = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace)
 		+ this.objectType.localName;
 	}
 	
