@@ -14,6 +14,7 @@
 <script src="lib/jquery.autosize-min.js"></script>
 <script src="lib/vkbeautify.js"></script>
 <script src="jquery.xmleditor.js"></script>
+	<script src="xsd/xsd2json.js"></script>
 </head>
 <body>
 	<div class="wrapper">
@@ -25,14 +26,16 @@
 		</header>
 	</div>
 	<div id="xml_editor">
-		<mods xmlns="http://www.loc.gov/mods/v3"> </mods>
+		&lt;xs:schema&gt;&lt;/xs:schema&gt;>
 	</div>
 	<script>
 		$(function() {
-			$("#xml_editor").xmlEditor({
-				schema : "demo/examples/mods.json"
-			});
-		});
+		  var extractor = new Xsd2Json("test_schema.xsd", {"schemaURI":" ", "rootElement": "xs:schema"});
+
+		  $("#mods_editor").xmlEditor({
+				  schema: extractor.getSchema()
+		  });
+	});
 	</script>
 	<footer>
 		<p>

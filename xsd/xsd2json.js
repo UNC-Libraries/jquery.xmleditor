@@ -565,7 +565,7 @@ SchemaProcessor.prototype.extractNamespaces = function() {
 		var namespaceIndex = attr.nodeName.indexOf("xmlns");
 		if (namespaceIndex == 0){
 			var namespacePrefix = attr.nodeName.substring(5).replace(":", "");
-			var namespaceUri = attr.nodeValue;
+			var namespaceUri = attr.nodeValue; console.log(namespaceUri);
 			this.registerNamespace(namespaceUri, namespacePrefix);
 			
 			// Store the namespace prefix for the xs namespace
@@ -628,7 +628,7 @@ SchemaProcessor.prototype.createDefinition = function(node, nameParts) {
 };
 
 SchemaProcessor.prototype.addElement = function(node, definition, parentDef) {
-	
+	console.log(node)
 	if (!parentDef.schema) {
 		// Store min/max occurs on the the elements parent, as they only apply to this particular relationship
 		// Root level elements can't have min/max occurs attributes
@@ -714,6 +714,7 @@ SchemaProcessor.prototype.buildTopLevel = function(node) {
 };
 
 SchemaProcessor.prototype.build = function(node, definition, parentDef) {
+	//console.log(node)
 	return this["build_" + node.localName](node, definition, parentDef);
 };
 
