@@ -123,6 +123,8 @@ $.widget( "xml.xmlEditor", {
 	
 	_create: function() {
 		var self = this;
+		var schema = this.options.schema;
+
 		this.instanceNumber = $("xml-xmlEditor").length;
 		
 		// Tree of xml element types
@@ -165,18 +167,31 @@ $.widget( "xml.xmlEditor", {
 		if (!vkbeautify)
 			this.options.prettyXML = false;
 		
-		if (typeof(this.options.schema) != 'function') {
+		if (typeof(schema) != 'function') {
 			// Turn relative paths into absolute paths for the sake of web workers
 			if (this.options.libPath) {
 				if (this.options.libPath.indexOf('http') != 0)
 					this.libPath = this.baseUrl + this.options.libPath;
 				else this.libPath = this.options.libPath;
 			} else this.libPath = this.baseUrl + "lib/";
-			if ((typeof this.options.schema == 'string' || typeof this.options.schema instanceof String)
-					&& this.options.schema.indexOf('http') != 0)
-				this.options.schema = this.baseUrl + this.options.schema;
+
+			if ((typeof schema == 'string' || typeof schema instanceof String)) {
+				var path_regx = /^https?:\/\/.*?\//;
+
+				// if http(s) just return the schema untouched
+				if (!path_regx.test(this.options.schema)) {
+					if (schema.indexOf('/') == 0) {
+						// Relative to root
+						var matches = this.baseUrl.match(path_regx);
+						this.options.schema = matches[0] + schema.substr(1, schema.length);
+					} else {
+						// Relative to current path
+						this.options.schema = this.baseUrl + schema;
+					}
+				}
+			}
 		}
-		
+
 		this.loadSchema(this.options.schema);
 	},
  
