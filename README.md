@@ -25,6 +25,11 @@ The editor should work in current versions of Chrome, Firefox, Safari, Opera, an
 - Standalone tool for building JSON representations of XML schemas (see the xsd/ folder in this project)
 
 ## How to use
+
+### Installing
+* (Manual Way) Download the package and include the file jquery.xmleditor.js after jQuery in the head of your web page.
+* Alternatively projects using bower can install it from the bower registry: bower install jquery.xmleditor
+
 ### Locating schema files
 Due to restrictions web browsers have on cross domain requests in javascript, all necessary XSD files must be located in the same domain as the page the editor is embedded in.  
 But rather than lugging the XSD files around everywhere, you can precompile a JSON representation of your schemas to include instead.  
