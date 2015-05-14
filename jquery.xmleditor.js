@@ -124,6 +124,7 @@ $.widget( "xml.xmlEditor", {
 	_create: function() {
 		var self = this;
 		var schema = this.options.schema;
+		var libPath = this.options.libPath;
 
 		this.instanceNumber = $("xml-xmlEditor").length;
 		
@@ -167,22 +168,34 @@ $.widget( "xml.xmlEditor", {
 		if (!vkbeautify)
 			this.options.prettyXML = false;
 		
-		if (typeof(schema) != 'function') {
+		if (typeof(this.options.schema) != 'function') {
 			// Turn relative paths into absolute paths for the sake of web workers
-			if (this.options.libPath) {
-				if (this.options.libPath.indexOf('http') != 0)
-					this.libPath = this.baseUrl + this.options.libPath;
-				else this.libPath = this.options.libPath;
-			} else this.libPath = this.baseUrl + "lib/";
+			var path_regx = /^https?:\/\/.*?\//;
+			var matches = this.baseUrl.match(path_regx);
+
+			// Turn relative paths into absolute paths for the sake of web workers
+			if (libPath) {
+				// Check for trailing slash. Add if needed, otherwise libPath breaks
+				libPath = (/\/$/.test(libPath)) ? libPath : libPath + '/';
+
+				if (!path_regx.test(libPath)) {
+					if (libPath.indexOf('/') === 0) {
+						this.libPath = matches[0] + libPath.substr(1, libPath.length);
+					} else {
+						this.libPath = this.baseUrl + libPath;
+					}
+				} else  {
+					this.libPath = libPath;
+				}
+			} else {
+				this.libPath = this.baseUrl + "lib/";
+			}
 
 			if ((typeof schema == 'string' || typeof schema instanceof String)) {
-				var path_regx = /^https?:\/\/.*?\//;
-
 				// if http(s) just return the schema untouched
-				if (!path_regx.test(this.options.schema)) {
-					if (schema.indexOf('/') == 0) {
+				if (!path_regx.test(schema)) {
+					if (schema.indexOf('/') === 0) {
 						// Relative to root
-						var matches = this.baseUrl.match(path_regx);
 						this.options.schema = matches[0] + schema.substr(1, schema.length);
 					} else {
 						// Relative to current path
@@ -191,7 +204,8 @@ $.widget( "xml.xmlEditor", {
 				}
 			}
 		}
-
+		console.log(this.options.schema);
+		console.log(this.libPath)
 		this.loadSchema(this.options.schema);
 	},
  
