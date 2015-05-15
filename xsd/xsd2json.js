@@ -714,7 +714,6 @@ SchemaProcessor.prototype.buildTopLevel = function(node) {
 };
 
 SchemaProcessor.prototype.build = function(node, definition, parentDef) {
-	console.log(node);
 	return this["build_" + node.localName](node, definition, parentDef);
 };
 
