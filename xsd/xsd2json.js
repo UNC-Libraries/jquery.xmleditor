@@ -565,7 +565,7 @@ SchemaProcessor.prototype.extractNamespaces = function() {
 		var namespaceIndex = attr.nodeName.indexOf("xmlns");
 		if (namespaceIndex == 0){
 			var namespacePrefix = attr.nodeName.substring(5).replace(":", "");
-			var namespaceUri = attr.nodeValue; console.log(namespaceUri);
+			var namespaceUri = attr.nodeValue;
 			this.registerNamespace(namespaceUri, namespacePrefix);
 			
 			// Store the namespace prefix for the xs namespace
@@ -628,7 +628,6 @@ SchemaProcessor.prototype.createDefinition = function(node, nameParts) {
 };
 
 SchemaProcessor.prototype.addElement = function(node, definition, parentDef) {
-	console.log(node)
 	if (!parentDef.schema) {
 		// Store min/max occurs on the the elements parent, as they only apply to this particular relationship
 		// Root level elements can't have min/max occurs attributes
@@ -670,8 +669,9 @@ SchemaProcessor.prototype.addTypeReference = function(definition, refName) {
 	if (!definition.typeRef) {
 		definition.typeRef = [];
 	}
-	
-	definition.typeRef.push(nameParts.indexedName);
+	if (nameParts != null) {
+		definition.typeRef.push(nameParts.indexedName);
+	}
 };
 
 // Build the schema tag
@@ -714,7 +714,7 @@ SchemaProcessor.prototype.buildTopLevel = function(node) {
 };
 
 SchemaProcessor.prototype.build = function(node, definition, parentDef) {
-	//console.log(node)
+	console.log(node);
 	return this["build_" + node.localName](node, definition, parentDef);
 };
 
@@ -722,7 +722,6 @@ SchemaProcessor.prototype.build = function(node, definition, parentDef) {
 // node - element schema node
 // parentdefinition - definition of the parent this element will be added to
 SchemaProcessor.prototype.build_element = function(node, definition, parentDef) {
-	
 	var ref = node.getAttribute("ref");
 	var subGroup = node.getAttribute("substitutionGroup");
 	if (ref) {
@@ -732,7 +731,7 @@ SchemaProcessor.prototype.build_element = function(node, definition, parentDef) 
 	} else {
 		// Build or retrieve the type definition
 		var type = node.getAttribute("type");
-		if (type == null) {
+		if (!type && this.getChildren(node)[0]) {
 			this.build(this.getChildren(node)[0], definition);
 		} else {
 			// Check to see if it is a built in type
@@ -743,9 +742,9 @@ SchemaProcessor.prototype.build_element = function(node, definition, parentDef) 
 			}
 		}
 	}
-	
+
 	return definition;
-}
+};
 
 SchemaProcessor.prototype.build_attribute = function(node, definition) {
 	var ref = node.getAttribute("ref");
@@ -1015,7 +1014,7 @@ SchemaProcessor.prototype.build_attributeGroup = function(node, definition) {
 SchemaProcessor.prototype.getBuiltInType = function(type, definition) {
 	if (definition.type != null)
 		return definition.type;
-	if (type.indexOf(":") == -1) {
+	if (type == null || type.indexOf(":") == -1) {
 		if (this.xsPrefix == "")
 			return type;
 	} else {
