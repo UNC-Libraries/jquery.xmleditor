@@ -494,8 +494,19 @@ XMLElement.prototype.addAttribute = function (objectType) {
 };
 
 // Remove an attribute of type objectType from this element
+// "name" seems to come in with a namespace sometimes, localName does not.
 XMLElement.prototype.removeAttribute = function (objectType) {
-	this.xmlNode[0].removeAttribute(objectType.name);
+	var node = this.xmlNode[0];
+	var localName = objectType.localName;
+	var has_ns = node.hasAttributeNS(objectType.namespace, localName);
+
+	if(has_ns) {
+		var attr_name = objectType.name.split(':');
+		node.removeAttributeNS(objectType.namespace, localName);
+		node.removeAttribute("xmlns:" + attr_name[0]);
+	} else {
+		node.removeAttribute(localName);
+	}
 };
 
 // Get the dom node for the currently selected attribute in this element
