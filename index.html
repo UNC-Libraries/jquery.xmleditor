@@ -29,13 +29,11 @@
 		&lt;xs:schema&gt;&lt;/xs:schema&gt;>
 	</div>
 	<script>
-		$(function() {
-		  var extractor = new Xsd2Json("test_schema.xsd", {"schemaURI":" ", "rootElement": "xs:schema"});
-
-		  $("#mods_editor").xmlEditor({
-				  schema: extractor.getSchema()
-		  });
-	});
+		 $(function() {
+			$("#xml_editor").xmlEditor({
+				schema : "demo/examples/mods.json"
+			});
+		});
 	</script>
 	<footer>
 		<p>
