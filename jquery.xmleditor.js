@@ -204,8 +204,7 @@ $.widget( "xml.xmlEditor", {
 				}
 			}
 		}
-		console.log(this.options.schema);
-		console.log(this.libPath)
+		
 		this.loadSchema(this.options.schema);
 	},
  
