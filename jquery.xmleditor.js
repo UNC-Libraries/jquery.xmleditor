@@ -709,7 +709,7 @@ $.widget( "xml.xmlEditor", {
 					return;
 				}
 
-				self.options.submitErrorHandler(jqHXR, exception);
+				self.options.submitErrorHandler(jqXHR, exception);
 			}
 		});
 	},
