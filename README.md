@@ -106,7 +106,7 @@ Configure the standard
 There are two ways to configure buttons which show up in the status 
 
 ##### xmlUploadPath
-Default, single uplaod button.  By providing an xmlUploadPath option, a "Submit Changes" button will appear.
+Default, single upload button.  By providing an xmlUploadPath option, a "Submit Changes" button will appear.
 
 ```javascript
 {
@@ -120,6 +120,18 @@ Default, single uplaod button.  By providing an xmlUploadPath option, a "Submit 
 An additional submitResponseHandler function can also be provided:
 
 - submitResponseHandler - Function called after the document is submitted when there is no HTTP error.  Passed AJAX response object as parameter.  Return true if the upload was considered to be successful.
+
+##### Custom errorHandler
+You can specify a custom error handler function if you need something specific for your situation.
+```javascript
+{
+  $("#xml_editor").xmlEditor({
+    submitErrorHandler : function(jqXHR, exception) {
+      my custom error handling code here
+    };
+  });
+}
+```
 
 ##### submitButtonConfigs
 Alternatively, any number of buttons can be created by providing the submitButtonConfigs option.  It expects an array containing button configuration objects, each of which can contain the following options:
@@ -164,6 +176,7 @@ Providing a submitButtonConfigs option will override the creation of the standar
 
 ### Building the plugin yourself
 If we wish to build the combined jquery.xmleditor.js yourself, you can use the provided rake script.  With rake installed, simple type "rake" in the root directory of this project.
+Note: You'll need the sprockets gem installed for the rake task to complete properly.
 
 License Information
 ---------
@@ -186,6 +199,8 @@ Authors
 [Ben Pennell](https://github.com/bbpennel)
 
 [Mike Daines](https://github.com/mdaines)
+
+[Dean Farrell](https://github.com/lfarrell)
 
 Attribution
 ------
