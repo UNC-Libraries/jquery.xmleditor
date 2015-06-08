@@ -97,22 +97,26 @@ function stubNameInput(nameInput, suggestionList, validItemFunction) {
 		}
 	});
 
-	// Activate autocompletion dropdown for possible child elements defined in schema
-	if (suggestionList && suggestionList.length > 0) {
-		var suggDefs = [];
-		var xmlState = this.editor.xmlState;
-
-		for (var i in suggestionList) {
-			var definition = suggestionList[i];
-			suggDefs.push(xmlState.getNamespacePrefix(definition.namespace) + definition.localName);
-		}
-
-		nameInput.xml_autocomplete({ source : suggDefs, minLength: 0, delay: 0,
-			matchSize : nameInput, validItemFunction : validItemFunction});
-		autocompleteEnabled = true;
-	}
+	var initializedAutocomplete = false;
 
 	nameInput.focus(function(e) {
+		// Activate autocompletion dropdown for possible child elements defined in schema
+		if (!initializedAutocomplete && suggestionList && suggestionList.length > 0) {
+			var suggDefs = [];
+			var xmlState = self.editor.xmlState;
+
+			for (var i in suggestionList) {
+				var definition = suggestionList[i];
+				suggDefs.push(xmlState.getNamespacePrefix(definition.namespace) + definition.localName);
+			}
+
+			nameInput.xml_autocomplete({ source : suggDefs, minLength: 0, delay: 0,
+				matchSize : nameInput, validItemFunction : validItemFunction});
+			nameInput.autocomplete("close");
+			autocompleteEnabled = true;
+			initializedAutocomplete = true;
+		}
+
 		self.guiEditor.selectNode(self);
 		if (autocompleteEnabled)
 			nameInput.xml_autocomplete("search", nameInput.text());

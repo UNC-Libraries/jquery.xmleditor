@@ -26,17 +26,11 @@ function MenuBar(editor) {
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
 				label : 'Submit to Server',
-<<<<<<< HEAD
 				enabled : defaultSubmitConfig != null,
-				binding : "alt+shift+s",
+				binding : "ctrl+alt+s",
 				action : function() {
 					self.editor.uploadXML.call(self.editor, defaultSubmitConfig);
 				}
-=======
-				enabled : (self.editor.options.ajaxOptions.xmlUploadPath != null),
-				binding : "ctrl+alt+s",
-				action : $.proxy(self.editor.submitXML, self.editor)
->>>>>>> key bindings and menu for adding nodes.  Many bug fixes and improvements to node adding
 			}, {
 				label : 'Export',
 				enabled : (typeof(Blob) !== undefined),

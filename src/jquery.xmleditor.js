@@ -121,6 +121,7 @@ $.widget( "xml.xmlEditor", {
 		menuEntries: undefined,
 		enforceOccurs: false,
 		prependNewElements: false,
+		autocomplete: true,
 		
 		targetNS: null
 	},

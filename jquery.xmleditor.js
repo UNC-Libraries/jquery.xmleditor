@@ -101,8 +101,13 @@ $.widget( "xml.xmlEditor", {
 		addTopMenuHeaderText : 'Add Top Element',
 		addAttrMenuHeaderText : 'Add Attribute',
 		addElementMenuHeaderText : 'Add Subelement',
+<<<<<<< Updated upstream
 		xmlEditorLabel : 'XML',
 		textEditorLabel : 'Text',
+=======
+		formEditorLabel : 'Form',
+		textEditorLabel : 'XML',
+>>>>>>> Stashed changes
 		
 		// Set to false to get rid of the 
 		enableDocumentStatusPanel : true,
@@ -121,6 +126,7 @@ $.widget( "xml.xmlEditor", {
 		menuEntries: undefined,
 		enforceOccurs: false,
 		prependNewElements: false,
+		autocomplete: true,
 		
 		targetNS: null
 	},
@@ -2564,7 +2570,11 @@ function MenuBar(editor) {
 			action : "http://www.loc.gov/standards/mods/mods-outline.html"
 		} ]
 	}*/, {
+<<<<<<< Updated upstream
 		label : self.editor.options.xmlEditorLabel,
+=======
+		label : self.editor.options.formEditorLabel,
+>>>>>>> Stashed changes
 		enabled : true, 
 		itemClass : 'header_mode_tab',
 		action : function() {
@@ -2807,6 +2817,20 @@ ModifyElementMenu.prototype.populate = function(xmlElement) {
 			// Disable the entry if its parent won't allow any more of this element type.
 			if (!parent.childCanBeAdded(xmlElement))
 				addButton.addClass('disabled');
+		});
+	}
+
+	if (this.target.objectType.any) {
+		$.each(this.editor.guiEditor.rootElement.objectType.elements, function() {
+			var xmlElement = this;
+			var elName = self.editor.xmlState.getNamespacePrefix(xmlElement.namespace) + xmlElement.localName;
+			var addButton = $("<li/>").attr({
+				title : 'Add ' + elName
+			}).html(elName)
+			.data('xml', {
+					"target": self.target,
+					"objectType": xmlElement
+			}).appendTo(self.menuContent);
 		});
 	}
 	
@@ -3701,6 +3725,10 @@ XMLAttributeStub.prototype.focus = function() {
 	this.nameInput.focus();
 };
 $.widget( "custom.xml_autocomplete", $.ui.autocomplete, {
+    messages: {
+        noResults: '',
+        results: function() {}
+    },
 
 	_create: function() {
 		this._super();
@@ -4658,22 +4686,26 @@ function stubNameInput(nameInput, suggestionList, validItemFunction) {
 		}
 	});
 
-	// Activate autocompletion dropdown for possible child elements defined in schema
-	if (suggestionList && suggestionList.length > 0) {
-		var suggDefs = [];
-		var xmlState = this.editor.xmlState;
-
-		for (var i in suggestionList) {
-			var definition = suggestionList[i];
-			suggDefs.push(xmlState.getNamespacePrefix(definition.namespace) + definition.localName);
-		}
-
-		nameInput.xml_autocomplete({ source : suggDefs, minLength: 0, delay: 0,
-			matchSize : nameInput, validItemFunction : validItemFunction});
-		autocompleteEnabled = true;
-	}
+	var initializedAutocomplete = false;
 
 	nameInput.focus(function(e) {
+		// Activate autocompletion dropdown for possible child elements defined in schema
+		if (!initializedAutocomplete && suggestionList && suggestionList.length > 0) {
+			var suggDefs = [];
+			var xmlState = self.editor.xmlState;
+
+			for (var i in suggestionList) {
+				var definition = suggestionList[i];
+				suggDefs.push(xmlState.getNamespacePrefix(definition.namespace) + definition.localName);
+			}
+
+			nameInput.xml_autocomplete({ source : suggDefs, minLength: 0, delay: 0,
+				matchSize : nameInput, validItemFunction : validItemFunction});
+			nameInput.autocomplete("close");
+			autocompleteEnabled = true;
+			initializedAutocomplete = true;
+		}
+
 		self.guiEditor.selectNode(self);
 		if (autocompleteEnabled)
 			nameInput.xml_autocomplete("search", nameInput.text());

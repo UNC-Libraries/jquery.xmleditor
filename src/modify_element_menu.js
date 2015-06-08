@@ -120,6 +120,20 @@ ModifyElementMenu.prototype.populate = function(xmlElement) {
 				addButton.addClass('disabled');
 		});
 	}
+
+	if (this.target.objectType.any) {
+		$.each(this.editor.guiEditor.rootElement.objectType.elements, function() {
+			var xmlElement = this;
+			var elName = self.editor.xmlState.getNamespacePrefix(xmlElement.namespace) + xmlElement.localName;
+			var addButton = $("<li/>").attr({
+				title : 'Add ' + elName
+			}).html(elName)
+			.data('xml', {
+					"target": self.target,
+					"objectType": xmlElement
+			}).appendTo(self.menuContent);
+		});
+	}
 	
 	if (this.expanded) {
 		var endingHeight = this.menuContent.outerHeight() + 1;

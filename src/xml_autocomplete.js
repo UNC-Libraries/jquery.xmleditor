@@ -1,4 +1,8 @@
 $.widget( "custom.xml_autocomplete", $.ui.autocomplete, {
+    messages: {
+        noResults: '',
+        results: function() {}
+    },
 
 	_create: function() {
 		this._super();
