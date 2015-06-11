@@ -101,13 +101,8 @@ $.widget( "xml.xmlEditor", {
 		addTopMenuHeaderText : 'Add Top Element',
 		addAttrMenuHeaderText : 'Add Attribute',
 		addElementMenuHeaderText : 'Add Subelement',
-<<<<<<< Updated upstream
 		xmlEditorLabel : 'XML',
 		textEditorLabel : 'Text',
-=======
-		formEditorLabel : 'Form',
-		textEditorLabel : 'XML',
->>>>>>> Stashed changes
 		
 		// Set to false to get rid of the 
 		enableDocumentStatusPanel : true,
@@ -662,8 +657,8 @@ $.widget( "xml.xmlEditor", {
 		// Inform the active editor of the newly added attribute
 		if (nodeObject) {
 			this.guiEditor.selectNode(nodeObject);
-			nodeObject.focus();
 			this.activeEditor.addNodeEvent(parentElement, nodeObject);
+			nodeObject.focus();
 		}
 	},
 
@@ -990,7 +985,7 @@ $.widget( "xml.xmlEditor", {
 						}
 					}
 				}
-				return false;
+				return true;
 			}
 			
 			if ((e.metaKey || e.ctrlKey) && focused.length == 0 && e.which == 'Z'.charCodeAt(0)) {
@@ -1173,7 +1168,7 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 		// Clear out the starting space on first focus.  This space is there to prevent field collapsing
 		// on new elements in the text editor view
 		$input.one('focus', function() {
-			if (!self.objectType.attribute && self.editor.options.expandingTextAreas)
+			if (self.editor.options.expandingTextAreas)
 				$input.autosize();
 			if (this.value == " ")
 				this.value = "";
@@ -2311,17 +2306,11 @@ function MenuBar(editor) {
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
 				label : 'Submit to Server',
-<<<<<<< HEAD
 				enabled : defaultSubmitConfig != null,
-				binding : "alt+shift+s",
+				binding : "ctrl+alt+s",
 				action : function() {
 					self.editor.uploadXML.call(self.editor, defaultSubmitConfig);
 				}
-=======
-				enabled : (self.editor.options.ajaxOptions.xmlUploadPath != null),
-				binding : "ctrl+alt+s",
-				action : $.proxy(self.editor.submitXML, self.editor)
->>>>>>> key bindings and menu for adding nodes.  Many bug fixes and improvements to node adding
 			}, {
 				label : 'Export',
 				enabled : (typeof(Blob) !== undefined),
@@ -2441,6 +2430,15 @@ function MenuBar(editor) {
 		enabled : true,
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
+				label : 'Add attribute',
+				enabled : true,
+				binding : "alt+a",
+				action : function(){
+					var selected = self.editor.guiEditor.selectedElement;
+					if (selected instanceof XMLElement)
+						self.editor.addNode(selected, "attribute", false);
+				}
+			}, {
 				label : 'Add child element',
 				enabled : true,
 				binding : "alt+e",
@@ -2449,7 +2447,7 @@ function MenuBar(editor) {
 					if (selected instanceof XMLElement)
 						self.editor.addNode(selected, "element", false);
 				}
-			},{
+			}, {
 				label : 'Add sibling element',
 				enabled : true,
 				binding : "alt+s",
@@ -2570,11 +2568,7 @@ function MenuBar(editor) {
 			action : "http://www.loc.gov/standards/mods/mods-outline.html"
 		} ]
 	}*/, {
-<<<<<<< Updated upstream
 		label : self.editor.options.xmlEditorLabel,
-=======
-		label : self.editor.options.formEditorLabel,
->>>>>>> Stashed changes
 		enabled : true, 
 		itemClass : 'header_mode_tab',
 		action : function() {
@@ -3655,9 +3649,6 @@ function XMLAttributeStub(xmlElement, editor) {
 	this.guiEditor = this.editor.guiEditor;
 	// dom element header for this element
 	this.elementHeader = null;
-	// dom element which contains the display of child nodes
-	this.titleElement = null;
-
 	this.tagName = "";
 
 	this.xmlElement = xmlElement;
@@ -3981,7 +3972,7 @@ XMLElement.prototype.render = function(parentElement, recursive, relativeTo, pre
 	this.domNode = $(this.domElement);
 
 	this.domElement.id = this.domNodeID;
-	this.domElement.className = this.objectType.localName + "_" + this.objectType.ns  + 'Instance ' + xmlElementClass;
+	this.domElement.className = this.objectType.localName + "_" + this.objectType.ns  + 'Instance ' + xmlNodeClass + ' ' + xmlElementClass;
 	if (this.isTopLevel)
 		this.domElement.className += ' ' + topLevelContainerClass;
 	if (this.isRootElement)
@@ -4596,7 +4587,7 @@ function XMLElementStub(editor) {
 	// dom element header for this element
 	this.elementHeader = null;
 	// dom element which contains the display of child nodes
-	this.titleElement = null;
+	this.nameInput = null;
 
 	this.tagName = "";
 }
@@ -4635,8 +4626,8 @@ XMLElementStub.prototype.render = function(parentElement, prepend, relativeToXML
 	this.elementHeader.appendChild(elementNameContainer);
 
 	// set up element title and entry field if appropriate
-	this.titleElement = $("<span contenteditable='true' class='edit_title'/>");
-	this.titleElement.appendTo(elementNameContainer);
+	this.nameInput = $("<span contenteditable='true' class='edit_title'/>");
+	this.nameInput.appendTo(elementNameContainer);
 
 	var self = this;
 
@@ -4650,7 +4641,7 @@ XMLElementStub.prototype.render = function(parentElement, prepend, relativeToXML
 	this.domNode = $domNode;
 	this.domNode.data("xmlObject", this);
 
-	stubNameInput.call(this, this.titleElement, parentElement.objectType.elements);
+	stubNameInput.call(this, this.nameInput, parentElement.objectType.elements);
 };
 
 function stubNameInput(nameInput, suggestionList, validItemFunction) {
@@ -4665,6 +4656,7 @@ function stubNameInput(nameInput, suggestionList, validItemFunction) {
 			} else {
 				self.remove();
 				self.guiEditor.selectNode(self.parentElement);
+				self.parentElement.updated({action : 'childRemoved', target : self});
 			}
 			return false;
 		}
@@ -4699,19 +4691,26 @@ function stubNameInput(nameInput, suggestionList, validItemFunction) {
 				suggDefs.push(xmlState.getNamespacePrefix(definition.namespace) + definition.localName);
 			}
 
-			nameInput.xml_autocomplete({ source : suggDefs, minLength: 0, delay: 0,
-				matchSize : nameInput, validItemFunction : validItemFunction});
-			nameInput.autocomplete("close");
+			nameInput.xml_autocomplete({
+				source : suggDefs,
+				minLength: 0,
+				delay: 0,
+				matchSize : nameInput,
+				validItemFunction : validItemFunction,
+				select : function(e, ui) {
+					self.nameInput.text(ui.item.value);
+					self.create();
+				}
+			});
 			autocompleteEnabled = true;
 			initializedAutocomplete = true;
 		}
 
-		self.guiEditor.selectNode(self);
-		if (autocompleteEnabled)
+		if (autocompleteEnabled){
 			nameInput.xml_autocomplete("search", nameInput.text());
+		}
 		e.stopPropagation();
-	})
-	.mousedown(function(e) {
+	}).mousedown(function(e) {
 		nameInput.focus();
 		e.stopPropagation();
 	});
@@ -4736,7 +4735,7 @@ XMLElementStub.prototype.remove = function() {
 };
 
 XMLElementStub.prototype.create = function() {
-	var tagName = this.titleElement.text();
+	var tagName = this.nameInput.text();
 
 	var nextSiblings = this.domNode.nextAll(".xml_node:not(.xml_stub)");
 	var relativeTo = null;
@@ -4769,7 +4768,7 @@ XMLElementStub.prototype.isSelected = function() {
 };
 
 XMLElementStub.prototype.focus = function() {
-	this.titleElement.focus();
+	this.nameInput.focus();
 };
 function XMLTextNode(textNode, dataType, editor) {
 	var textType = {

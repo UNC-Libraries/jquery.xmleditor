@@ -56,7 +56,7 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 		// Clear out the starting space on first focus.  This space is there to prevent field collapsing
 		// on new elements in the text editor view
 		$input.one('focus', function() {
-			if (!self.objectType.attribute && self.editor.options.expandingTextAreas)
+			if (self.editor.options.expandingTextAreas)
 				$input.autosize();
 			if (this.value == " ")
 				this.value = "";

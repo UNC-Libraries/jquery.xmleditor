@@ -657,8 +657,8 @@ $.widget( "xml.xmlEditor", {
 		// Inform the active editor of the newly added attribute
 		if (nodeObject) {
 			this.guiEditor.selectNode(nodeObject);
-			nodeObject.focus();
 			this.activeEditor.addNodeEvent(parentElement, nodeObject);
+			nodeObject.focus();
 		}
 	},
 
@@ -985,7 +985,7 @@ $.widget( "xml.xmlEditor", {
 						}
 					}
 				}
-				return false;
+				return true;
 			}
 			
 			if ((e.metaKey || e.ctrlKey) && focused.length == 0 && e.which == 'Z'.charCodeAt(0)) {

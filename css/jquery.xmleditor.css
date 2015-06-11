@@ -470,7 +470,8 @@
 	resize: horizontal;
 	min-width: 100px;
 	height: 1.5em;
-	width: 160px;	
+	width: 160px;
+	overflow: hidden;
 }
 
 .attribute_container > select {

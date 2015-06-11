@@ -6,9 +6,6 @@ function XMLAttributeStub(xmlElement, editor) {
 	this.guiEditor = this.editor.guiEditor;
 	// dom element header for this element
 	this.elementHeader = null;
-	// dom element which contains the display of child nodes
-	this.titleElement = null;
-
 	this.tagName = "";
 
 	this.xmlElement = xmlElement;

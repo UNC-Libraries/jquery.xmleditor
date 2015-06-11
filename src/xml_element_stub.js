@@ -7,7 +7,7 @@ function XMLElementStub(editor) {
 	// dom element header for this element
 	this.elementHeader = null;
 	// dom element which contains the display of child nodes
-	this.titleElement = null;
+	this.nameInput = null;
 
 	this.tagName = "";
 }
@@ -46,8 +46,8 @@ XMLElementStub.prototype.render = function(parentElement, prepend, relativeToXML
 	this.elementHeader.appendChild(elementNameContainer);
 
 	// set up element title and entry field if appropriate
-	this.titleElement = $("<span contenteditable='true' class='edit_title'/>");
-	this.titleElement.appendTo(elementNameContainer);
+	this.nameInput = $("<span contenteditable='true' class='edit_title'/>");
+	this.nameInput.appendTo(elementNameContainer);
 
 	var self = this;
 
@@ -61,7 +61,7 @@ XMLElementStub.prototype.render = function(parentElement, prepend, relativeToXML
 	this.domNode = $domNode;
 	this.domNode.data("xmlObject", this);
 
-	stubNameInput.call(this, this.titleElement, parentElement.objectType.elements);
+	stubNameInput.call(this, this.nameInput, parentElement.objectType.elements);
 };
 
 function stubNameInput(nameInput, suggestionList, validItemFunction) {
@@ -76,6 +76,7 @@ function stubNameInput(nameInput, suggestionList, validItemFunction) {
 			} else {
 				self.remove();
 				self.guiEditor.selectNode(self.parentElement);
+				self.parentElement.updated({action : 'childRemoved', target : self});
 			}
 			return false;
 		}
@@ -110,19 +111,26 @@ function stubNameInput(nameInput, suggestionList, validItemFunction) {
 				suggDefs.push(xmlState.getNamespacePrefix(definition.namespace) + definition.localName);
 			}
 
-			nameInput.xml_autocomplete({ source : suggDefs, minLength: 0, delay: 0,
-				matchSize : nameInput, validItemFunction : validItemFunction});
-			nameInput.autocomplete("close");
+			nameInput.xml_autocomplete({
+				source : suggDefs,
+				minLength: 0,
+				delay: 0,
+				matchSize : nameInput,
+				validItemFunction : validItemFunction,
+				select : function(e, ui) {
+					self.nameInput.text(ui.item.value);
+					self.create();
+				}
+			});
 			autocompleteEnabled = true;
 			initializedAutocomplete = true;
 		}
 
-		self.guiEditor.selectNode(self);
-		if (autocompleteEnabled)
+		if (autocompleteEnabled){
 			nameInput.xml_autocomplete("search", nameInput.text());
+		}
 		e.stopPropagation();
-	})
-	.mousedown(function(e) {
+	}).mousedown(function(e) {
 		nameInput.focus();
 		e.stopPropagation();
 	});
@@ -147,7 +155,7 @@ XMLElementStub.prototype.remove = function() {
 };
 
 XMLElementStub.prototype.create = function() {
-	var tagName = this.titleElement.text();
+	var tagName = this.nameInput.text();
 
 	var nextSiblings = this.domNode.nextAll(".xml_node:not(.xml_stub)");
 	var relativeTo = null;
@@ -180,5 +188,5 @@ XMLElementStub.prototype.isSelected = function() {
 };
 
 XMLElementStub.prototype.focus = function() {
-	this.titleElement.focus();
+	this.nameInput.focus();
 };

@@ -150,6 +150,15 @@ function MenuBar(editor) {
 		enabled : true,
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
+				label : 'Add attribute',
+				enabled : true,
+				binding : "alt+a",
+				action : function(){
+					var selected = self.editor.guiEditor.selectedElement;
+					if (selected instanceof XMLElement)
+						self.editor.addNode(selected, "attribute", false);
+				}
+			}, {
 				label : 'Add child element',
 				enabled : true,
 				binding : "alt+e",
@@ -158,7 +167,7 @@ function MenuBar(editor) {
 					if (selected instanceof XMLElement)
 						self.editor.addNode(selected, "element", false);
 				}
-			},{
+			}, {
 				label : 'Add sibling element',
 				enabled : true,
 				binding : "alt+s",

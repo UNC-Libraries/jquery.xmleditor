@@ -48,7 +48,7 @@ XMLElement.prototype.render = function(parentElement, recursive, relativeTo, pre
 	this.domNode = $(this.domElement);
 
 	this.domElement.id = this.domNodeID;
-	this.domElement.className = this.objectType.localName + "_" + this.objectType.ns  + 'Instance ' + xmlElementClass;
+	this.domElement.className = this.objectType.localName + "_" + this.objectType.ns  + 'Instance ' + xmlNodeClass + ' ' + xmlElementClass;
 	if (this.isTopLevel)
 		this.domElement.className += ' ' + topLevelContainerClass;
 	if (this.isRootElement)
