@@ -666,6 +666,16 @@ $.widget( "xml.xmlEditor", {
 		}
 	},
 
+	// Adds an element stub either as a child of an element which allows children, or 
+	// as a sibling
+	addNextElement : function(xmlElement, prepend) {
+		if (xmlElement.allowChildren) {
+			this.addNode(xmlElement, "element", prepend);
+		} else {
+			this.addNode(xmlElement.parentElement, "element", prepend, xmlElement);
+		}
+	},
+
 	// Triggered when a document has been loaded or reloaded
 	documentLoadedEvent : function(newDocument) {
 		if (this.guiEditor != null && this.guiEditor.rootElement != null)
@@ -931,6 +941,8 @@ $.widget( "xml.xmlEditor", {
 	
 	// Initialize key bindings
 	keydownCallback: function(e) {
+		var prepend = this.options.prependNewElements ^ e.shiftKey;
+
 		if (this.guiEditor.active) {
 			var focused = $("input:focus, textarea:focus, select:focus");
 			
@@ -939,13 +951,6 @@ $.widget( "xml.xmlEditor", {
 				if (focused.length > 0)
 					focused.blur();
 				else this.guiEditor.selectNode(null);
-				return false;
-			}
-			
-			// Enter, focus the first visible input
-			if (e.which == 13 && focused.length == 0) {
-				e.preventDefault();
-				this.guiEditor.focusSelectedText();
 				return false;
 			}
 			
@@ -1029,12 +1034,21 @@ $.widget( "xml.xmlEditor", {
 		}
 
 		if (this.guiEditor.active) {
+			var selected = this.guiEditor.selectedElement;
+
+			// Enter, contextual adding
+			if (e.which == 13) {
+				if (selected instanceof XMLElement) {
+					this.addNextElement(selected);
+				} else if (selected instanceof XMLElementStub 
+						|| selected instanceof XMLAttributeStub) {
+					selected.create();
+				}
+				e.preventDefault();
+				return false;
+			}
+
 			if (e.altKey) {
-				var prepend = this.options.prependNewElements;
-				if (e.shiftKey) prepend = !prepend;
-
-				var selected = this.guiEditor.selectedElement;
-
 				if (e.which == 'E'.charCodeAt(0)) {
 					if (selected instanceof XMLElement)
 						this.addNode(selected, "element", prepend);
