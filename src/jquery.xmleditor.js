@@ -652,6 +652,10 @@ $.widget( "xml.xmlEditor", {
 			}
 		}
 
+		if (!(parentElement instanceof XMLElement)) {
+			return;
+		}
+
 		// Create node on the targeted parent
 		var nodeObject = parentElement.addNode(nodeType, prepend, relativeTo);
 		// Inform the active editor of the newly added attribute

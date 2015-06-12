@@ -446,7 +446,7 @@ GUIEditor.prototype.selectNext = function(reverse) {
 GUIEditor.prototype.selectAttribute = function(reverse) {
 	if (this.selectedNode == null) {
 		return this;
-	} else {
+	} else if (this.selectedNode instanceof XMLElement) {
 		var selectedAttribute = this.selectedNode.getSelectedAttribute();
 		if (selectedAttribute.length > 0) {
 			var newSelection = selectedAttribute[reverse? 'prev' : 'next']("." + attributeContainerClass);
@@ -455,9 +455,11 @@ GUIEditor.prototype.selectAttribute = function(reverse) {
 				newSelection.addClass("selected");
 			}
 		} else {
-			if (this.selectedNode.domNode)
-				selectedAttribute = this.selectedNode.domNode.children("." + attributeContainerClass)
-						.first().addClass("selected");
+			if (this.selectedNode.domNode){
+				selectedAttribute = this.selectedNode.attributeContainer
+						.children('.' + attributeContainerClass).first();
+				selectedAttribute.addClass("selected");
+			}
 		}
 	}
 };

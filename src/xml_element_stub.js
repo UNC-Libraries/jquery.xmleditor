@@ -76,7 +76,8 @@ function stubNameInput(nameInput, suggestionList, validItemFunction) {
 			} else {
 				self.remove();
 				self.guiEditor.selectNode(self.parentElement);
-				self.parentElement.updated({action : 'childRemoved', target : self});
+				var containingNode = self.parentElement? self.parentElement : self.xmlElement;
+				containingNode.updated({action : 'childRemoved', target : self});
 			}
 			return false;
 		}

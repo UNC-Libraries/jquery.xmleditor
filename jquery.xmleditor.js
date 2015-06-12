@@ -652,6 +652,10 @@ $.widget( "xml.xmlEditor", {
 			}
 		}
 
+		if (!(parentElement instanceof XMLElement)) {
+			return;
+		}
+
 		// Create node on the targeted parent
 		var nodeObject = parentElement.addNode(nodeType, prepend, relativeTo);
 		// Inform the active editor of the newly added attribute
@@ -2183,7 +2187,7 @@ GUIEditor.prototype.selectNext = function(reverse) {
 GUIEditor.prototype.selectAttribute = function(reverse) {
 	if (this.selectedNode == null) {
 		return this;
-	} else {
+	} else if (this.selectedNode instanceof XMLElement) {
 		var selectedAttribute = this.selectedNode.getSelectedAttribute();
 		if (selectedAttribute.length > 0) {
 			var newSelection = selectedAttribute[reverse? 'prev' : 'next']("." + attributeContainerClass);
@@ -2192,9 +2196,11 @@ GUIEditor.prototype.selectAttribute = function(reverse) {
 				newSelection.addClass("selected");
 			}
 		} else {
-			if (this.selectedNode.domNode)
-				selectedAttribute = this.selectedNode.domNode.children("." + attributeContainerClass)
-						.first().addClass("selected");
+			if (this.selectedNode.domNode){
+				selectedAttribute = this.selectedNode.attributeContainer
+						.children('.' + attributeContainerClass).first();
+				selectedAttribute.addClass("selected");
+			}
 		}
 	}
 };
@@ -4656,7 +4662,8 @@ function stubNameInput(nameInput, suggestionList, validItemFunction) {
 			} else {
 				self.remove();
 				self.guiEditor.selectNode(self.parentElement);
-				self.parentElement.updated({action : 'childRemoved', target : self});
+				var containingNode = self.parentElement? self.parentElement : self.xmlElement;
+				containingNode.updated({action : 'childRemoved', target : self});
 			}
 			return false;
 		}
