@@ -169,8 +169,8 @@ XMLElementStub.prototype.create = function() {
 		// Move new element to match display position of the stub, in case it was misplaced because of its siblings being stubs
 		newElement.domNode.detach();
 		this.domNode.after(newElement.domNode);
-
 		this.remove();
+		this.guiEditor.focusSelectedText(newElement);
 	} else {
 		console.log(newElement);
 	}

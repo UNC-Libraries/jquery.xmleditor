@@ -1925,6 +1925,7 @@ GUIEditor.prototype.addElementEvent = function(parentElement, newElement) {
 
 	this.focusObject(newElement.domNode);
 	this.selectNode(newElement);
+	this.focusSelectedText(newElement);
 	if (parentElement == this.rootElement)
 		this.editor.addTopLevelMenu.populate(this.rootElement);
 	this.editor.xmlState.documentChangedEvent();
@@ -2221,6 +2222,7 @@ GUIEditor.prototype.focusSelectedText = function() {
 	var containerElement = focused.parents("." + xmlElementClass);
 	if (containerElement !== this.selectedNode)
 		this.selectNode(containerElement);
+	focused.focus();
 	return this;
 };
 
@@ -4755,8 +4757,8 @@ XMLElementStub.prototype.create = function() {
 		// Move new element to match display position of the stub, in case it was misplaced because of its siblings being stubs
 		newElement.domNode.detach();
 		this.domNode.after(newElement.domNode);
-
 		this.remove();
+		this.guiEditor.focusSelectedText(newElement);
 	} else {
 		console.log(newElement);
 	}

@@ -184,6 +184,7 @@ GUIEditor.prototype.addElementEvent = function(parentElement, newElement) {
 
 	this.focusObject(newElement.domNode);
 	this.selectNode(newElement);
+	this.focusSelectedText(newElement);
 	if (parentElement == this.rootElement)
 		this.editor.addTopLevelMenu.populate(this.rootElement);
 	this.editor.xmlState.documentChangedEvent();
@@ -480,6 +481,7 @@ GUIEditor.prototype.focusSelectedText = function() {
 	var containerElement = focused.parents("." + xmlElementClass);
 	if (containerElement !== this.selectedNode)
 		this.selectNode(containerElement);
+	focused.focus();
 	return this;
 };
 
