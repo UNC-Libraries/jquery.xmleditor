@@ -1050,7 +1050,7 @@ $.widget( "xml.xmlEditor", {
 
 			if (e.altKey) {
 				if (e.which == 'E'.charCodeAt(0)) {
-					if (selected instanceof XMLElement)
+					if (selected instanceof XMLElement && selected.allowChildren)
 						this.addNode(selected, "element", prepend);
 					return false;
 				}

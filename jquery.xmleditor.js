@@ -1050,7 +1050,7 @@ $.widget( "xml.xmlEditor", {
 
 			if (e.altKey) {
 				if (e.which == 'E'.charCodeAt(0)) {
-					if (selected instanceof XMLElement)
+					if (selected instanceof XMLElement && selected.allowChildren)
 						this.addNode(selected, "element", prepend);
 					return false;
 				}
@@ -2459,6 +2459,16 @@ function MenuBar(editor) {
 					var selected = self.editor.guiEditor.selectedElement;
 					if (selected instanceof XMLElement)
 						self.editor.addNode(selected, "attribute", false);
+				}
+			}, {
+				label : 'Add element',
+				enabled : true,
+				binding : "enter",
+				action : function(){
+					var selected = self.editor.guiEditor.selectedElement;
+					if (selected instanceof XMLElement) {
+						self.editor.addNextElement(selected, false);
+					}
 				}
 			}, {
 				label : 'Add child element',
@@ -4297,7 +4307,8 @@ XMLElement.prototype.addNodeContainer = function (recursive) {
 	}
 
 	// Add in a default text node if applicable and none present
-	if (this.allowText && this.nodeCount == 0 && this.objectType.type != "mixed") {
+	if (this.allowText && this.nodeCount == 0 &&
+			(this.objectType.type != "mixed" || !this.objectType.any)) {
 		this.renderText();
 	}
 };
@@ -4506,7 +4517,9 @@ XMLElement.prototype.attributeExists = function(attrDefinition) {
 
 XMLElement.prototype.addNode = function (nodeType, prepend, relativeTo) {
 	this.nodeContainer.show();
-	this.attributeContainer.show();
+	if (this.attributeContainer) {
+		this.attributeContainer.show();
+	}
 	switch (nodeType) {
 		case "text" :
 			if (this.allowText)

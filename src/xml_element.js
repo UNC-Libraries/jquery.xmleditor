@@ -351,7 +351,8 @@ XMLElement.prototype.addNodeContainer = function (recursive) {
 	}
 
 	// Add in a default text node if applicable and none present
-	if (this.allowText && this.nodeCount == 0 && this.objectType.type != "mixed") {
+	if (this.allowText && this.nodeCount == 0 &&
+			(this.objectType.type != "mixed" || !this.objectType.any)) {
 		this.renderText();
 	}
 };
@@ -560,7 +561,9 @@ XMLElement.prototype.attributeExists = function(attrDefinition) {
 
 XMLElement.prototype.addNode = function (nodeType, prepend, relativeTo) {
 	this.nodeContainer.show();
-	this.attributeContainer.show();
+	if (this.attributeContainer) {
+		this.attributeContainer.show();
+	}
 	switch (nodeType) {
 		case "text" :
 			if (this.allowText)

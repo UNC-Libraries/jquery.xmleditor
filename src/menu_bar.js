@@ -159,6 +159,16 @@ function MenuBar(editor) {
 						self.editor.addNode(selected, "attribute", false);
 				}
 			}, {
+				label : 'Add element',
+				enabled : true,
+				binding : "enter",
+				action : function(){
+					var selected = self.editor.guiEditor.selectedElement;
+					if (selected instanceof XMLElement) {
+						self.editor.addNextElement(selected, false);
+					}
+				}
+			}, {
 				label : 'Add child element',
 				enabled : true,
 				binding : "alt+e",
