@@ -34,25 +34,36 @@
 	</div>
 <script>
 	$(function() {
-	    var availableTags = [ "Aguano", "Tucanoan", "English", "Spanish",
-	            "French", "Chinese", "German", "C++", "Japanese", "Urdu",
-	            "Hindi" ];
-	    var extractor = new Xsd2Json("cpf.xsd", {
-		    "schemaURI" : "examples/eac-cpf/"
-	    });
-	    $("#xml_editor").xmlEditor(
-	            {
-	                schema : extractor.getSchema(),
-	                elementUpdated : function(event) {
-		                if (event.action == 'render'
-		                        && this.objectType.localName == 'language') {
-			                this.textInput.autocomplete({
-				                source : availableTags
-			                });
-		                }
-	                }
-	            });
-    });
+		var availableTags = [ "Aguano", "Tucanoan", "English", "Spanish",
+				"French", "Chinese", "German", "C++", "Japanese", "Urdu",
+				"Hindi" ];
+		var extractor = new Xsd2Json("cpf.xsd", {
+			"schemaURI" : "examples/eac-cpf/"
+		});
+		$("#xml_editor").xmlEditor(
+				{
+					schema : extractor.getSchema(),
+					elementUpdated : function(event) {
+						if (event.action == 'render'
+								&& this.objectType.localName == 'language') {
+
+							var textInputs = this.getTextInputs();
+
+							textInputs.keypress(function(event){
+								var keycode = (event.keyCode ? event.keyCode : event.which);
+								if (keycode == '13') {
+									event.preventDefault();
+									event.stopPropagation();
+								}
+							});
+
+							textInputs.autocomplete({
+								source : availableTags
+							});
+						}
+					}
+				});
+	});
 </script>
 </body>
 </html>

@@ -390,6 +390,18 @@ XMLElement.prototype.renderText = function(childNode, prepend) {
 	return textNode;
 };
 
+XMLElement.prototype.getTextInputs = function() {
+	var textNodes = this.nodeContainer.children("." + xmlTextClass);
+	var textInputs = []
+	for (var i = 0; i < textNodes.length; i++) {
+		var textNode = textNodes.eq(i);
+		var nodeObject = textNode.data("xmlObject");
+		textInputs.push(nodeObject.textInput);
+	}
+
+	return $(textInputs);
+};
+
 XMLElement.prototype.renderCData = function(childNode, prepend) {
 	var cdataNode = new XMLCDataNode(childNode, this.editor);
 	cdataNode.render(this, prepend);

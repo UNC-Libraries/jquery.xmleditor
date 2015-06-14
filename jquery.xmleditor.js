@@ -934,13 +934,17 @@ $.widget( "xml.xmlEditor", {
 			$(window).off("keydown.xml_keybindings");
 		}
 	},
+
+	getFocusedInput: function() {
+		return $("input:focus, textarea:focus, select:focus");
+	},
 	
 	// Initialize key bindings
 	keydownCallback: function(e) {
 		var prepend = this.options.prependNewElements ^ e.shiftKey;
 
 		if (this.guiEditor.active) {
-			var focused = $("input:focus, textarea:focus, select:focus");
+			var focused = this.getFocusedInput();
 			
 			// Escape key, blur the currently selected input or deselect selected element
 			if (e.which == 27) {
@@ -1034,14 +1038,18 @@ $.widget( "xml.xmlEditor", {
 
 			// Enter, contextual adding
 			if (e.which == 13) {
-				if (selected instanceof XMLElement) {
-					this.addNextElement(selected);
-				} else if (selected instanceof XMLElementStub 
-						|| selected instanceof XMLAttributeStub) {
-					selected.create();
+				var focused = this.getFocusedInput();
+				if (focused.length == 0) {
+					if (selected instanceof XMLElement) {
+						this.addNextElement(selected);
+					} else if (selected instanceof XMLElementStub 
+							|| selected instanceof XMLAttributeStub) {
+						selected.create();
+					}
+					e.preventDefault();
+					return false;
 				}
-				e.preventDefault();
-				return false;
+				return true;
 			}
 
 			if (e.altKey) {
@@ -4348,6 +4356,18 @@ XMLElement.prototype.renderText = function(childNode, prepend) {
 	this.nodeCount++;
 
 	return textNode;
+};
+
+XMLElement.prototype.getTextInputs = function() {
+	var textNodes = this.nodeContainer.children("." + xmlTextClass);
+	var textInputs = []
+	for (var i = 0; i < textNodes.length; i++) {
+		var textNode = textNodes.eq(i);
+		var nodeObject = textNode.data("xmlObject");
+		textInputs.push(nodeObject.textInput);
+	}
+
+	return $(textInputs);
 };
 
 XMLElement.prototype.renderCData = function(childNode, prepend) {
