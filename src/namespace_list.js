@@ -25,6 +25,10 @@ NamespaceList.prototype.containsPrefix = function(nsPrefix) {
 };
 
 NamespaceList.prototype.getNamespacePrefix = function(nsURI) {
+	if (!nsURI) {
+		return "";
+	}
+
 	var prefix = this.namespaceToPrefix[nsURI];
 	if (prefix)
 		prefix += ":";

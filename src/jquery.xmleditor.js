@@ -572,6 +572,14 @@ $.widget( "xml.xmlEditor", {
 	addAttributeButtonCallback: function(instigator) {
 		if ($(instigator).hasClass("disabled"))
 			return;
+		// Create attribute on the targeted parent, and add its namespace if missing
+		var data = $(instigator).data('xml');
+
+		return this.addAttribute(data.target, data.objectType, instigator);
+	},
+
+	addAttribute: function(xmlElement, attrDefinition, instigator) {
+
 		// Synchronize xml document if there are unsynchronized changes in the text editor
 		if (this.xmlState.changesNotSynced()) {
 			try {
@@ -581,13 +589,6 @@ $.widget( "xml.xmlEditor", {
 				return;
 			}
 		}
-		// Create attribute on the targeted parent, and add its namespace if missing
-		var data = $(instigator).data('xml');
-
-		return this.addAttribute(data.target, data.objectType, instigator);
-	},
-
-	addAttribute: function(xmlElement, attrDefinition, instigator) {
 
 		var objectType;
 		if ($.type(attrDefinition) === "object") {
@@ -605,14 +606,10 @@ $.widget( "xml.xmlEditor", {
 				}
 			}
 
-			if (!objectType && !xmlElement.objectType.any) {
+			if (!objectType && !xmlElement.objectType.anyAttribute) {
 				return "Could not add attribute " + attrDefinition + ", it is not a valid for element " + xmlElement.objectType.localName;
 			}
 		}
-
-		// Verify that the attribute is not already present on the element
-		if (xmlElement.attributeExists(objectType || attrDefinition))
-			return "Could not add attribute " + attrDefinition + ", it is already present";
 
 		var newAttr;
 		if (objectType) {
@@ -622,6 +619,10 @@ $.widget( "xml.xmlEditor", {
 			var nameParts = attrDefinition.split(":");
 			if (nameParts.length > 1)
 				this.xmlState.addNamespace(nameParts[0]);
+			newAttr = xmlElement.addAttribute({
+				attribute : true,
+				localName : attrDefinition
+			});
 			//newAttr = xmlElement.addNonschemaAttribute(newElementDefinition);
 		}
 
@@ -695,13 +696,8 @@ $.widget( "xml.xmlEditor", {
 			$(".xml_editor_container *:focus").blur();
 
 			if (this.textEditor.isInitialized() && this.xmlState.isChanged()) {
-				// Try to reconstruct the xml object before changing tabs.  Cancel change if parse error to avoid losing changes.
-				//try {
-					this.setXMLFromEditor();
-				// } catch (e) {
-				// 	this.addProblem("Invalid xml", e);
-				// 	return false;
-				// }
+				// Try to reconstruct the xml object before changing tabs.
+				this.setXMLFromEditor();
 				this.undoHistory.captureSnapshot();
 			}
 		}

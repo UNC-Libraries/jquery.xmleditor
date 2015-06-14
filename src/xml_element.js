@@ -12,7 +12,7 @@ function XMLElement(xmlNode, objectType, editor) {
 	// Flag indicating if any children nodes can be added to this element
 	this.allowChildren = this.objectType.elements.length > 0 || this.objectType.any;
 	// Flag indicating if any attributes can be added to this element
-	this.allowAttributes = this.objectType.attributes && this.objectType.attributes.length > 0;
+	this.allowAttributes = this.objectType.anyAttribute || (this.objectType.attributes && this.objectType.attributes.length > 0);
 	// Should this element allow text nodes to be added
 	this.allowText = this.objectType.type != null;
 	// dom element header for this element
@@ -417,7 +417,7 @@ XMLElement.prototype.renderElementStub = function(prepend, relativeTo) {
 	return node;
 };
 
-XMLElement.prototype.renderAttributeStub = function(prepend, relativeTo) {
+XMLElement.prototype.renderAttributeStub = function() {
 	var node = new XMLAttributeStub(this, this.editor);
 	node.render();
 
@@ -517,6 +517,11 @@ XMLElement.prototype.insertXMLNode = function (newElement, relativeTo, prepend) 
 
 // Add a new attribute of type objectType to this element
 XMLElement.prototype.addAttribute = function (objectType) {
+	// Verify that the attribute is not already present on the element
+	if (this.attributeExists(objectType)) {
+		return null;
+	}
+
 	var attributeValue = "";
 	if (objectType.defaultValue) {
 		attributeValue = objectType.defaultValue;
@@ -571,8 +576,16 @@ XMLElement.prototype.addNode = function (nodeType, prepend, relativeTo) {
 			else return null;
 		case "cdata" : return this.renderCData(null, prepend, relativeTo);
 		case "comment" : return this.renderComment(null, prepend, relativeTo);
-		case "element" : return this.renderElementStub(prepend, relativeTo);
-		case "attribute" : return this.renderAttributeStub();
+		case "element" :
+			if (this.allowChildren) {
+				return this.renderElementStub(prepend, relativeTo);
+			}
+			return null;
+		case "attribute" :
+			if (this.allowAttributes) {
+				return this.renderAttributeStub();
+			}
+			return null;
 	}
 	return null;
 };

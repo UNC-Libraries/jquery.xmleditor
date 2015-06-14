@@ -628,6 +628,7 @@ SchemaProcessor.prototype.createDefinition = function(node, nameParts) {
 };
 
 SchemaProcessor.prototype.addElement = function(node, definition, parentDef) {
+	
 	if (!parentDef.schema) {
 		// Store min/max occurs on the the elements parent, as they only apply to this particular relationship
 		// Root level elements can't have min/max occurs attributes
@@ -669,9 +670,8 @@ SchemaProcessor.prototype.addTypeReference = function(definition, refName) {
 	if (!definition.typeRef) {
 		definition.typeRef = [];
 	}
-	if (nameParts != null) {
-		definition.typeRef.push(nameParts.indexedName);
-	}
+	
+	definition.typeRef.push(nameParts.indexedName);
 };
 
 // Build the schema tag
@@ -721,6 +721,7 @@ SchemaProcessor.prototype.build = function(node, definition, parentDef) {
 // node - element schema node
 // parentdefinition - definition of the parent this element will be added to
 SchemaProcessor.prototype.build_element = function(node, definition, parentDef) {
+	
 	var ref = node.getAttribute("ref");
 	var subGroup = node.getAttribute("substitutionGroup");
 	if (ref) {
@@ -730,7 +731,7 @@ SchemaProcessor.prototype.build_element = function(node, definition, parentDef) 
 	} else {
 		// Build or retrieve the type definition
 		var type = node.getAttribute("type");
-		if (!type && this.getChildren(node)[0]) {
+		if (type == null) {
 			this.build(this.getChildren(node)[0], definition);
 		} else {
 			// Check to see if it is a built in type
@@ -741,9 +742,9 @@ SchemaProcessor.prototype.build_element = function(node, definition, parentDef) 
 			}
 		}
 	}
-
+	
 	return definition;
-};
+}
 
 SchemaProcessor.prototype.build_attribute = function(node, definition) {
 	var ref = node.getAttribute("ref");
@@ -782,7 +783,7 @@ SchemaProcessor.prototype.build_complexType = function(node, definition, parentD
 		var child = children[i];
 		switch (child.localName) {
 		case "group" : case "simpleContent" : case "complexContent" : case "choice" : 
-		case "attributeGroup" : case "sequence" : case "all" :
+		case "attributeGroup" : case "sequence" : case "all" : case "anyAttribute" :
 			this.build(child, definition);
 			break;
 		case "attribute" :
@@ -913,6 +914,10 @@ SchemaProcessor.prototype.build_any = function(node, definition) {
 	definition.any = !(node.getAttribute("minOccurs") == "0" && node.getAttribute("maxOccurs") == "0");
 };
 
+SchemaProcessor.prototype.build_anyAttribute = function(node, definition) {
+	definition.anyAttribute = true;
+};
+
 // Process a complexContent tag
 SchemaProcessor.prototype.build_complexContent = function(node, definition) {
 	if (node.getAttribute("mixed") == "true") {
@@ -950,7 +955,7 @@ SchemaProcessor.prototype.build_restriction = function(node, definition) {
 		var child = children[i];
 		switch (child.localName) {
 		case "group" : case "simpleType" : case "choice" : 
-		case "attributeGroup" : case "sequence" : case "all" :
+		case "attributeGroup" : case "sequence" : case "all" : case "anyAttribute":
 			this.build(child, definition);
 			break;
 		case "attribute" :
@@ -978,7 +983,7 @@ SchemaProcessor.prototype.build_extension = function(node, definition) {
 		var child = children[i];
 		switch (child.localName) {
 		case "group" : case "choice" : case "attributeGroup" : 
-		case "sequence" : case "all" :
+		case "sequence" : case "all" : case "anyAttribute":
 			this.build(child, definition);
 			break;
 		case "attribute" :
@@ -1000,7 +1005,7 @@ SchemaProcessor.prototype.build_attributeGroup = function(node, definition) {
 	for (var i in children) {
 		var child = children[i];
 		switch (child.localName) {
-		case "attributeGroup" :
+		case "attributeGroup" : case "anyAttribute" :
 			this.build(child, definition);
 			break;
 		case "attribute" :
@@ -1013,7 +1018,7 @@ SchemaProcessor.prototype.build_attributeGroup = function(node, definition) {
 SchemaProcessor.prototype.getBuiltInType = function(type, definition) {
 	if (definition.type != null)
 		return definition.type;
-	if (type == null || type.indexOf(":") == -1) {
+	if (type.indexOf(":") == -1) {
 		if (this.xsPrefix == "")
 			return type;
 	} else {

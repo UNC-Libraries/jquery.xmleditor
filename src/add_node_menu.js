@@ -41,15 +41,19 @@ AddNodeMenu.prototype.populate = function(xmlElement) {
 		return;
 	}
 
-	$("<li>Add Element</li>").data('xml', {
-		target : xmlElement,
-		nodeType : "element"
-	}).appendTo(this.menuContent);
+	if (xmlElement.allowChildren) {
+		$("<li>Add Element</li>").data('xml', {
+			target : xmlElement,
+			nodeType : "element"
+		}).appendTo(this.menuContent);
+	}
 
-	$("<li>Add Attribute</li>").data('xml', {
-		target : xmlElement,
-		nodeType : "attribute"
-	}).appendTo(this.menuContent);
+	if (xmlElement.allowAttributes) {
+		$("<li>Add Attribute</li>").data('xml', {
+			target : xmlElement,
+			nodeType : "attribute"
+		}).appendTo(this.menuContent);
+	}
 
 	$("<li>Add CDATA</li>").data('xml', {
 		target : xmlElement,
@@ -61,7 +65,7 @@ AddNodeMenu.prototype.populate = function(xmlElement) {
 		nodeType : "comment"
 	}).appendTo(this.menuContent);
 
-	if (xmlElement.objectType.type != null) {
+	if (xmlElement.objectType.type != null && xmlElement.allowText) {
 		this.addButton = $("<li>Add text</li>").attr({
 			title : 'Add text'
 		}).data('xml', {

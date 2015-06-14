@@ -572,6 +572,14 @@ $.widget( "xml.xmlEditor", {
 	addAttributeButtonCallback: function(instigator) {
 		if ($(instigator).hasClass("disabled"))
 			return;
+		// Create attribute on the targeted parent, and add its namespace if missing
+		var data = $(instigator).data('xml');
+
+		return this.addAttribute(data.target, data.objectType, instigator);
+	},
+
+	addAttribute: function(xmlElement, attrDefinition, instigator) {
+
 		// Synchronize xml document if there are unsynchronized changes in the text editor
 		if (this.xmlState.changesNotSynced()) {
 			try {
@@ -581,13 +589,6 @@ $.widget( "xml.xmlEditor", {
 				return;
 			}
 		}
-		// Create attribute on the targeted parent, and add its namespace if missing
-		var data = $(instigator).data('xml');
-
-		return this.addAttribute(data.target, data.objectType, instigator);
-	},
-
-	addAttribute: function(xmlElement, attrDefinition, instigator) {
 
 		var objectType;
 		if ($.type(attrDefinition) === "object") {
@@ -605,14 +606,10 @@ $.widget( "xml.xmlEditor", {
 				}
 			}
 
-			if (!objectType && !xmlElement.objectType.any) {
+			if (!objectType && !xmlElement.objectType.anyAttribute) {
 				return "Could not add attribute " + attrDefinition + ", it is not a valid for element " + xmlElement.objectType.localName;
 			}
 		}
-
-		// Verify that the attribute is not already present on the element
-		if (xmlElement.attributeExists(objectType || attrDefinition))
-			return "Could not add attribute " + attrDefinition + ", it is already present";
 
 		var newAttr;
 		if (objectType) {
@@ -622,6 +619,10 @@ $.widget( "xml.xmlEditor", {
 			var nameParts = attrDefinition.split(":");
 			if (nameParts.length > 1)
 				this.xmlState.addNamespace(nameParts[0]);
+			newAttr = xmlElement.addAttribute({
+				attribute : true,
+				localName : attrDefinition
+			});
 			//newAttr = xmlElement.addNonschemaAttribute(newElementDefinition);
 		}
 
@@ -695,13 +696,8 @@ $.widget( "xml.xmlEditor", {
 			$(".xml_editor_container *:focus").blur();
 
 			if (this.textEditor.isInitialized() && this.xmlState.isChanged()) {
-				// Try to reconstruct the xml object before changing tabs.  Cancel change if parse error to avoid losing changes.
-				//try {
-					this.setXMLFromEditor();
-				// } catch (e) {
-				// 	this.addProblem("Invalid xml", e);
-				// 	return false;
-				// }
+				// Try to reconstruct the xml object before changing tabs.
+				this.setXMLFromEditor();
 				this.undoHistory.captureSnapshot();
 			}
 		}
@@ -1333,15 +1329,19 @@ AddNodeMenu.prototype.populate = function(xmlElement) {
 		return;
 	}
 
-	$("<li>Add Element</li>").data('xml', {
-		target : xmlElement,
-		nodeType : "element"
-	}).appendTo(this.menuContent);
+	if (xmlElement.allowChildren) {
+		$("<li>Add Element</li>").data('xml', {
+			target : xmlElement,
+			nodeType : "element"
+		}).appendTo(this.menuContent);
+	}
 
-	$("<li>Add Attribute</li>").data('xml', {
-		target : xmlElement,
-		nodeType : "attribute"
-	}).appendTo(this.menuContent);
+	if (xmlElement.allowAttributes) {
+		$("<li>Add Attribute</li>").data('xml', {
+			target : xmlElement,
+			nodeType : "attribute"
+		}).appendTo(this.menuContent);
+	}
 
 	$("<li>Add CDATA</li>").data('xml', {
 		target : xmlElement,
@@ -1353,7 +1353,7 @@ AddNodeMenu.prototype.populate = function(xmlElement) {
 		nodeType : "comment"
 	}).appendTo(this.menuContent);
 
-	if (xmlElement.objectType.type != null) {
+	if (xmlElement.objectType.type != null && xmlElement.allowText) {
 		this.addButton = $("<li>Add text</li>").attr({
 			title : 'Add text'
 		}).data('xml', {
@@ -3081,6 +3081,10 @@ NamespaceList.prototype.containsPrefix = function(nsPrefix) {
 };
 
 NamespaceList.prototype.getNamespacePrefix = function(nsURI) {
+	if (!nsURI) {
+		return "";
+	}
+
 	var prefix = this.namespaceToPrefix[nsURI];
 	if (prefix)
 		prefix += ":";
@@ -3968,7 +3972,7 @@ function XMLElement(xmlNode, objectType, editor) {
 	// Flag indicating if any children nodes can be added to this element
 	this.allowChildren = this.objectType.elements.length > 0 || this.objectType.any;
 	// Flag indicating if any attributes can be added to this element
-	this.allowAttributes = this.objectType.attributes && this.objectType.attributes.length > 0;
+	this.allowAttributes = this.objectType.anyAttribute || (this.objectType.attributes && this.objectType.attributes.length > 0);
 	// Should this element allow text nodes to be added
 	this.allowText = this.objectType.type != null;
 	// dom element header for this element
@@ -4373,7 +4377,7 @@ XMLElement.prototype.renderElementStub = function(prepend, relativeTo) {
 	return node;
 };
 
-XMLElement.prototype.renderAttributeStub = function(prepend, relativeTo) {
+XMLElement.prototype.renderAttributeStub = function() {
 	var node = new XMLAttributeStub(this, this.editor);
 	node.render();
 
@@ -4473,6 +4477,11 @@ XMLElement.prototype.insertXMLNode = function (newElement, relativeTo, prepend) 
 
 // Add a new attribute of type objectType to this element
 XMLElement.prototype.addAttribute = function (objectType) {
+	// Verify that the attribute is not already present on the element
+	if (this.attributeExists(objectType)) {
+		return null;
+	}
+
 	var attributeValue = "";
 	if (objectType.defaultValue) {
 		attributeValue = objectType.defaultValue;
@@ -4527,8 +4536,16 @@ XMLElement.prototype.addNode = function (nodeType, prepend, relativeTo) {
 			else return null;
 		case "cdata" : return this.renderCData(null, prepend, relativeTo);
 		case "comment" : return this.renderComment(null, prepend, relativeTo);
-		case "element" : return this.renderElementStub(prepend, relativeTo);
-		case "attribute" : return this.renderAttributeStub();
+		case "element" :
+			if (this.allowChildren) {
+				return this.renderElementStub(prepend, relativeTo);
+			}
+			return null;
+		case "attribute" :
+			if (this.allowAttributes) {
+				return this.renderAttributeStub();
+			}
+			return null;
 	}
 	return null;
 };
