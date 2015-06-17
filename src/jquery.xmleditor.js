@@ -424,6 +424,7 @@ $.widget( "xml.xmlEditor", {
 		
 		this.constructEditor();
 		this.refreshDisplay();
+		this.activeEditor.selectRoot();
 		// Capture baseline undo state
 		this.undoHistory.captureSnapshot();
 	},
@@ -948,9 +949,9 @@ $.widget( "xml.xmlEditor", {
 			
 			// Escape key, blur the currently selected input or deselect selected element
 			if (e.which == 27) {
-				if (focused.length > 0)
+				if (focused.length > 0) {
 					focused.blur();
-				else this.guiEditor.selectNode(null);
+				} else this.guiEditor.selectNode(null);
 				return false;
 			}
 			
@@ -1039,9 +1040,9 @@ $.widget( "xml.xmlEditor", {
 			// Enter, contextual adding
 			if (e.which == 13) {
 				var focused = this.getFocusedInput();
-				if (focused.length == 0) {
+				if (focused.length == 0 || e.altKey) {
 					if (selected instanceof XMLElement) {
-						this.addNextElement(selected);
+						this.addNextElement(selected, e.shiftKey);
 					} else if (selected instanceof XMLElementStub 
 							|| selected instanceof XMLAttributeStub) {
 						selected.create();

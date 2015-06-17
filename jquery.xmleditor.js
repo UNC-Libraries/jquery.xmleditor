@@ -424,6 +424,7 @@ $.widget( "xml.xmlEditor", {
 		
 		this.constructEditor();
 		this.refreshDisplay();
+		this.activeEditor.selectRoot();
 		// Capture baseline undo state
 		this.undoHistory.captureSnapshot();
 	},
@@ -948,9 +949,9 @@ $.widget( "xml.xmlEditor", {
 			
 			// Escape key, blur the currently selected input or deselect selected element
 			if (e.which == 27) {
-				if (focused.length > 0)
+				if (focused.length > 0) {
 					focused.blur();
-				else this.guiEditor.selectNode(null);
+				} else this.guiEditor.selectNode(null);
 				return false;
 			}
 			
@@ -1039,9 +1040,9 @@ $.widget( "xml.xmlEditor", {
 			// Enter, contextual adding
 			if (e.which == 13) {
 				var focused = this.getFocusedInput();
-				if (focused.length == 0) {
+				if (focused.length == 0 || e.altKey) {
 					if (selected instanceof XMLElement) {
-						this.addNextElement(selected);
+						this.addNextElement(selected, e.shiftKey);
 					} else if (selected instanceof XMLElementStub 
 							|| selected instanceof XMLAttributeStub) {
 						selected.create();
@@ -1874,10 +1875,15 @@ GUIEditor.prototype._initEventBindings = function() {
 	});
 };
 
+GUIEditor.prototype.selectRoot = function() {
+	this.selectNode($("." + xmlElementClass).first());
+};
+
 // Make this editor the active editor and show it
 GUIEditor.prototype.activate = function() {
 	this.active = true;
 	this.deselect();
+	
 	
 	this.editor.textEditor.resetSelectedTagRange();
 	if (this.editor.textEditor.isModified() || (this.editor.textEditor.isInitialized() && this.editor.xmlState.isChanged())) {
@@ -1885,6 +1891,8 @@ GUIEditor.prototype.activate = function() {
 		this.editor.textEditor.setInitialized();
 	}
 	this.guiContent.show();
+	
+	this.selectRoot();
 	return this;
 };
 
@@ -2180,6 +2188,7 @@ GUIEditor.prototype.selectParent = function(reverse) {
 // then select the next sibling if any are available.
 GUIEditor.prototype.selectNext = function(reverse) {
 	var newSelection = null;
+	
 	if (this.selectedNode == null) {
 		if (!reverse)
 			newSelection = $("." + xmlElementClass).first();
@@ -2191,6 +2200,10 @@ GUIEditor.prototype.selectNext = function(reverse) {
 			allElements = $(allElements.get().reverse());
 		
 		var selectedNode = this.selectedNode;
+		if (!(selectedNode instanceof XMLElement)) {
+			selectedNode = selectedNode.parentElement;
+		}
+
 		allElements.each(function(){
 			if (found) {
 				newSelection = $(this);

@@ -111,10 +111,15 @@ GUIEditor.prototype._initEventBindings = function() {
 	});
 };
 
+GUIEditor.prototype.selectRoot = function() {
+	this.selectNode($("." + xmlElementClass).first());
+};
+
 // Make this editor the active editor and show it
 GUIEditor.prototype.activate = function() {
 	this.active = true;
 	this.deselect();
+	
 	
 	this.editor.textEditor.resetSelectedTagRange();
 	if (this.editor.textEditor.isModified() || (this.editor.textEditor.isInitialized() && this.editor.xmlState.isChanged())) {
@@ -122,6 +127,8 @@ GUIEditor.prototype.activate = function() {
 		this.editor.textEditor.setInitialized();
 	}
 	this.guiContent.show();
+	
+	this.selectRoot();
 	return this;
 };
 
@@ -417,6 +424,7 @@ GUIEditor.prototype.selectParent = function(reverse) {
 // then select the next sibling if any are available.
 GUIEditor.prototype.selectNext = function(reverse) {
 	var newSelection = null;
+	
 	if (this.selectedNode == null) {
 		if (!reverse)
 			newSelection = $("." + xmlElementClass).first();
@@ -428,6 +436,10 @@ GUIEditor.prototype.selectNext = function(reverse) {
 			allElements = $(allElements.get().reverse());
 		
 		var selectedNode = this.selectedNode;
+		if (!(selectedNode instanceof XMLElement)) {
+			selectedNode = selectedNode.parentElement;
+		}
+
 		allElements.each(function(){
 			if (found) {
 				newSelection = $(this);
