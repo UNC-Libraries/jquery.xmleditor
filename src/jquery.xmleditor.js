@@ -23,10 +23,9 @@
  * 
  * Dependencies:
  *   jquery 1.7+
- *   jquery.ui 1.7+
+ *   jquery.ui 1.9+
  *   ajax ace editor
  *   jquery.autosize.js (optional)
- *   vkbeautify.js (optional)
  * 
  * @author Ben Pennell
  */
@@ -38,6 +37,8 @@ var menuColumnClass = "xml_menu_column";
 var menuContentClass = 'menu_content';
 var menuExpandDuration = 180;
 var xmlElementClass = 'xml_element';
+var xmlTextClass = 'xml_text_node';
+var xmlNodeClass = 'xml_node';
 var topLevelContainerClass = 'top_level_element_group';
 var elementRootPrefix = "root_element_";
 var elementPrefix = "xml_element_";
@@ -52,6 +53,7 @@ var xmlWorkAreaContainerClass = "xml_work_area";
 var addTopMenuClass = "add_top_menu";
 var addAttrMenuClass = "add_attribute_menu";
 var addElementMenuClass = "add_element_menu";
+var addNodeMenuClass = "add_node_menu";
 var xmlMenuBarClass = "xml_menu_bar";
 var submitButtonClass = "send_xml";
 var submissionStatusClass = "xml_submit_status";
@@ -119,6 +121,7 @@ $.widget( "xml.xmlEditor", {
 		menuEntries: undefined,
 		enforceOccurs: false,
 		prependNewElements: false,
+		autocomplete: true,
 		
 		targetNS: null
 	},
@@ -167,8 +170,6 @@ $.widget( "xml.xmlEditor", {
 		// Detect optional features
 		if (!$.isFunction($.fn.autosize))
 			this.options.expandingTextAreas = false;
-		if (!vkbeautify)
-			this.options.prettyXML = false;
 		
 		if (typeof(this.options.schema) != 'function') {
 			// Turn relative paths into absolute paths for the sake of web workers
@@ -418,12 +419,12 @@ $.widget( "xml.xmlEditor", {
 		// Join back up asynchronous loading of document and schema
 		if (!this.schemaTree || !this.xmlState)
 			return;
-		this.xmlState.namespaces.namespaceURIs = $.extend({}, this.schemaTree.namespaces.namespaceURIs, this.xmlState.namespaces.namespaceURIs);
-		this.xmlState.namespaces.namespaceToPrefix = $.extend({}, this.schemaTree.namespaces.namespaceToPrefix, this.xmlState.namespaces.namespaceToPrefix);
+
 		this.targetPrefix = this.xmlState.namespaces.getNamespacePrefix(this.options.targetNS);
 		
 		this.constructEditor();
 		this.refreshDisplay();
+		this.activeEditor.selectRoot();
 		// Capture baseline undo state
 		this.undoHistory.captureSnapshot();
 	},
@@ -457,14 +458,18 @@ $.widget( "xml.xmlEditor", {
 				true, false, true);
 		this.modifyMenu.addAttributeMenu(addAttrMenuClass, this.options.addAttrMenuHeaderText, 
 				true, false, true);
+		this.modifyMenu.addNodeMenu(addNodeMenuClass, "Add Nodes", true, false);
 		this.addTopLevelMenu = this.modifyMenu.addMenu(addTopMenuClass, this.options.addTopMenuHeaderText, 
 				true, true, false, function(target) {
 			var selectedElement = self.guiEditor.selectedElement;
 			if (!selectedElement || selectedElement.length == 0 || selectedElement.isRootElement) 
 				return null;
 			var currentElement = selectedElement;
-			while (!currentElement.isTopLevel)
+			while (currentElement.parentElement != null) {
+				if (currentElement.parentElement.isRootElement)
+					break;
 				currentElement = currentElement.parentElement;
+			}
 			if (currentElement != null)
 				return currentElement;
 			return null;
@@ -497,6 +502,13 @@ $.widget( "xml.xmlEditor", {
 		var xmlElement = $(instigator).data("xml").target;
 		var objectType = $(instigator).data("xml").objectType;
 		
+		this.addChildElement(xmlElement, objectType, relativeTo, prepend);
+	},
+
+	addChildElement: function(parentElement, newElementDefinition, relativeTo, prepend) {
+		if (!parentElement.allowChildren)
+			return null;
+
 		// If in the text editor view, synchronous the text to the xml model and ensure wellformedness
 		if (this.textEditor.active) {
 			if (this.xmlState.changesNotSynced()) {
@@ -508,23 +520,67 @@ $.widget( "xml.xmlEditor", {
 				}
 			}
 		}
-		
-		// Determine if it is valid to add this child element to the given parent element
-		if (!xmlElement.childCanBeAdded(objectType))
-			return;
-		
-		// Add the namespace of the new element to the root if it is not already present
-		this.xmlState.addNamespace(objectType);
+
+		var objectType;
+		if (typeof newElementDefinition == 'string' || newElementDefinition instanceof String) {
+			var defs = parentElement.objectType.elements;
+			
+			for (var index in defs)  {
+				var definition = defs[index];
+				var elementName = this.xmlState.getNamespacePrefix(definition.namespace) 
+						+ definition.localName;
+				if (elementName == newElementDefinition) {
+					objectType = definition;
+					break;
+				}
+			}
+
+			// No matching child definition and parent doesn't allow "any", so can't add child
+			if (!objectType && !parentElement.objectType.any) {
+				return "Could not add child " + newElementDefinition + ", it is not a valid child of " + parentElement.objectType.localName;
+			}
+		} else {
+			objectType = newElementDefinition;
+		}
+
 		// Create the new element as a child of its parent
-		var newElement = xmlElement.addElement(objectType, relativeTo, prepend);
+		var newElement;
+		if (objectType) {
+			// Determine if it is valid to add this child element to the given parent element
+			if (!parentElement.childCanBeAdded(objectType))
+				return;
+			
+			// Add the namespace of the new element to the root if it is not already present
+			this.xmlState.addNamespace(objectType);
+			newElement = parentElement.addElement(objectType, relativeTo, prepend);
+		} else {
+			var nameParts = newElementDefinition.split(":");
+			this.xmlState.addNamespace(nameParts.length > 1? nameParts[0] : "");
+			newElement = parentElement.addNonschemaElement(newElementDefinition, relativeTo, prepend);
+		}
+		
+		if (newElement == null) {
+			return "Failed to add child of type " + newElementDefinition;
+		}
+		
 		// Trigger post element creation event in the currently active editor to handle UI updates
-		this.activeEditor.addElementEvent(xmlElement, newElement);
+		this.activeEditor.addElementEvent(parentElement, newElement);
+
+		return newElement;
 	},
 	
 	// Event which adds an attribute to an element, as defined by an instigator such as a menu
 	addAttributeButtonCallback: function(instigator) {
 		if ($(instigator).hasClass("disabled"))
 			return;
+		// Create attribute on the targeted parent, and add its namespace if missing
+		var data = $(instigator).data('xml');
+
+		return this.addAttribute(data.target, data.objectType, instigator);
+	},
+
+	addAttribute: function(xmlElement, attrDefinition, instigator) {
+
 		// Synchronize xml document if there are unsynchronized changes in the text editor
 		if (this.xmlState.changesNotSynced()) {
 			try {
@@ -534,14 +590,94 @@ $.widget( "xml.xmlEditor", {
 				return;
 			}
 		}
-		// Create attribute on the targeted parent, and add its namespace if missing
-		var data = $(instigator).data('xml');
-		this.xmlState.addNamespace(data.objectType);
-		data.target.addAttribute(data.objectType);
+
+		var objectType;
+		if ($.type(attrDefinition) === "object") {
+			objectType = attrDefinition;
+		} else {
+			var defs = xmlElement.objectType.attributes;
+			
+			for (var index in defs)  {
+				var definition = defs[index];
+				var attrName = this.xmlState.getNamespacePrefix(definition.namespace) 
+						+ definition.localName;
+				if (attrName == attrDefinition) {
+					objectType = definition;
+					break;
+				}
+			}
+
+			if (!objectType && !xmlElement.objectType.anyAttribute) {
+				return "Could not add attribute " + attrDefinition + ", it is not a valid for element " + xmlElement.objectType.localName;
+			}
+		}
+
+		var newAttr;
+		if (objectType) {
+			this.xmlState.addNamespace(objectType);
+			newAttr = xmlElement.addAttribute(objectType);
+		} else {
+			var nameParts = attrDefinition.split(":");
+			if (nameParts.length > 1)
+				this.xmlState.addNamespace(nameParts[0]);
+			newAttr = xmlElement.addAttribute({
+				attribute : true,
+				localName : attrDefinition
+			});
+			//newAttr = xmlElement.addNonschemaAttribute(newElementDefinition);
+		}
+
 		// Inform the active editor of the newly added attribute
-		this.activeEditor.addAttributeEvent(data.target, data.objectType, $(instigator));
+		this.activeEditor.addAttributeEvent(xmlElement, newAttr, $(instigator));
+
+		return newAttr;
 	},
-	
+
+	addNodeCallback: function(instigator, nodeType, prepend) {
+		if ($(instigator).hasClass("disabled"))
+			return;
+
+		var data = $(instigator).data('xml');
+
+		this.addNode(data.target, nodeType, prepend);
+	},
+
+	addNode: function(parentElement, nodeType, prepend, relativeTo) {
+
+		// Synchronize xml document if there are unsynchronized changes in the text editor
+		if (this.xmlState.changesNotSynced()) {
+			try {
+				this.setXMLFromEditor();
+			} catch (e) {
+				alert(e.message);
+				return;
+			}
+		}
+
+		if (!(parentElement instanceof XMLElement)) {
+			return;
+		}
+
+		// Create node on the targeted parent
+		var nodeObject = parentElement.addNode(nodeType, prepend, relativeTo);
+		// Inform the active editor of the newly added attribute
+		if (nodeObject) {
+			this.guiEditor.selectNode(nodeObject);
+			this.activeEditor.addNodeEvent(parentElement, nodeObject);
+			nodeObject.focus();
+		}
+	},
+
+	// Adds an element stub either as a child of an element which allows children, or 
+	// as a sibling
+	addNextElement : function(xmlElement, prepend) {
+		if (xmlElement.allowChildren) {
+			this.addNode(xmlElement, "element", prepend);
+		} else {
+			this.addNode(xmlElement.parentElement, "element", prepend, xmlElement);
+		}
+	},
+
 	// Triggered when a document has been loaded or reloaded
 	documentLoadedEvent : function(newDocument) {
 		if (this.guiEditor != null && this.guiEditor.rootElement != null)
@@ -557,14 +693,12 @@ $.widget( "xml.xmlEditor", {
 			return this;
 			
 		if (mode == 0) {
+			$("*:focus").blur();
+			$(".xml_editor_container *:focus").blur();
+
 			if (this.textEditor.isInitialized() && this.xmlState.isChanged()) {
-				// Try to reconstruct the xml object before changing tabs.  Cancel change if parse error to avoid losing changes.
-				try {
-					this.setXMLFromEditor();
-				} catch (e) {
-					this.addProblem("Invalid xml", e);
-					return false;
-				}
+				// Try to reconstruct the xml object before changing tabs.
+				this.setXMLFromEditor();
 				this.undoHistory.captureSnapshot();
 			}
 		}
@@ -607,8 +741,10 @@ $.widget( "xml.xmlEditor", {
 	setXMLFromEditor: function() {
 		var xmlString = this.textEditor.aceEditor.getValue();
 		this.xmlState.setXMLFromString(xmlString);
-		this.guiEditor.setRootElement(this.xmlState.xml.children()[0]);
-		this.addTopLevelMenu.populate(this.guiEditor.rootElement)
+		if (this.guiEditor.isActive) {
+			this.guiEditor.setRootElement(this.xmlState.xml.children()[0]);
+			this.addTopLevelMenu.populate(this.guiEditor.rootElement)
+		}
 	},
 	
 	// Callback for submit button pressing.  Performs a submit function and then uploads the 
@@ -729,22 +865,22 @@ $.widget( "xml.xmlEditor", {
 			xmlNodeObject = this.xmlState.xml;
 		var xmlNode = (xmlNodeObject instanceof jQuery? xmlNodeObject[0]: xmlNodeObject);
 		var xmlStr = "";
-		try {
-			// Gecko-based browsers, Safari, Opera.
-			xmlStr = (new XMLSerializer()).serializeToString(xmlNode);
-		} catch (e) {
+		if (this.options.prettyXML) {
+			return formatXML(xmlNode);
+		} else {
 			try {
-				// Internet Explorer.
-				xmlStr = xmlNode.xml;
+				// Gecko-based browsers, Safari, Opera.
+				return (new XMLSerializer()).serializeToString(xmlNode);
 			} catch (e) {
-				this.addProblem('Xmlserializer not supported', e);
-				return false;
+				try {
+					// Internet Explorer.
+					return xmlNode.xml;
+				} catch (e) {
+					this.addProblem('Xmlserializer not supported', e);
+					return false;
+				}
 			}
 		}
-		// Format the text if enabled
-		if (this.options.prettyXML)
-			xmlStr = vkbeautify.xml(xmlStr);
-		return xmlStr;
 	},
 	
 	// Add a error/problem message to the error display
@@ -757,6 +893,7 @@ $.widget( "xml.xmlEditor", {
 				this.problemsPanel.append(problem.message.replace(/</g, "&lt;").replace(/>/g, "&gt;"));
 			}
 		}
+		console.error(problem);
 		this.refreshProblemPanel();
 	},
 	
@@ -798,95 +935,172 @@ $.widget( "xml.xmlEditor", {
 			$(window).off("keydown.xml_keybindings");
 		}
 	},
+
+	getFocusedInput: function() {
+		return $("input:focus, textarea:focus, select:focus");
+	},
 	
 	// Initialize key bindings
 	keydownCallback: function(e) {
+		var prepend = this.options.prependNewElements ^ e.shiftKey;
+
 		if (this.guiEditor.active) {
-			var focused = $("input:focus, textarea:focus, select:focus");
+			var focused = this.getFocusedInput();
 			
 			// Escape key, blur the currently selected input or deselect selected element
-			if (e.keyCode == 27) {
-				if (focused.length > 0)
+			if (e.which == 27) {
+				if (focused.length > 0) {
 					focused.blur();
-				else this.guiEditor.selectElement(null);
-				return false;
-			}
-			
-			// Enter, focus the first visible input
-			if (e.keyCode == 13 && focused.length == 0) {
-				e.preventDefault();
-				this.guiEditor.focusSelectedText();
+				} else this.guiEditor.selectNode(null);
 				return false;
 			}
 			
 			// Tab, select the next input
-			if (e.keyCode == 9) {
+			if (e.which == 9) {
 				e.preventDefault();
 				this.guiEditor.focusInput(e.shiftKey);
 				return false;
 			}
 			
 			// Delete key press while item selected but nothing is focused.
-			if (e.keyCode == 46 && focused.length == 0) {
+			if (e.which == 46 && focused.length == 0) {
 				this.guiEditor.deleteSelected();
 				return false;
 			}
 			
-			if (e.keyCode > 36 && e.keyCode < 41 && focused.length == 0){
-				e.preventDefault();
-				if (e.altKey) {
+			if (e.which > 36 && e.which < 41){
+				if (e.altKey && (focused.length == 0 || focused.is("textarea"))) {
+					e.preventDefault();
 					// Alt + up or down move the element up and down in the document
-					this.guiEditor.moveSelected(e.keyCode == 38);
-				} else if (e.shiftKey) {
-					// If holding shift while pressing up or down, then jump to the next/prev sibling
-					if (e.keyCode == 40 || e.keyCode == 38) {
-						this.guiEditor.selectSibling(e.keyCode == 38);
-					} else if (e.keyCode == 37 || e.keyCode == 39) {
-						this.guiEditor.selectParent(e.keyCode == 39);
-					}
-				} else {
-					// If not holding shift while hitting up or down, go to the next/prev element
-					if (e.keyCode == 40 || e.keyCode == 38){
-						this.guiEditor.selectNext(e.keyCode == 38);
-					} else if (e.keyCode == 37 || e.keyCode == 39) {
-						this.guiEditor.selectAttribute(e.keyCode == 37);
+					this.guiEditor.moveSelected(e.which == 38);
+					if (focused.is("textarea"))
+						focused.focus();
+					return false;
+				}
+				if (focused.length == 0) {
+					e.preventDefault();
+					if (e.shiftKey) {
+						// If holding shift while pressing up or down, then jump to the next/prev sibling
+						if (e.which == 40 || e.which == 38) {
+							this.guiEditor.selectSibling(e.which == 38);
+						} else if (e.which == 37 || e.which == 39) {
+							this.guiEditor.selectParent(e.which == 39);
+						}
+					} else {
+						// If not holding shift while hitting up or down, go to the next/prev element
+						if (e.which == 40 || e.which == 38){
+							this.guiEditor.selectNext(e.which == 38);
+						} else if (e.which == 37 || e.which == 39) {
+							this.guiEditor.selectAttribute(e.which == 37);
+						}
 					}
 				}
-				return false;
+				return true;
 			}
 			
-			if ((e.metaKey || e.ctrlKey) && focused.length == 0 && e.keyCode == 'Z'.charCodeAt(0)) {
+			if ((e.metaKey || e.ctrlKey) && focused.length == 0 && e.which == 'Z'.charCodeAt(0)) {
 				// Undo
 				this.undoHistory.changeHead(e.shiftKey? 1: -1);
 				return false;
-			} else if ((e.metaKey || e.ctrlKey) && focused.length == 0 && e.keyCode == 'Y'.charCodeAt(0)){
+			} else if ((e.metaKey || e.ctrlKey) && focused.length == 0 && e.which == 'Y'.charCodeAt(0)){
 				// Redo
 				this.undoHistory.changeHead(1);
 				return false;
 			}
 		}
 		
-		// Save, on either tab.
-		if (e.altKey && e.shiftKey && e.keyCode == 'S'.charCodeAt(0)) {
-			$("." + submitButtonClass).click();
-			return false;
+		if (e.altKey && e.ctrlKey) {
+			// Save, on either tab.
+			if (e.which == 'S'.charCodeAt(0)) {
+				$("." + submitButtonClass).click();
+				return false;
+			}
+			
+			if (e.which == 'E'.charCodeAt(0)) {
+				this.exportXML();
+				return false;
+			}
+			
+			// Switch to the GUI editor
+			if (e.which == '1'.charCodeAt(0)) {
+				this.modeChange(0);
+				return false;
+			}
+			
+			// Switch to the text editor
+			if (e.which == '2'.charCodeAt(0)) {
+				this.modeChange(1);
+				return false;
+			}
 		}
-		
-		if (e.altKey && e.shiftKey && e.keyCode == 'E'.charCodeAt(0)) {
-			this.exportXML();
-			return false;
-		}
-		
-		// Switch to the GUI editor
-		if (e.altKey && e.shiftKey && e.keyCode == 'X'.charCodeAt(0)) {
-			this.modeChange(0);
-			return false;
-		}
-		
-		// Switch to the text editor
-		if (e.altKey && e.shiftKey && e.keyCode == 'T'.charCodeAt(0)) {
-			this.modeChange(1);
-			return false;
+
+		if (this.guiEditor.active) {
+			var selected = this.guiEditor.selectedElement;
+
+			// Enter, contextual adding
+			if (e.which == 13) {
+				var focused = this.getFocusedInput();
+				if (focused.length == 0 || e.altKey) {
+					if (selected instanceof XMLElement) {
+						this.addNextElement(selected, e.shiftKey);
+					} else if (selected instanceof XMLElementStub 
+							|| selected instanceof XMLAttributeStub) {
+						selected.create();
+					}
+					e.preventDefault();
+					return false;
+				}
+				return true;
+			}
+
+			if (e.altKey) {
+				if (e.which == 'E'.charCodeAt(0)) {
+					if (selected instanceof XMLElement && selected.allowChildren)
+						this.addNode(selected, "element", prepend);
+					return false;
+				}
+
+				if (e.which == 'S'.charCodeAt(0)) {
+					if (selected)
+						this.addNode(selected.parentElement, "element", prepend, selected);
+					return false;
+				}
+
+				if (e.which == 'P'.charCodeAt(0)) {
+					if (selected && selected.parentElement.objectType)
+						this.addNode(selected.parentElement, "element", prepend);
+					return false;
+				}
+
+				if (e.which == 'R'.charCodeAt(0)) {
+					this.addNode(this.guiEditor.rootElement, "element", prepend);
+					return false;
+				}
+
+				if (e.which == 'A'.charCodeAt(0)) {
+					if (selected)
+						this.addNode(selected, "attribute", prepend);
+					return false;
+				}
+
+				if (e.which == 'T'.charCodeAt(0)) {
+					if (selected)
+						this.addNode(selected, "text", prepend);
+					return false;
+				}
+
+				if (e.which == 191) {
+					if (selected)
+						this.addNode(selected, "comment", prepend);
+					return false;
+				}
+
+				if (e.which == 188) {
+					if (selected)
+						this.addNode(selected, "cdata", prepend);
+					return false;
+				}
+			}
 		}
 		
 		return true;
