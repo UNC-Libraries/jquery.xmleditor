@@ -209,4 +209,3 @@ Attribution
 [json2.js and cycle.js](https://github.com/douglascrockford/JSON-js)
 [Cloud9 IDE](https://github.com/ajaxorg/cloud9)
 [jquery.autosize.js](http://www.jacklmoore.com/autosize/)
-[vkbeautify](http://code.google.com/p/vkbeautify/)
