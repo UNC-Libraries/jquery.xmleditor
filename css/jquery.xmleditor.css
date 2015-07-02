@@ -764,3 +764,18 @@
 	*display: inline;
 	width: 1em;
 }
+
+/* Default templating */
+.no-close .ui-dialog-titlebar-close {
+  display: none;
+}
+
+.validateTips {
+	margin-bottom: 25px;
+	text-align: center;
+	display: none;
+}
+
+.templating {
+	margin-left: 25%;
+}
