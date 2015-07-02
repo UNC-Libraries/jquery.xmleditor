@@ -4884,7 +4884,6 @@ XMLElementStub.prototype.focus = function() {
 function XMLTemplates(init_object) {
     this.template_path = init_object.options.templatePath;
     this.templates = init_object.options.templates;
-    this.default_template = init_object.options.defaultTemplate;
     this.editor = init_object;
 }
 
@@ -4899,8 +4898,9 @@ XMLTemplates.prototype.createDialog = function() {
 
     dialog = $("#dialog-form").dialog({
         autoOpen: true,
-        height: 300,
-        width: 350,
+        dialogClass: "no-close",
+        height: 350,
+        width: 500,
         modal: true,
         buttons: {
             "Select Template": function() { self.processForm($(this), self); },
@@ -4928,16 +4928,11 @@ XMLTemplates.prototype.templateForm = function() {
     var form = '<div id="dialog-form" title="Please Select a Template">' +
       '<p class="validateTips">Form field is required.</p>' +
       '<form>' +
-        '<fieldset>' +
-          '<label for="template">Templates</label>' +
-            '<select id="templating" name="templating" class="text ui-widget-content ui-corner-all">' +
-                '<option value="">--Templates--</option>';
-
+        '<fieldset>';
     for(var i=0; i<this.templates.length; i++) {
-        form += '<option value="' + this.templates[i] + '">' + this.templates[i] + '</option>';
+        form += '<input class="templating" name="templating" type="radio" value="' + this.templates[i] + '">' + this.templates[i] + '<br />';
     }
 
-    form += '</select>';
     form += '<input type="submit" tabindex="-1" style="position:absolute; top:-1000px">' +
        '</fieldset>' +
       '</form>' +
@@ -4954,14 +4949,14 @@ XMLTemplates.prototype.templateForm = function() {
  */
 XMLTemplates.prototype.processForm = function(dialog, self) {
     var valid = true;
-    var selected = $("#templating");
+    var selected = $(".validateTips");
+    var selection = $("input[name=templating]:checked").val();
 
     selected.removeClass("ui-state-error");
-    var selection = selected.val();
 
-    if (selection === '') {
+    if (selection === undefined) {
         valid = false;
-        selected.addClass("ui-state-error");
+        selected.addClass("ui-state-error").css("display", "block");
     } else {
         $(dialog).dialog("close");
         self.loadSelectedTemplate(selection, self);
@@ -4976,6 +4971,7 @@ XMLTemplates.prototype.processForm = function(dialog, self) {
  * @param self
  */
 XMLTemplates.prototype.loadSelectedTemplate = function(selection, self) {
+    // Default template loading doesn't have access to xml_templates constructor
     if(self.editor === undefined) { self.editor = self; }
 
     $.ajax({
