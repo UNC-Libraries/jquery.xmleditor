@@ -88,6 +88,12 @@ $.widget( "xml.xmlEditor", {
 			xmlRetrievalPath: null,
 			xmlRetrievalParams : null
 		},
+
+		// User set default template settings
+		templatePath : false,
+    	templates : [],
+    	defaultTemplate : false,
+
 		// Function triggered after uploading XML document, to interpret if the response was successful or not.  If upload failed, an error message should be returned.
 		submitResponseHandler : null,
 		// Function triggered after uploading XML document, if an error occurs. Gives full text of error, instead of a boilerplate "500 server error" message.
@@ -207,8 +213,15 @@ $.widget( "xml.xmlEditor", {
 				}
 			}
 		}
-		
-		this.loadSchema(this.options.schema);
+
+		// Check for default templates
+		if (this.options.templatePath) {
+			this.template = new XMLTemplates(this);
+			this.template.templateForm();
+			this.template.createDialog();
+		} else {
+			this.loadSchema(this.options.schema);
+		}
 	},
  
 	_init: function() {
@@ -247,7 +260,7 @@ $.widget( "xml.xmlEditor", {
 				}
 			};
 		}
-		
+
 		// Retrieve the local xml content before we start populating the editor.
 		var localXMLContent = null;
 		if (this.element.is("textarea")) {
@@ -394,6 +407,7 @@ $.widget( "xml.xmlEditor", {
 	// XML Document loaded event
 	_documentReady : function(xmlString) {
 		var self = this;
+
 		this.xmlState = new DocumentState(xmlString, this);
 		this.xmlState.extractNamespacePrefixes();
 		this.undoHistory = new UndoHistory(this.xmlState, this);
