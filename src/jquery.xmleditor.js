@@ -217,8 +217,13 @@ $.widget( "xml.xmlEditor", {
 		// Check for default templates
 		if (this.options.templatePath) {
 			this.template = new XMLTemplates(this);
-			this.template.templateForm();
-			this.template.createDialog();
+
+			if (this.options.defaultTemplate) {
+				this.template.loadSelectedTemplate(this.options.defaultTemplate, this);
+			} else {
+				this.template.templateForm();
+				this.template.createDialog();
+			}
 		} else {
 			this.loadSchema(this.options.schema);
 		}

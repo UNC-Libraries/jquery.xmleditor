@@ -7,7 +7,7 @@ function XMLTemplates(init_object) {
     this.template_path = init_object.options.templatePath;
     this.templates = init_object.options.templates;
     this.default_template = init_object.options.defaultTemplate;
-    this._that = init_object;
+    this.editor = init_object;
 }
 
 XMLTemplates.prototype.constructor = XMLTemplates;
@@ -28,7 +28,7 @@ XMLTemplates.prototype.createDialog = function() {
             "Select Template": function() { self.processForm($(this), self); },
             Cancel: function() {
                 $(this).dialog("close");
-                self._that.loadSchema(self._that.options.schema);
+                self.editor.loadSchema(self.editor.options.schema);
             }
         },
         close: function() {
@@ -98,30 +98,17 @@ XMLTemplates.prototype.processForm = function(dialog, self) {
  * @param self
  */
 XMLTemplates.prototype.loadSelectedTemplate = function(selection, self) {
-    var default_template = this.loadDefaultTemplate();
-    var template = (default_template) ? default_template : selection;
+    if(self.editor === undefined) { self.editor = self; }
 
     $.ajax({
-        url: this.template_path + template,
+        url: this.template_path + selection,
         dataType: "xml"
     }).done(function(data) {
-        var xml_string = self._that.xml2Str(data);
-        self._that._documentReady(xml_string);
-        self._that.loadSchema(self._that.options.schema);
+        var xml_string = self.editor.xml2Str(data);
+        self.editor._documentReady(xml_string);
+        self.editor.loadSchema(self.editor.options.schema);
     }).fail(function(jqXHR, textStatus) {
-        self._that.loadSchema(self._that.options.schema);
+        self.editor.loadSchema(self.editor.options.schema);
         alert("Unable to load the requested template: " + textStatus);
     });
-};
-
-/**
- * Always loads the template provided in editor settings if user specifies one in the settings.
- * @returns {*}
- */
-XMLTemplates.prototype.loadDefaultTemplate = function() {
-    if (this.default_template) {
-        return this.default_template;
-    }
-
-    return false;
 };
