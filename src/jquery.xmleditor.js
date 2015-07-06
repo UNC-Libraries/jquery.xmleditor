@@ -395,7 +395,7 @@ $.widget( "xml.xmlEditor", {
 				data : (ajaxOptions.xmlRetrievalParams),
 				dataType : "text",
 				success : function(data) {
-					if($(data).children().length || !self.options.templatePath) {
+					if($(data).children().length) {
 						self._documentReady(data);
 					} else {
 						// Check for templates if XML retrieval path is set.
