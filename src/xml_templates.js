@@ -28,7 +28,14 @@ XMLTemplates.prototype.createDialog = function() {
             "Select Template": function() { self.processForm($(this), self); },
             Cancel: function() {
                 $(this).dialog("close");
-                self.editor.loadSchema(self.editor.options.schema);
+
+                var default_template = self.editor.options.cancelTemplate;
+
+                if(default_template) {
+                    self.loadSelectedTemplate(default_template, self);
+                } else {
+                   self.editor.loadSchema(self.editor.options.schema);
+                }
             }
         },
         close: function() {

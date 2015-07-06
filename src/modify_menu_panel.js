@@ -35,8 +35,8 @@ ModifyMenuPanel.prototype.initialize = function (parentContainer) {
 				}
 
 				if (!('responseHandler' in config) && config.url) {
-					config.responseHandler = this.options.submitResponseHandler
-						|| this.swordSubmitResponseHandler;
+					config.responseHandler = config.responseHandler = self.editor.options.submitResponseHandler
+						|| self.editor.swordSubmitResponseHandler;
 				}
 
 				submitButton.click(function() {

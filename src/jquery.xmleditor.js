@@ -93,6 +93,7 @@ $.widget( "xml.xmlEditor", {
 		templatePath : false,
     	templates : [],
     	defaultTemplate : false,
+		cancelTemplate : false,
 
 		// Function triggered after uploading XML document, to interpret if the response was successful or not.  If upload failed, an error message should be returned.
 		submitResponseHandler : null,
@@ -216,14 +217,7 @@ $.widget( "xml.xmlEditor", {
 
 		// Check for default templates if no default retrieval path
 		if (this.options.ajaxOptions.xmlRetrievalPath === null && this.options.templatePath) {
-			this.template = new XMLTemplates(this);
-
-			if (this.options.defaultTemplate) {
-				this.template.loadSelectedTemplate(this.options.defaultTemplate, this);
-			} else {
-				this.template.templateForm();
-				this.template.createDialog();
-			}
+			this._templating(this);
 		} else {
 			this.loadSchema(this.options.schema);
 		}
@@ -405,14 +399,7 @@ $.widget( "xml.xmlEditor", {
 						self._documentReady(data);
 					} else {
 						// Check for templates if XML retrieval path is set.
-						self.template = new XMLTemplates(self);
-
-						if (self.options.defaultTemplate) {
-							self.template.loadSelectedTemplate(self.options.defaultTemplate, self);
-						} else {
-							self.template.templateForm();
-							self.template.createDialog();
-						}
+						self._templating(self);
 					}
 				}
 			});
@@ -420,7 +407,18 @@ $.widget( "xml.xmlEditor", {
 			this._documentReady(localXMLContent);
 		}
 	},
-	
+
+	_templating : function(self) {
+		self.template = new XMLTemplates(self);
+
+		if (self.options.defaultTemplate) {
+			self.template.loadSelectedTemplate(self.options.defaultTemplate, self);
+		} else {
+			self.template.templateForm();
+			self.template.createDialog();
+		}
+	},
+
 	// XML Document loaded event
 	_documentReady : function(xmlString) {
 		var self = this;
