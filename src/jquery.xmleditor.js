@@ -216,7 +216,9 @@ $.widget( "xml.xmlEditor", {
 		}
 
 		// Check for default templates if no default retrieval path
-		if (this.options.ajaxOptions.xmlRetrievalPath === null && this.options.templatePath) {
+		if (!this.options.templatePath) {
+			this.loadSchema(this.options.schema);
+		} else if (this.options.ajaxOptions.xmlRetrievalPath === null) {
 			this._templating(this);
 		} else {
 			this.loadSchema(this.options.schema);
@@ -395,7 +397,7 @@ $.widget( "xml.xmlEditor", {
 				data : (ajaxOptions.xmlRetrievalParams),
 				dataType : "text",
 				success : function(data) {
-					if($(data).children().length) {
+					if (!self.options.templatePath || $(data).children().length) {
 						self._documentReady(data);
 					} else {
 						// Check for templates if XML retrieval path is set.
