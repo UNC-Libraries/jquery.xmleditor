@@ -88,6 +88,13 @@ $.widget( "xml.xmlEditor", {
 			xmlRetrievalPath: null,
 			xmlRetrievalParams : null
 		},
+
+		// User set default template settings
+		templatePath : false,
+    	templates : [],
+    	defaultTemplate : false,
+		cancelTemplate : false,
+
 		// Function triggered after uploading XML document, to interpret if the response was successful or not.  If upload failed, an error message should be returned.
 		submitResponseHandler : null,
 		// Function triggered after uploading XML document, if an error occurs. Gives full text of error, instead of a boilerplate "500 server error" message.
@@ -207,8 +214,15 @@ $.widget( "xml.xmlEditor", {
 				}
 			}
 		}
-		
-		this.loadSchema(this.options.schema);
+
+		// Check for default templates if no default retrieval path
+		if (!this.options.templatePath) {
+			this.loadSchema(this.options.schema);
+		} else if (this.options.ajaxOptions.xmlRetrievalPath === null) {
+			this._templating(this);
+		} else {
+			this.loadSchema(this.options.schema);
+		}
 	},
  
 	_init: function() {
@@ -247,7 +261,7 @@ $.widget( "xml.xmlEditor", {
 				}
 			};
 		}
-		
+
 		// Retrieve the local xml content before we start populating the editor.
 		var localXMLContent = null;
 		if (this.element.is("textarea")) {
@@ -383,17 +397,34 @@ $.widget( "xml.xmlEditor", {
 				data : (ajaxOptions.xmlRetrievalParams),
 				dataType : "text",
 				success : function(data) {
-					self._documentReady(data);
+					if (!self.options.templatePath || $(data).children().length) {
+						self._documentReady(data);
+					} else {
+						// Check for templates if XML retrieval path is set.
+						self._templating(self);
+					}
 				}
 			});
 		} else {
 			this._documentReady(localXMLContent);
 		}
 	},
-	
+
+	_templating : function(self) {
+		self.template = new XMLTemplates(self);
+
+		if (self.options.defaultTemplate) {
+			self.template.loadSelectedTemplate(self.options.defaultTemplate, self);
+		} else {
+			self.template.templateForm();
+			self.template.createDialog();
+		}
+	},
+
 	// XML Document loaded event
 	_documentReady : function(xmlString) {
 		var self = this;
+
 		this.xmlState = new DocumentState(xmlString, this);
 		this.xmlState.extractNamespacePrefixes();
 		this.undoHistory = new UndoHistory(this.xmlState, this);
