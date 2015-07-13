@@ -37,8 +37,8 @@ XMLTemplates.prototype.createDialog = function() {
                 if (default_template) {
                     self.loadSelectedTemplate(default_template, self);
                 } else {
-                   // history.go(-1);
-                   self.editor.loadSchema(self.editor.options.schema);
+                    history.go(-1);
+                 //  self.editor.loadSchema(self.editor.options.schema);
                 }
             }
         }
@@ -66,7 +66,7 @@ XMLTemplates.prototype.templateForm = function() {
             '<a href="' + current.filename + '">';
 
         if (current.icon_url) {
-           form += '<img src="' + current.icon_url + '"/> ';
+           form += '<img class="' + current.icon_class + '" src="' + current.icon_url + '"/> ';
         }
 
         if (current.icon_class) {

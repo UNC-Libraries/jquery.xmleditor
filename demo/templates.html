@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>jQuery.xmleditor</title>
+<link rel="stylesheet" href="stylesheets/reset.css" type="text/css" />
+<link rel="stylesheet" href="stylesheets/demo.css" type="text/css" />
+<link rel="stylesheet" href="../css/jquery.xmleditor.css" type="text/css" />
+	<link rel="stylesheet" href="stylesheets/font-awesome/css/font-awesome.min.css" type="text/css" />
+	<link rel="stylesheet" href="stylesheets/jquery-ui.min.css" type="text/css" />
+	<link rel="stylesheet" href="stylesheets/jquery-ui.structure.min.css" type="text/css" />
+	<link rel="stylesheet" href="stylesheets/jquery-ui.theme.min.css" type="text/css" />
+<script src="../lib/ace/src-min/ace.js"></script>
+<script src="../lib/jquery.min.js"></script>
+<script src="../lib/jquery-ui.min.js"></script>
+<script src="../lib/json2.js"></script>
+<script src="../lib/cycle.js"></script>
+<script src="../lib/jquery.autosize-min.js"></script>
+<script src="../jquery.xmleditor.js"></script>
+</head>
+<body>
+	<div class="wrapper">
+		<header>
+			<h1>jQuery.xmleditor MODS Editing Demo</h1>
+			<a href="https://github.com/UNC-Libraries/jquery.xmleditor">View
+				the Project on GitHub <small>UNC-Libraries/jquery.xmleditor</small>
+			</a>
+		</header>
+	</div>
+	<div id="xml_editor">
+		<mods xmlns="http://www.loc.gov/mods/v3"> </mods>
+	</div>
+	<script>
+		$(function() {
+			$("#xml_editor").xmlEditor({
+				schema : "examples/mods.json",
+                libPath: '../lib/',
+				templateOptions: {
+					templatePath: 'examples/default_templates/',
+					templates: [
+							{ filename: 'mods.xml', description: 'Loads default MODS template', icon_class: 'fa fa-file-text-o', icon_url: '' },
+						    { filename: 'audio.xml', description: 'Loads template for audio files', icon_class: 'fa fa-file-audio-o' },
+						    { filename: 'image.xml', description: 'Loads template for image files', icon_class: 'fa fa-file-image-o'},
+							{ filename: 'video.xml', description: 'Loads template for image files. Images are pictures of things that people have digitized from other formats', icon_class: 'fa fa-file-video-o' }
+					]
+					//defaultTemplate: 'audio.xml'
+				}
+			});
+		});
+	</script>
+	<footer>
+		<p>
+			This project is maintained by <a
+				href="https://github.com/UNC-Libraries">UNC-Libraries</a>
+		</p>
+	</footer>
+</body>
+</html>
