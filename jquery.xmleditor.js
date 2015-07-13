@@ -5049,8 +5049,8 @@ XMLTemplates.prototype.focusTemplate = function(dialog) {
             base_element.addClass('focus').focus();
         }
 
-        // Go ahead and load it if enter hit
-        if (key == 13) {
+        // Go ahead and load it if enter/escape hit
+        if (key == 13 || key == 27) {
             self.processForm(dialog, self);
         }
     });
