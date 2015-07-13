@@ -766,7 +766,7 @@
 }
 
 /* Default templating */
-.no-close .ui-dialog-titlebar-close {
+.jquery-editor-no-close .ui-dialog-titlebar-close {
   display: none;
 }
 
@@ -774,8 +774,34 @@
 	margin-bottom: 25px;
 	text-align: center;
 	display: none;
+	font-weight: bold;
 }
 
 .templating {
-	margin-left: 25%;
+	height: auto;
+	border: 1px solid #d3d3d3;
+	padding: 20px 0 20px 10px;
+	margin-bottom: 10px;
+	font-weight: bold;
+	cursor: pointer;
+}
+
+.templating a {
+	text-decoration: none;
+	font-weight: bold;
+	pointer-events: none;
+}
+
+.templating a span {
+	font-weight: normal;
+	font-size: .8em;
+}
+
+#ui-id-1 {
+	text-align: center;
+}
+
+.focus {
+	background-color: #eee;
+	border-color: lightslategray;
 }

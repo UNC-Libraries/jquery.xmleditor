@@ -90,10 +90,12 @@ $.widget( "xml.xmlEditor", {
 		},
 
 		// User set default template settings
-		templatePath : false,
-    	templates : [],
-    	defaultTemplate : false,
-		cancelTemplate : false,
+		templateOptions : {
+			templatePath : false,
+			templates : [],
+			defaultTemplate : false,
+			cancelTemplate : false
+		},
 
 		// Function triggered after uploading XML document, to interpret if the response was successful or not.  If upload failed, an error message should be returned.
 		submitResponseHandler : null,
@@ -216,7 +218,7 @@ $.widget( "xml.xmlEditor", {
 		}
 
 		// Check for default templates if no default retrieval path
-		if (!this.options.templatePath) {
+		if (!this.options.templateOptions.templatePath) {
 			this.loadSchema(this.options.schema);
 		} else if (this.options.ajaxOptions.xmlRetrievalPath === null) {
 			this._templating(this);
@@ -419,8 +421,8 @@ $.widget( "xml.xmlEditor", {
 		} else {
 			self.template.templateForm();
 			dialog = self.template.createDialog();
-			self.template.loadFromDoubleClick(dialog);
-			self.template.focusTemplate();
+			self.template.focusTemplate(dialog);
+			self.template.loadEvents(dialog);
 		}
 	},
 

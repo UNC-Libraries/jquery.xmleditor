@@ -1,11 +1,11 @@
 /**
- * Create class to select and load default XML templates
+ * Create class to focus, select and load default XML templates
  * @param init_object
  * @constructor
  */
 function XMLTemplates(init_object) {
-    this.template_path = init_object.options.templatePath;
-    this.templates = init_object.options.templates;
+    this.template_path = init_object.options.templateOptions.templatePath;
+    this.templates = init_object.options.templateOptions.templates;
     this.editor = init_object;
 }
 
@@ -13,6 +13,7 @@ XMLTemplates.prototype.constructor = XMLTemplates;
 
 /**
  * Load the dialog form for user to select a template from a list of provided templates
+ * @returns {*|jQuery}
  */
 XMLTemplates.prototype.createDialog = function() {
     var self = this,
@@ -20,7 +21,7 @@ XMLTemplates.prototype.createDialog = function() {
 
     dialog = $("#dialog-form").dialog({
         autoOpen: true,
-        dialogClass: "no-close",
+        dialogClass: "jquery-editor-no-close",
         height: 350,
         width: 500,
         modal: true,
@@ -31,11 +32,12 @@ XMLTemplates.prototype.createDialog = function() {
             Cancel : function() {
                 $(this).dialog("close");
 
-                var default_template = self.editor.options.cancelTemplate;
+                var default_template = self.editor.options.templateOptions.cancelTemplate;
 
-                if(default_template) {
+                if (default_template) {
                     self.loadSelectedTemplate(default_template, self);
                 } else {
+                   // history.go(-1);
                    self.editor.loadSchema(self.editor.options.schema);
                 }
             }
@@ -58,10 +60,26 @@ XMLTemplates.prototype.templateForm = function() {
         '<ul>';
 
     for(var i=0; i<this.templates.length; i++) {
+        var current = this.templates[i];
+
         form += '<li class="templating"'  + ' id="template_' + i + '">' +
-            '<a href="#">' +
-            '   <i class="fa fa-file-o"></i> ' + this._formatFormText(this.templates[i]) +
-            '</a>'
+            '<a href="' + current.filename + '">';
+
+        if (current.icon_url) {
+           form += '<img src="' + current.icon_url + '"/> ';
+        }
+
+        if (current.icon_class) {
+           form += '<i class="' + current.icon_class + '"></i> ';
+        }
+
+        form += this._formatFormText(current.filename);
+
+        if (current.description) {
+            form += '<span> &mdash; ' + current.description + '</span>';
+        }
+
+        form += '</a>'
             '</li>';
     }
 
@@ -76,10 +94,10 @@ XMLTemplates.prototype.templateForm = function() {
  * Select a template from the form
  * @param dialog
  * @param self
- * @returns {boolean}
  */
 XMLTemplates.prototype.processForm = function(dialog, self) {
-    var selection = $(".focus").text();
+    // Split on mdash if description present
+    var selection = $(".focus").text().split('\u2014')[0];
 
     $(dialog).dialog("close");
     self.loadSelectedTemplate(selection, self);
@@ -92,7 +110,7 @@ XMLTemplates.prototype.processForm = function(dialog, self) {
  */
 XMLTemplates.prototype.loadSelectedTemplate = function(selection, self) {
     // Default template loading doesn't have access to xml_templates constructor
-    if(self.editor === undefined) { self.editor = self; }
+    if (self.editor === undefined) { self.editor = self; }
 
     $.ajax({
         url: this.template_path + this._formatFormSubmitText(selection),
@@ -109,17 +127,21 @@ XMLTemplates.prototype.loadSelectedTemplate = function(selection, self) {
 
 /**
  * Highlight and focus currently selected template
+ * If enter hit go ahead and load focused template
+ * @param dialog
  */
-XMLTemplates.prototype.focusTemplate = function() {
-    $('#dialog-form ul').on('click keydown', function(e) {
+XMLTemplates.prototype.focusTemplate = function(dialog) {
+    var self = this;
+
+    // Focus selected template
+    $('.jquery-editor-no-close').on('click keydown', function(e) {
         e.preventDefault();
         var key = e.which;
         var number_of_forms, base_element, current, form_id, next_element;
 
-        if(key === 1 || key === 9) {
+        if (key === 1 || key === 9) {
             number_of_forms = $('#dialog-form ul li').length;
-
-            if(key == 1) {
+            if (key == 1) {
                 base_element = $('#' + e.target.id);
             } else {
                 current = $('.focus').attr('id');
@@ -131,16 +153,26 @@ XMLTemplates.prototype.focusTemplate = function() {
             $('.templating').removeClass('focus');
             base_element.addClass('focus').focus();
         }
+
+        // Go ahead and load it if enter hit
+        if (key == 13) {
+            self.processForm(dialog, self);
+        }
     });
 };
 
-
-XMLTemplates.prototype.loadFromDoubleClick = function(dialog, e) {
+/**
+ * Load a template by double clicking it.
+ * @param dialog
+ */
+XMLTemplates.prototype.loadEvents = function(dialog) {
     var self = this;
-    $('#dialog-form').on('dblclick', function(e) {
+
+    $('#dialog-form').on('dblclick', function() {
         self.processForm(dialog, self);
     });
 };
+
 
 /**
  * Format template names for dialog form
@@ -151,7 +183,7 @@ XMLTemplates.prototype.loadFromDoubleClick = function(dialog, e) {
  * @private
  */
 XMLTemplates.prototype._formatFormText = function(string) {
-    var remove_file_format = string.replace(/\.\w{3,4}$/, '');
+    var remove_file_format = string.replace(/\.\w{3,}$/, '');
     return remove_file_format.charAt(0).toUpperCase() + remove_file_format.slice(1);
 };
 
