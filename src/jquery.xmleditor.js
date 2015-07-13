@@ -411,13 +411,16 @@ $.widget( "xml.xmlEditor", {
 	},
 
 	_templating : function(self) {
+		var dialog;
 		self.template = new XMLTemplates(self);
 
 		if (self.options.defaultTemplate) {
 			self.template.loadSelectedTemplate(self.options.defaultTemplate, self);
 		} else {
 			self.template.templateForm();
-			self.template.createDialog();
+			dialog = self.template.createDialog();
+			self.template.loadFromDoubleClick(dialog);
+			self.template.focusTemplate();
 		}
 	},
 

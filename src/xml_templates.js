@@ -45,6 +45,8 @@ XMLTemplates.prototype.createDialog = function() {
     form = dialog.find("form").on("submit", function(e) {
         e.preventDefault();
     });
+
+    return dialog;
 };
 
 /**
@@ -119,7 +121,7 @@ XMLTemplates.prototype.focusTemplate = function() {
 
             if(key == 1) {
                 base_element = $('#' + e.target.id);
-            } else if(key === 9) {
+            } else {
                 current = $('.focus').attr('id');
                 form_id = parseInt(current.slice(-1)) + 1;
                 next_element = (form_id === number_of_forms) ? 0 : form_id;
@@ -130,15 +132,13 @@ XMLTemplates.prototype.focusTemplate = function() {
             base_element.addClass('focus').focus();
         }
     });
-
-    $(document)
 };
 
 
-XMLTemplates.prototype.loadFromDirectClick = function(e) {
+XMLTemplates.prototype.loadFromDoubleClick = function(dialog, e) {
+    var self = this;
     $('#dialog-form').on('dblclick', function(e) {
-
-        this.processForm();
+        self.processForm(dialog, self);
     });
 };
 
