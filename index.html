@@ -6,9 +6,6 @@
 <link rel="stylesheet" href="demo/stylesheets/reset.css" type="text/css" />
 <link rel="stylesheet" href="demo/stylesheets/demo.css" type="text/css" />
 <link rel="stylesheet" href="css/jquery.xmleditor.css" type="text/css" />
-	<link rel="stylesheet" href="css/jquery-ui.min.css" type="text/css" />
-	<link rel="stylesheet" href="css/jquery-ui.structure.min.css" type="text/css" />
-	<link rel="stylesheet" href="css/jquery-ui.theme.min.css" type="text/css" />
 <script src="lib/ace/src-min/ace.js"></script>
 <script src="lib/jquery.min.js"></script>
 <script src="lib/jquery-ui.min.js"></script>
@@ -32,16 +29,7 @@
 	<script>
 		$(function() {
 			$("#xml_editor").xmlEditor({
-				schema : "demo/examples/mods.json",
-				templatePath : "demo/examples/default_templates/",
-				//defaultTemplate : "audio.xml",
-				cancelTemplate : "audio.xml",
-    			templates : ["audio.xml", "image.xml"],
-				ajaxOptions : {
-					xmlUploadPath: null,
-					xmlRetrievalPath: null,
-					xmlRetrievalParams : null
-				}
+				schema : "demo/examples/mods.json"
 			});
 		});
 	</script>
