@@ -218,9 +218,7 @@ $.widget( "xml.xmlEditor", {
 		}
 
 		// Check for default templates if no default retrieval path
-		if (!this.options.templateOptions.templatePath) {
-			this.loadSchema(this.options.schema);
-		} else if (this.options.ajaxOptions.xmlRetrievalPath === null) {
+		if (this.options.templateOptions.templatePath && !this.options.ajaxOptions.xmlRetrievalPath) {
 			this._templating(this);
 		} else {
 			this.loadSchema(this.options.schema);
@@ -399,7 +397,7 @@ $.widget( "xml.xmlEditor", {
 				data : (ajaxOptions.xmlRetrievalParams),
 				dataType : "text",
 				success : function(data) {
-					if (!self.options.templatePath || $(data).children().length) {
+					if (!self.options.templateOptions.templatePath || $(data).children().length) {
 						self._documentReady(data);
 					} else {
 						// Check for templates if XML retrieval path is set.
@@ -416,8 +414,8 @@ $.widget( "xml.xmlEditor", {
 		var dialog;
 		self.template = new XMLTemplates(self);
 
-		if (self.options.defaultTemplate) {
-			self.template.loadSelectedTemplate(self.options.defaultTemplate, self);
+		if (self.options.templateOptions.defaultTemplate) {
+			self.template.loadSelectedTemplate(self.options.templateOptions.defaultTemplate, self);
 		} else {
 			self.template.templateForm();
 			dialog = self.template.createDialog();

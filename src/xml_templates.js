@@ -7,6 +7,7 @@ function XMLTemplates(init_object) {
     this.template_path = init_object.options.templateOptions.templatePath;
     this.templates = init_object.options.templateOptions.templates;
     this.editor = init_object;
+    this.extension_regx = /\.\w{3,}$/;
 }
 
 XMLTemplates.prototype.constructor = XMLTemplates;
@@ -37,8 +38,8 @@ XMLTemplates.prototype.createDialog = function() {
                 if (default_template) {
                     self.loadSelectedTemplate(default_template, self);
                 } else {
-                    history.go(-1);
-                 //  self.editor.loadSchema(self.editor.options.schema);
+                   history.go(-1);
+                   self.editor.loadSchema(self.editor.options.schema);
                 }
             }
         }
@@ -173,7 +174,6 @@ XMLTemplates.prototype.loadEvents = function(dialog) {
     });
 };
 
-
 /**
  * Format template names for dialog form
  * Remove file extension
@@ -183,7 +183,7 @@ XMLTemplates.prototype.loadEvents = function(dialog) {
  * @private
  */
 XMLTemplates.prototype._formatFormText = function(string) {
-    var remove_file_format = string.replace(/\.\w{3,}$/, '');
+    var remove_file_format = string.replace(this.extension_regx, '');
     return remove_file_format.charAt(0).toUpperCase() + remove_file_format.slice(1);
 };
 
@@ -194,5 +194,6 @@ XMLTemplates.prototype._formatFormText = function(string) {
  * @private
  */
 XMLTemplates.prototype._formatFormSubmitText = function(string) {
-    return $.trim(string.toLowerCase()) + '.xml';
+	var extension = (this.extension_regx.test(string)) ? '' : '.xml';
+	return $.trim(string.toLowerCase()) + extension;  
 };

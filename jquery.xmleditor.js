@@ -218,9 +218,7 @@ $.widget( "xml.xmlEditor", {
 		}
 
 		// Check for default templates if no default retrieval path
-		if (!this.options.templateOptions.templatePath) {
-			this.loadSchema(this.options.schema);
-		} else if (this.options.ajaxOptions.xmlRetrievalPath === null) {
+		if (this.options.templateOptions.templatePath && !this.options.ajaxOptions.xmlRetrievalPath) {
 			this._templating(this);
 		} else {
 			this.loadSchema(this.options.schema);
@@ -399,7 +397,7 @@ $.widget( "xml.xmlEditor", {
 				data : (ajaxOptions.xmlRetrievalParams),
 				dataType : "text",
 				success : function(data) {
-					if (!self.options.templatePath || $(data).children().length) {
+					if (!self.options.templateOptions.templatePath || $(data).children().length) {
 						self._documentReady(data);
 					} else {
 						// Check for templates if XML retrieval path is set.
@@ -416,8 +414,8 @@ $.widget( "xml.xmlEditor", {
 		var dialog;
 		self.template = new XMLTemplates(self);
 
-		if (self.options.defaultTemplate) {
-			self.template.loadSelectedTemplate(self.options.defaultTemplate, self);
+		if (self.options.templateOptions.defaultTemplate) {
+			self.template.loadSelectedTemplate(self.options.templateOptions.defaultTemplate, self);
 		} else {
 			self.template.templateForm();
 			dialog = self.template.createDialog();
@@ -4902,6 +4900,7 @@ function XMLTemplates(init_object) {
     this.template_path = init_object.options.templateOptions.templatePath;
     this.templates = init_object.options.templateOptions.templates;
     this.editor = init_object;
+    this.extension_regx = /\.\w{3,}$/;
 }
 
 XMLTemplates.prototype.constructor = XMLTemplates;
@@ -4932,8 +4931,8 @@ XMLTemplates.prototype.createDialog = function() {
                 if (default_template) {
                     self.loadSelectedTemplate(default_template, self);
                 } else {
-                    history.go(-1);
-                 //  self.editor.loadSchema(self.editor.options.schema);
+                   history.go(-1);
+                   self.editor.loadSchema(self.editor.options.schema);
                 }
             }
         }
@@ -5068,7 +5067,6 @@ XMLTemplates.prototype.loadEvents = function(dialog) {
     });
 };
 
-
 /**
  * Format template names for dialog form
  * Remove file extension
@@ -5078,7 +5076,7 @@ XMLTemplates.prototype.loadEvents = function(dialog) {
  * @private
  */
 XMLTemplates.prototype._formatFormText = function(string) {
-    var remove_file_format = string.replace(/\.\w{3,}$/, '');
+    var remove_file_format = string.replace(this.extension_regx, '');
     return remove_file_format.charAt(0).toUpperCase() + remove_file_format.slice(1);
 };
 
@@ -5089,7 +5087,8 @@ XMLTemplates.prototype._formatFormText = function(string) {
  * @private
  */
 XMLTemplates.prototype._formatFormSubmitText = function(string) {
-    return $.trim(string.toLowerCase()) + '.xml';
+	var extension = (this.extension_regx.test(string)) ? '' : '.xml';
+	return $.trim(string.toLowerCase()) + extension;  
 };
 function XMLTextNode(textNode, dataType, editor) {
 	var textType = {

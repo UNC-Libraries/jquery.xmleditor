@@ -770,13 +770,6 @@
   display: none;
 }
 
-.validateTips {
-	margin-bottom: 25px;
-	text-align: center;
-	display: none;
-	font-weight: bold;
-}
-
 .templating {
 	height: auto;
 	border: 1px solid #d3d3d3;
@@ -804,4 +797,8 @@
 .focus {
 	background-color: #eee;
 	border-color: lightslategray;
+}
+
+body + #dialog-form {
+	display: none;
 }
