@@ -4993,7 +4993,7 @@ XMLTemplates.prototype.templateForm = function() {
  */
 XMLTemplates.prototype.processForm = function(dialog, self) {
     // Split on mdash if description present
-    var selection = $(".focus").text().split('\u2014')[0];
+    var selection = $(".focus a").attr('href');
 
     $(dialog).dialog("close");
     self.loadSelectedTemplate(selection, self);
@@ -5009,7 +5009,7 @@ XMLTemplates.prototype.loadSelectedTemplate = function(selection, self) {
     if (self.editor === undefined) { self.editor = self; }
 
     $.ajax({
-        url: this.template_path + this._formatFormSubmitText(selection),
+        url: this.template_path + selection,
         dataType: "xml"
     }).done(function(data) {
         var xml_string = self.editor.xml2Str(data);
@@ -5080,17 +5080,6 @@ XMLTemplates.prototype.loadEvents = function(dialog) {
 XMLTemplates.prototype._formatFormText = function(string) {
     var remove_file_format = string.replace(this.extension_regx, '');
     return remove_file_format.charAt(0).toUpperCase() + remove_file_format.slice(1);
-};
-
-/**
- * Undo pretty printing to get actual file name to load
- * @param string
- * @returns {string}
- * @private
- */
-XMLTemplates.prototype._formatFormSubmitText = function(string) {
-	var extension = (this.extension_regx.test(string)) ? '' : '.xml';
-	return $.trim(string.toLowerCase()) + extension;  
 };
 function XMLTextNode(textNode, dataType, editor) {
 	var textType = {
