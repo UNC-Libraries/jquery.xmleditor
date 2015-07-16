@@ -4915,7 +4915,7 @@ XMLTemplates.prototype.createDialog = function() {
 
     dialog = $("#dialog-form").dialog({
         autoOpen: true,
-        dialogClass: "jquery-editor-no-close",
+        dialogClass: "jquery-editor-no-close template-form",
         height: 350,
         width: 500,
         modal: true,
@@ -4950,7 +4950,7 @@ XMLTemplates.prototype.createDialog = function() {
  * Don't think we can assume user will build this form themselves
  */
 XMLTemplates.prototype.templateForm = function() {
-    var form = '<div id="dialog-form" title="Choose Template">' +
+    var form = '<div id="dialog-form" class="template-form" title="Choose Template">' +
         '<ul>';
 
     for(var i=0; i<this.templates.length; i++) {
@@ -4966,14 +4966,16 @@ XMLTemplates.prototype.templateForm = function() {
         if (current.icon_class) {
            form += '<i class="' + current.icon_class + '"></i> ';
         }
-
+        form += '<div>';
         form += this._formatFormText(current.filename);
 
         if (current.description) {
-            form += '<span> &mdash; ' + current.description + '</span>';
+            form += '<span>' + current.description + '</span>';
         }
 
-        form += '</a>'
+        form += '</div>';
+
+        form += '</a>' +
             '</li>';
     }
 
