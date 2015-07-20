@@ -219,7 +219,7 @@ $.widget( "xml.xmlEditor", {
 
 		// Check for default templates if no default retrieval path
 		if (this.options.templateOptions.templatePath && !this.options.ajaxOptions.xmlRetrievalPath) {
-			this._templating(this);
+			this._templating();
 		} else {
 			this.loadSchema(this.options.schema);
 		}
@@ -401,7 +401,7 @@ $.widget( "xml.xmlEditor", {
 						self._documentReady(data);
 					} else {
 						// Check for templates if XML retrieval path is set.
-						self._templating(self);
+						self._templating();
 					}
 				}
 			});
@@ -410,17 +410,15 @@ $.widget( "xml.xmlEditor", {
 		}
 	},
 
-	_templating : function(self) {
+	_templating : function() {
 		var dialog;
+		var self = this;
 		self.template = new XMLTemplates(self);
 
 		if (self.options.templateOptions.defaultTemplate) {
 			self.template.loadSelectedTemplate(self.options.templateOptions.defaultTemplate, self);
 		} else {
-			self.template.templateForm();
-			dialog = self.template.createDialog();
-			self.template.focusTemplate(dialog);
-			self.template.loadEvents(dialog);
+			self.template.createChooseTemplate();
 		}
 	},
 
@@ -4905,15 +4903,20 @@ function XMLTemplates(init_object) {
 
 XMLTemplates.prototype.constructor = XMLTemplates;
 
+XMLTemplates.prototype.createChooseTemplate = function() {
+    this.templateForm();
+    this.createDialog();
+    this.loadEvents();
+};
+
 /**
  * Load the dialog form for user to select a template from a list of provided templates
  * @returns {*|jQuery}
  */
 XMLTemplates.prototype.createDialog = function() {
-    var self = this,
-        dialog, form;
+    var self = this;
 
-    dialog = $("#dialog-form").dialog({
+    this.form.dialog({
         autoOpen: true,
         dialogClass: "jquery-editor-no-close template-form",
         height: 350,
@@ -4921,7 +4924,7 @@ XMLTemplates.prototype.createDialog = function() {
         modal: true,
         buttons: {
             Choose : function() {
-                self.processForm($(this), self);
+                self.processForm();
             },
             Cancel : function() {
                 $(this).dialog("close");
@@ -4929,7 +4932,7 @@ XMLTemplates.prototype.createDialog = function() {
                 var default_template = self.editor.options.templateOptions.cancelTemplate;
 
                 if (default_template) {
-                    self.loadSelectedTemplate(default_template, self);
+                    self.loadSelectedTemplate(default_template);
                 } else {
                    history.go(-1);
                    self.editor.loadSchema(self.editor.options.schema);
@@ -4937,12 +4940,6 @@ XMLTemplates.prototype.createDialog = function() {
             }
         }
     });
-
-    form = dialog.find("form").on("submit", function(e) {
-        e.preventDefault();
-    });
-
-    return dialog;
 };
 
 /**
@@ -4950,7 +4947,7 @@ XMLTemplates.prototype.createDialog = function() {
  * Don't think we can assume user will build this form themselves
  */
 XMLTemplates.prototype.templateForm = function() {
-    var form = '<div id="dialog-form" class="template-form" title="Choose Template">' +
+    var form = '<div class="template-form" title="Choose Template">' +
         '<ul>';
 
     for(var i=0; i<this.templates.length; i++) {
@@ -4982,8 +4979,9 @@ XMLTemplates.prototype.templateForm = function() {
     form += '</ul>' +
         '</div>';
 
-    $(form).insertAfter("body");
-    $('#dialog-form li:first').addClass('focus');
+    this.form = $(form);
+    this.form.insertAfter("body");
+    $('li:first', this.form).addClass('focus');
 };
 
 /**
@@ -4991,12 +4989,12 @@ XMLTemplates.prototype.templateForm = function() {
  * @param dialog
  * @param self
  */
-XMLTemplates.prototype.processForm = function(dialog, self) {
+XMLTemplates.prototype.processForm = function() {
     // Split on mdash if description present
-    var selection = $(".focus a").attr('href');
+    var selection = $(".focus a", this.form).attr('href');
 
-    $(dialog).dialog("close");
-    self.loadSelectedTemplate(selection, self);
+    this.form.dialog("close");
+    this.loadSelectedTemplate(selection);
 };
 
 /**
@@ -5004,10 +5002,9 @@ XMLTemplates.prototype.processForm = function(dialog, self) {
  * @param selection
  * @param self
  */
-XMLTemplates.prototype.loadSelectedTemplate = function(selection, self) {
+XMLTemplates.prototype.loadSelectedTemplate = function(selection) {
+    var self = this;
     // Default template loading doesn't have access to xml_templates constructor
-    if (self.editor === undefined) { self.editor = self; }
-
     $.ajax({
         url: this.template_path + selection,
         dataType: "xml"
@@ -5026,33 +5023,37 @@ XMLTemplates.prototype.loadSelectedTemplate = function(selection, self) {
  * If enter hit go ahead and load focused template
  * @param dialog
  */
-XMLTemplates.prototype.focusTemplate = function(dialog) {
+XMLTemplates.prototype.focusTemplate = function() {
     var self = this;
 
     // Focus selected template
-    $('.jquery-editor-no-close').on('click keydown', function(e) {
+    this.form.on('keydown click', '.templating', function(e) {
+
         e.preventDefault();
         var key = e.which;
         var number_of_forms, base_element, current, form_id, next_element;
 
         if (key === 1 || key === 9) {
-            number_of_forms = $('#dialog-form ul li').length;
+            // Left click, select the clicked target
             if (key == 1) {
-                base_element = $('#' + e.target.id);
+                base_element = $(e.target);
+                if (!base_element.hasClass("templating")) {
+                    base_element = base_element.parent(".templating");
+                }
             } else {
-                current = $('.focus').attr('id');
+                // Tab, select the next template
+                current = $('.focus', self.form).attr('id');
                 form_id = parseInt(current.slice(-1)) + 1;
                 next_element = (form_id === number_of_forms) ? 0 : form_id;
-                base_element = $('#template_' + next_element);
+                base_element = $('#template_' + next_element, self.form);
             }
 
-            $('.templating').removeClass('focus');
+            $('.templating', self.form).removeClass('focus');
             base_element.addClass('focus').focus();
         }
 
-        // Go ahead and load it if enter/escape hit
         if (key == 13 || key == 27) {
-            self.processForm(dialog, self);
+            self.processForm();
         }
     });
 };
@@ -5064,8 +5065,10 @@ XMLTemplates.prototype.focusTemplate = function(dialog) {
 XMLTemplates.prototype.loadEvents = function(dialog) {
     var self = this;
 
-    $('#dialog-form').on('dblclick', function() {
-        self.processForm(dialog, self);
+    this.focusTemplate();
+
+    this.form.on('dblclick', function() {
+        self.processForm();
     });
 };
 

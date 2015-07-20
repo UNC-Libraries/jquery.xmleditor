@@ -839,16 +839,12 @@
 	min-height: 36px;
 }
 
-#ui-id-1 {
-	text-align: center;
-}
-
 .template-form .focus {
 	background-color: #eee;
 	border-color: lightslategray;
 }
 
-body + #dialog-form {
+body + .template-form {
 	display: none;
 }
 

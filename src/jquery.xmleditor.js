@@ -219,7 +219,7 @@ $.widget( "xml.xmlEditor", {
 
 		// Check for default templates if no default retrieval path
 		if (this.options.templateOptions.templatePath && !this.options.ajaxOptions.xmlRetrievalPath) {
-			this._templating(this);
+			this._templating();
 		} else {
 			this.loadSchema(this.options.schema);
 		}
@@ -401,7 +401,7 @@ $.widget( "xml.xmlEditor", {
 						self._documentReady(data);
 					} else {
 						// Check for templates if XML retrieval path is set.
-						self._templating(self);
+						self._templating();
 					}
 				}
 			});
@@ -410,17 +410,15 @@ $.widget( "xml.xmlEditor", {
 		}
 	},
 
-	_templating : function(self) {
+	_templating : function() {
 		var dialog;
+		var self = this;
 		self.template = new XMLTemplates(self);
 
 		if (self.options.templateOptions.defaultTemplate) {
 			self.template.loadSelectedTemplate(self.options.templateOptions.defaultTemplate, self);
 		} else {
-			self.template.templateForm();
-			dialog = self.template.createDialog();
-			self.template.focusTemplate(dialog);
-			self.template.loadEvents(dialog);
+			self.template.createChooseTemplate();
 		}
 	},
 
