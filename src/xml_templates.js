@@ -143,6 +143,8 @@ XMLTemplates.prototype.focusTemplate = function() {
         var number_of_forms, base_element, current, form_id, next_element;
 
         if (key === 1 || key === 9) {
+            number_of_forms = $('.templating').length;
+
             // Left click, select the clicked target
             if (key == 1) {
                 base_element = $(e.target);
@@ -150,17 +152,17 @@ XMLTemplates.prototype.focusTemplate = function() {
                     base_element = base_element.parent(".templating");
                 }
             } else {
-                // Tab, select the next template
                 current = $('.focus', self.form).attr('id');
                 form_id = parseInt(current.slice(-1)) + 1;
                 next_element = (form_id === number_of_forms) ? 0 : form_id;
-                base_element = $('#template_' + next_element, self.form);
+                base_element = $('#template_' + next_element);
             }
 
             $('.templating', self.form).removeClass('focus');
             base_element.addClass('focus').focus();
         }
 
+        // Load currently focused form if enter or escape is hit
         if (key == 13 || key == 27) {
             self.processForm();
         }
