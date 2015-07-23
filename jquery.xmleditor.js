@@ -88,6 +88,15 @@ $.widget( "xml.xmlEditor", {
 			xmlRetrievalPath: null,
 			xmlRetrievalParams : null
 		},
+
+		// User set default template settings
+		templateOptions : {
+			templatePath : false,
+			templates : [],
+			defaultTemplate : false,
+			cancelTemplate : false
+		},
+
 		// Function triggered after uploading XML document, to interpret if the response was successful or not.  If upload failed, an error message should be returned.
 		submitResponseHandler : null,
 		// Function triggered after uploading XML document, if an error occurs. Gives full text of error, instead of a boilerplate "500 server error" message.
@@ -207,8 +216,13 @@ $.widget( "xml.xmlEditor", {
 				}
 			}
 		}
-		
-		this.loadSchema(this.options.schema);
+
+		// Check for default templates if no default retrieval path
+		if (this.options.templateOptions.templatePath && !this.options.ajaxOptions.xmlRetrievalPath) {
+			this._templating();
+		} else {
+			this.loadSchema(this.options.schema);
+		}
 	},
  
 	_init: function() {
@@ -247,7 +261,7 @@ $.widget( "xml.xmlEditor", {
 				}
 			};
 		}
-		
+
 		// Retrieve the local xml content before we start populating the editor.
 		var localXMLContent = null;
 		if (this.element.is("textarea")) {
@@ -383,17 +397,35 @@ $.widget( "xml.xmlEditor", {
 				data : (ajaxOptions.xmlRetrievalParams),
 				dataType : "text",
 				success : function(data) {
-					self._documentReady(data);
+					if (!self.options.templateOptions.templatePath || $(data).children().length) {
+						self._documentReady(data);
+					} else {
+						// Check for templates if XML retrieval path is set.
+						self._templating();
+					}
 				}
 			});
 		} else {
 			this._documentReady(localXMLContent);
 		}
 	},
-	
+
+	_templating : function() {
+		var dialog;
+		var self = this;
+		self.template = new XMLTemplates(self);
+
+		if (self.options.templateOptions.defaultTemplate) {
+			self.template.loadSelectedTemplate(self.options.templateOptions.defaultTemplate, self);
+		} else {
+			self.template.createChooseTemplate();
+		}
+	},
+
 	// XML Document loaded event
 	_documentReady : function(xmlString) {
 		var self = this;
+
 		this.xmlState = new DocumentState(xmlString, this);
 		this.xmlState.extractNamespacePrefixes();
 		this.undoHistory = new UndoHistory(this.xmlState, this);
@@ -2936,8 +2968,8 @@ ModifyMenuPanel.prototype.initialize = function (parentContainer) {
 				}
 
 				if (!('responseHandler' in config) && config.url) {
-					config.responseHandler = this.options.submitResponseHandler
-						|| this.swordSubmitResponseHandler;
+					config.responseHandler = config.responseHandler = self.editor.options.submitResponseHandler
+						|| self.editor.swordSubmitResponseHandler;
 				}
 
 				submitButton.click(function() {
@@ -4855,6 +4887,204 @@ XMLElementStub.prototype.isSelected = function() {
 
 XMLElementStub.prototype.focus = function() {
 	this.nameInput.focus();
+};
+/**
+ * Create class to focus, select and load default XML templates
+ * @param init_object
+ * @constructor
+ */
+
+function XMLTemplates(init_object) {
+    this.template_path = init_object.options.templateOptions.templatePath;
+    this.templates = init_object.options.templateOptions.templates;
+    this.editor = init_object;
+    this.extension_regx = /\.\w{3,}$/;
+}
+
+XMLTemplates.prototype.constructor = XMLTemplates;
+
+XMLTemplates.prototype.createChooseTemplate = function() {
+    this.templateForm();
+    this.createDialog();
+    this.loadEvents();
+};
+
+/**
+ * Load the dialog form for user to select a template from a list of provided templates
+ * @returns {*|jQuery}
+ */
+XMLTemplates.prototype.createDialog = function() {
+    var self = this;
+
+    this.form.dialog({
+        autoOpen: true,
+        dialogClass: "jquery-editor-no-close template-form",
+        height: 350,
+        width: 500,
+        modal: true,
+        buttons: {
+            Choose : function() {
+                self.processForm();
+            },
+            Cancel : function() {
+                $(this).dialog("close");
+
+                var default_template = self.editor.options.templateOptions.cancelTemplate;
+
+                if (default_template) {
+                    self.loadSelectedTemplate(default_template);
+                } else {
+                   history.go(-1);
+                   self.editor.loadSchema(self.editor.options.schema);
+                }
+            }
+        }
+    });
+};
+
+/**
+ * Create form & add to DOM
+ * Don't think we can assume user will build this form themselves
+ */
+XMLTemplates.prototype.templateForm = function() {
+    var form = '<div class="template-form" title="Choose Template">' +
+        '<ul>';
+
+    for(var i=0; i<this.templates.length; i++) {
+        var current = this.templates[i];
+
+        form += '<li class="templating"'  + ' id="template_' + i + '">' +
+            '<a href="' + current.filename + '">';
+
+        if (current.icon_url) {
+           form += '<img class="' + current.icon_class + '" src="' + current.icon_url + '"/> ';
+        }
+
+        if (current.icon_class) {
+           form += '<i class="' + current.icon_class + '"></i> ';
+        }
+        form += '<div>';
+        form += this._formatFormText(current.filename);
+
+        if (current.description) {
+            form += '<span>' + current.description + '</span>';
+        }
+
+        form += '</div>';
+
+        form += '</a>' +
+            '</li>';
+    }
+
+    form += '</ul>' +
+        '</div>';
+
+    this.form = $(form);
+    this.form.insertAfter("body");
+    $('li:first', this.form).addClass('focus');
+};
+
+/**
+ * Select a template from the form
+ * @param dialog
+ * @param self
+ */
+XMLTemplates.prototype.processForm = function() {
+    // Split on mdash if description present
+    var selection = $(".focus a", this.form).attr('href');
+
+    this.form.dialog("close");
+    this.loadSelectedTemplate(selection);
+};
+
+/**
+ * Load selected template.
+ * @param selection
+ * @param self
+ */
+XMLTemplates.prototype.loadSelectedTemplate = function(selection) {
+    var self = this;
+    // Default template loading doesn't have access to xml_templates constructor
+    $.ajax({
+        url: this.template_path + selection,
+        dataType: "xml"
+    }).done(function(data) {
+        var xml_string = self.editor.xml2Str(data);
+        self.editor._documentReady(xml_string);
+        self.editor.loadSchema(self.editor.options.schema);
+    }).fail(function(jqXHR, textStatus) {
+        self.editor.loadSchema(self.editor.options.schema);
+        alert("Unable to load the requested template: " + textStatus);
+    });
+};
+
+/**
+ * Highlight and focus currently selected template
+ * If enter hit go ahead and load focused template
+ * @param dialog
+ */
+XMLTemplates.prototype.focusTemplate = function() {
+    var self = this;
+
+    // Focus selected template
+    this.form.on('keydown click', '.templating', function(e) {
+
+        e.preventDefault();
+        var key = e.which;
+        var number_of_forms, base_element, current, form_id, next_element;
+
+        if (key === 1 || key === 9) {
+            number_of_forms = $('.templating').length;
+
+            // Left click, select the clicked target
+            if (key == 1) {
+                base_element = $(e.target);
+                if (!base_element.hasClass("templating")) {
+                    base_element = base_element.parent(".templating");
+                }
+            } else {
+                current = $('.focus', self.form).attr('id');
+                form_id = parseInt(current.slice(-1)) + 1;
+                next_element = (form_id === number_of_forms) ? 0 : form_id;
+                base_element = $('#template_' + next_element);
+            }
+
+            $('.templating', self.form).removeClass('focus');
+            base_element.addClass('focus').focus();
+        }
+
+        // Load currently focused form if enter or escape is hit
+        if (key == 13 || key == 27) {
+            self.processForm();
+        }
+    });
+};
+
+/**
+ * Load a template by double clicking it.
+ * @param dialog
+ */
+XMLTemplates.prototype.loadEvents = function(dialog) {
+    var self = this;
+
+    this.focusTemplate();
+
+    this.form.on('dblclick', function() {
+        self.processForm();
+    });
+};
+
+/**
+ * Format template names for dialog form
+ * Remove file extension
+ * Upper case first letter for template names without extending String prototype
+ * @param string
+ * @returns {string}
+ * @private
+ */
+XMLTemplates.prototype._formatFormText = function(string) {
+    var remove_file_format = string.replace(this.extension_regx, '');
+    return remove_file_format.charAt(0).toUpperCase() + remove_file_format.slice(1);
 };
 function XMLTextNode(textNode, dataType, editor) {
 	var textType = {

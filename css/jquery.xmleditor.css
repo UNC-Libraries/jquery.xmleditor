@@ -764,3 +764,86 @@
 	*display: inline;
 	width: 1em;
 }
+
+/* Default templating */
+.template-form.jquery-editor-no-close .ui-dialog-titlebar-close {
+  display: none;
+}
+
+.ui-dialog.template-form  {
+	border-radius: 6px;
+	font-size: 18px;
+}
+
+.template-form .ui-dialog-titlebar {
+	background : transparent linear-gradient(to bottom, #FFF, #DDD) repeat scroll 0% 0%;
+	padding: 8px 10px;
+	border-radius: 6px 6px 0px 0px;
+	border-bottom: 1px solid #BBB;
+	margin-bottom: 6px;
+	font-weight: bold;
+	font-size: 1.2em;
+	color: #445;
+}
+
+.template-form .ui-dialog-content {
+	padding: 10px;
+	border: none;
+	overflow: auto;
+}
+
+.template-form .ui-dialog-buttonpane {
+	text-align: right;
+	padding: 6px;
+	border: none;
+	background: none;
+	border-top: 1px solid #AAA;
+}
+
+.template-form .ui-button {
+	padding: 8px 10px;
+	border-radius: 6px;
+	border: 1px solid #aaa;
+	margin-left: 10px;
+	background-color: #eee;
+	font-size: 1em;
+}
+
+.templating {
+	height: auto;
+	border: 1px solid #d3d3d3;
+	padding: 10px;
+	margin-bottom: 10px;
+	font-weight: bold;
+	cursor: pointer;
+	border-radius: 4px;
+}
+
+.templating a {
+	text-decoration: none;
+	font-weight: bold;
+	pointer-events: none;
+	color: #000;
+	clear: both;
+}
+
+.templating a span {
+	font-weight: normal;
+	font-size: .8em;
+	display: block;
+	margin-top: 5px;
+	line-height: 1.2em;
+}
+
+.templating div {
+	min-height: 36px;
+}
+
+.template-form .focus {
+	background-color: #eee;
+	border-color: lightslategray;
+}
+
+body + .template-form {
+	display: none;
+}
