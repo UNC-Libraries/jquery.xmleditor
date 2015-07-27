@@ -93,7 +93,6 @@ $.widget( "xml.xmlEditor", {
 		templateOptions : {
 			templatePath : false,
 			templates : [],
-			defaultTemplate : false,
 			cancelTemplate : false
 		},
 
@@ -217,12 +216,8 @@ $.widget( "xml.xmlEditor", {
 			}
 		}
 
-		// Check for default templates if no default retrieval path
-		if (this.options.templateOptions.templatePath && !this.options.ajaxOptions.xmlRetrievalPath) {
-			this._templating();
-		} else {
-			this.loadSchema(this.options.schema);
-		}
+		// Load the schema
+		this.loadSchema(this.options.schema);
 	},
  
 	_init: function() {
@@ -322,6 +317,7 @@ $.widget( "xml.xmlEditor", {
 			});
 		}
 		
+		// Start loading the document for editing
 		this.loadDocument(this.options.ajaxOptions, localXMLContent);
 	},
 	
@@ -392,24 +388,31 @@ $.widget( "xml.xmlEditor", {
 		var self = this;
 
 		if (ajaxOptions != null && ajaxOptions.xmlRetrievalPath != null) {
+			// Load document from the specified path
 			$.ajax({
 				type : "GET",
 				url : ajaxOptions.xmlRetrievalPath,
 				data : (ajaxOptions.xmlRetrievalParams),
 				dataType : "text",
 				success : function(data) {
-					if (!self.options.templateOptions.templatePath || $(data).children().length) {
+					if ($(data).children().length) {
 						self._documentReady(data);
-					} else {
+					} else if (self.options.templateOptions.templatePath) {
+						// Document path didn't retrieve anything
 						self._templating();
+					} else {
+						console.error("Could not specified document and no fallback provided, cannot start.");
 					}
 				}
 			});
-		} else {
-			if (self.options.templateOptions.templatePath  && ajaxOptions.xmlRetrievalPath === null) {
-				self._templating();
-			}
+		} else if ($.trim(localXMLContent)) {
+			// Use local content embedded in starting element next
 			this._documentReady(localXMLContent);
+		} else if (this.options.templateOptions.templatePath) {
+			// Fall back to templating if it was specified
+			this._templating();
+		} else {
+			console.error("No starting document");
 		}
 	},
 
@@ -418,11 +421,7 @@ $.widget( "xml.xmlEditor", {
 		var self = this;
 		self.template = new XMLTemplates(self);
 
-		if (self.options.templateOptions.defaultTemplate) {
-			self.template.loadSelectedTemplate(self.options.templateOptions.defaultTemplate, self);
-		} else {
-			self.template.createChooseTemplate();
-		}
+		self.template.createChooseTemplate();
 	},
 
 	// XML Document loaded event
@@ -4967,7 +4966,7 @@ XMLTemplates.prototype.templateForm = function() {
            form += '<i class="' + current.icon_class + '"></i> ';
         }
         form += '<div>';
-        form += this._formatFormText(current.filename);
+        form += current.title? current.title : current.filename;
 
         if (current.description) {
             form += '<span>' + current.description + '</span>';
@@ -5014,11 +5013,7 @@ XMLTemplates.prototype.loadSelectedTemplate = function(selection) {
     }).done(function(data) {
         var xml_string = self.editor.xml2Str(data);
         self.editor._documentReady(xml_string);
-        if (self.editor.options.ajaxOptions.xmlRetrievalPath === null) {
-          self.editor.loadSchema(self.editor.options.schema);
-        }
     }).fail(function(jqXHR, textStatus) {
-        self.editor.loadSchema(self.editor.options.schema);
         alert("Unable to load the requested template: " + textStatus);
     });
 };
@@ -5077,19 +5072,6 @@ XMLTemplates.prototype.loadEvents = function(dialog) {
     this.form.on('dblclick', function() {
         self.processForm();
     });
-};
-
-/**
- * Format template names for dialog form
- * Remove file extension
- * Upper case first letter for template names without extending String prototype
- * @param string
- * @returns {string}
- * @private
- */
-XMLTemplates.prototype._formatFormText = function(string) {
-    var remove_file_format = string.replace(this.extension_regx, '');
-    return remove_file_format.charAt(0).toUpperCase() + remove_file_format.slice(1);
 };
 function XMLTextNode(textNode, dataType, editor) {
 	var textType = {

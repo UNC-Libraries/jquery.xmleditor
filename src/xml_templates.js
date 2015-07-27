@@ -73,7 +73,7 @@ XMLTemplates.prototype.templateForm = function() {
            form += '<i class="' + current.icon_class + '"></i> ';
         }
         form += '<div>';
-        form += this._formatFormText(current.filename);
+        form += current.title? current.title : current.filename;
 
         if (current.description) {
             form += '<span>' + current.description + '</span>';
@@ -120,11 +120,7 @@ XMLTemplates.prototype.loadSelectedTemplate = function(selection) {
     }).done(function(data) {
         var xml_string = self.editor.xml2Str(data);
         self.editor._documentReady(xml_string);
-        if (self.editor.options.ajaxOptions.xmlRetrievalPath === null) {
-          self.editor.loadSchema(self.editor.options.schema);
-        }
     }).fail(function(jqXHR, textStatus) {
-        self.editor.loadSchema(self.editor.options.schema);
         alert("Unable to load the requested template: " + textStatus);
     });
 };
@@ -183,17 +179,4 @@ XMLTemplates.prototype.loadEvents = function(dialog) {
     this.form.on('dblclick', function() {
         self.processForm();
     });
-};
-
-/**
- * Format template names for dialog form
- * Remove file extension
- * Upper case first letter for template names without extending String prototype
- * @param string
- * @returns {string}
- * @private
- */
-XMLTemplates.prototype._formatFormText = function(string) {
-    var remove_file_format = string.replace(this.extension_regx, '');
-    return remove_file_format.charAt(0).toUpperCase() + remove_file_format.slice(1);
 };
