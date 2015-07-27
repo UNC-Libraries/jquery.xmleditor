@@ -120,7 +120,9 @@ XMLTemplates.prototype.loadSelectedTemplate = function(selection) {
     }).done(function(data) {
         var xml_string = self.editor.xml2Str(data);
         self.editor._documentReady(xml_string);
-        self.editor.loadSchema(self.editor.options.schema);
+        if (self.editor.options.ajaxOptions.xmlRetrievalPath === null) {
+          self.editor.loadSchema(self.editor.options.schema);
+        }
     }).fail(function(jqXHR, textStatus) {
         self.editor.loadSchema(self.editor.options.schema);
         alert("Unable to load the requested template: " + textStatus);

@@ -389,8 +389,9 @@ $.widget( "xml.xmlEditor", {
 	
 	// Load the XML document for editing
 	loadDocument: function(ajaxOptions, localXMLContent) {
+		var self = this;
+
 		if (ajaxOptions != null && ajaxOptions.xmlRetrievalPath != null) {
-			var self = this;
 			$.ajax({
 				type : "GET",
 				url : ajaxOptions.xmlRetrievalPath,
@@ -400,12 +401,14 @@ $.widget( "xml.xmlEditor", {
 					if (!self.options.templateOptions.templatePath || $(data).children().length) {
 						self._documentReady(data);
 					} else {
-						// Check for templates if XML retrieval path is set.
 						self._templating();
 					}
 				}
 			});
 		} else {
+			if (self.options.templateOptions.templatePath  && ajaxOptions.xmlRetrievalPath === null) {
+				self._templating();
+			}
 			this._documentReady(localXMLContent);
 		}
 	},

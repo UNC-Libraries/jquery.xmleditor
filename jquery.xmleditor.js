@@ -389,8 +389,9 @@ $.widget( "xml.xmlEditor", {
 	
 	// Load the XML document for editing
 	loadDocument: function(ajaxOptions, localXMLContent) {
+		var self = this;
+
 		if (ajaxOptions != null && ajaxOptions.xmlRetrievalPath != null) {
-			var self = this;
 			$.ajax({
 				type : "GET",
 				url : ajaxOptions.xmlRetrievalPath,
@@ -400,12 +401,14 @@ $.widget( "xml.xmlEditor", {
 					if (!self.options.templateOptions.templatePath || $(data).children().length) {
 						self._documentReady(data);
 					} else {
-						// Check for templates if XML retrieval path is set.
 						self._templating();
 					}
 				}
 			});
 		} else {
+			if (self.options.templateOptions.templatePath  && ajaxOptions.xmlRetrievalPath === null) {
+				self._templating();
+			}
 			this._documentReady(localXMLContent);
 		}
 	},
@@ -5011,7 +5014,9 @@ XMLTemplates.prototype.loadSelectedTemplate = function(selection) {
     }).done(function(data) {
         var xml_string = self.editor.xml2Str(data);
         self.editor._documentReady(xml_string);
-        self.editor.loadSchema(self.editor.options.schema);
+        if (self.editor.options.ajaxOptions.xmlRetrievalPath === null) {
+          self.editor.loadSchema(self.editor.options.schema);
+        }
     }).fail(function(jqXHR, textStatus) {
         self.editor.loadSchema(self.editor.options.schema);
         alert("Unable to load the requested template: " + textStatus);
