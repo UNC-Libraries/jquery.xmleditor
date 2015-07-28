@@ -93,7 +93,7 @@ $.widget( "xml.xmlEditor", {
 		templateOptions : {
 			templatePath : false,
 			templates : [],
-			cancelTemplate : false
+			cancelFunction : false
 		},
 
 		// Function triggered after uploading XML document, to interpret if the response was successful or not.  If upload failed, an error message should be returned.

@@ -24,6 +24,13 @@ XMLTemplates.prototype.createChooseTemplate = function() {
  */
 XMLTemplates.prototype.createDialog = function() {
     var self = this;
+    var buttons = {};
+    if (self.editor.options.templateOptions.cancelFunction) {
+        buttons["Cancel"] = $.proxy(self.editor.options.templateOptions.cancelFunction, self);
+    }
+    buttons["Choose"] = function() {
+        self.processForm();
+    };
 
     this.form.dialog({
         autoOpen: true,
@@ -31,23 +38,7 @@ XMLTemplates.prototype.createDialog = function() {
         height: 350,
         width: 500,
         modal: true,
-        buttons: {
-            Choose : function() {
-                self.processForm();
-            },
-            Cancel : function() {
-                $(this).dialog("close");
-
-                var default_template = self.editor.options.templateOptions.cancelTemplate;
-
-                if (default_template) {
-                    self.loadSelectedTemplate(default_template);
-                } else {
-                   history.go(-1);
-                   self.editor.loadSchema(self.editor.options.schema);
-                }
-            }
-        }
+        buttons: buttons
     });
 };
 
