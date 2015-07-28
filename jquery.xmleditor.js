@@ -5020,11 +5020,11 @@ XMLTemplates.prototype.focusTemplate = function() {
     // Focus selected template
     this.form.on('keydown click', '.templating', function(e) {
 
-        e.preventDefault();
         var key = e.which;
         var number_of_forms, base_element, current, form_id, next_element;
 
         if (key === 1 || key === 9) {
+            e.preventDefault();
             number_of_forms = $('.templating').length;
 
             // Left click, select the clicked target
