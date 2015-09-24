@@ -1165,5 +1165,28 @@ $.widget( "xml.xmlEditor", {
 				$("#" + xmlMenuHeaderPrefix + this.toString()).removeClass("disabled").data("menuItemData").enabled = true;
 			else $("#" + xmlMenuHeaderPrefix + this.toString()).addClass("disabled").data("menuItemData").enabled = false;
 		});
+	},
+
+	// Finds the associated vocabulary for an xml element
+	getVocabulary: function(self, xmlElement) {
+		if (!this.options.vocabularies) {
+			return null;
+		}
+
+		var matchingVocab = null;
+		$.each(this.options.vocabularies, function(selector, vocabulary){
+			// find elements in xml document that match this vocabulary's selector
+			var matches = $(selector, self.xmlState.xml);
+
+			// Check to see if our xmlElement was in the matching list
+			for (var i = 0; i < matches.length; i++) {
+				if (xmlElement.xmlNode === matches[i]) {
+					matchingVocab = vocabulary;
+					return false;
+				}
+			}
+		});
+
+		return matchingVocab;
 	}
 });
