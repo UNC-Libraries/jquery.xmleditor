@@ -1165,6 +1165,30 @@ $.widget( "xml.xmlEditor", {
 				$("#" + xmlMenuHeaderPrefix + this.toString()).removeClass("disabled").data("menuItemData").enabled = true;
 			else $("#" + xmlMenuHeaderPrefix + this.toString()).addClass("disabled").data("menuItemData").enabled = false;
 		});
+	},
+
+	// Finds the associated vocabulary for an xml element
+	getVocabulary: function(xmlElement) {
+		if (!this.options.vocabularies) {
+			return null;
+		}
+
+		var matchingVocab = null;
+		var xmlDocument = this.xmlState.xml;
+		$.each(this.options.vocabularies, function(selector, vocabulary){
+			// find elements in xml document that match this vocabulary's selector
+			var matches = $(selector, xmlDocument);
+
+			// Check to see if our xmlElement was in the matching list
+			for (var i = 0; i < matches.length; i++) {
+				if (xmlElement.xmlNode[0] === matches[i]) {
+					matchingVocab = vocabulary;
+					return false;
+				}
+			}
+		});
+
+		return matchingVocab;
 	}
 });
 function AbstractXMLObject(objectType, editor) {
@@ -4397,7 +4421,9 @@ XMLElement.prototype.renderChild = function(childNode, recursive) {
 };
 
 XMLElement.prototype.renderText = function(childNode, prepend) {
-	var textNode = new XMLTextNode(childNode, this.objectType.type, this.editor);
+	var vocabulary = this.editor.getVocabulary(this);
+
+	var textNode = new XMLTextNode(childNode, this.objectType.type, this.editor, vocabulary);
 	textNode.render(this, prepend);
 
 	this.nodeCount++;
@@ -5064,7 +5090,7 @@ XMLTemplates.prototype.loadEvents = function(dialog) {
         self.processForm();
     });
 };
-function XMLTextNode(textNode, dataType, editor) {
+function XMLTextNode(textNode, dataType, editor, vocabulary) {
 	var textType = {
 		text : true,
 		type : dataType
@@ -5072,6 +5098,7 @@ function XMLTextNode(textNode, dataType, editor) {
 
 	this.textNode = textNode;
 	this.xmlNode = $(textNode);
+	this.vocabulary = vocabulary;
 	
 	AbstractXMLObject.call(this, textType, editor);
 	
@@ -5133,6 +5160,11 @@ XMLTextNode.prototype.render = function(parentElement, prepend) {
 	this.textInput = AbstractXMLObject.prototype.createElementInput.call(this,
 			this.domNodeID + "_text", textValue, inputColumn);
 	this.textInput.addClass('element_text');
+	if (this.vocabulary) {
+		this.textInput.autocomplete({
+				source : this.vocabulary
+			});
+	}
 
 	this.deleteButton = document.createElement('div');
 	this.deleteButton.className = 'xml_delete';

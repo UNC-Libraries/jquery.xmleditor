@@ -1,4 +1,4 @@
-function XMLTextNode(textNode, dataType, editor) {
+function XMLTextNode(textNode, dataType, editor, vocabulary) {
 	var textType = {
 		text : true,
 		type : dataType
@@ -6,6 +6,7 @@ function XMLTextNode(textNode, dataType, editor) {
 
 	this.textNode = textNode;
 	this.xmlNode = $(textNode);
+	this.vocabulary = vocabulary;
 	
 	AbstractXMLObject.call(this, textType, editor);
 	
@@ -67,6 +68,11 @@ XMLTextNode.prototype.render = function(parentElement, prepend) {
 	this.textInput = AbstractXMLObject.prototype.createElementInput.call(this,
 			this.domNodeID + "_text", textValue, inputColumn);
 	this.textInput.addClass('element_text');
+	if (this.vocabulary) {
+		this.textInput.autocomplete({
+				source : this.vocabulary
+			});
+	}
 
 	this.deleteButton = document.createElement('div');
 	this.deleteButton.className = 'xml_delete';

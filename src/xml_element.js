@@ -382,7 +382,9 @@ XMLElement.prototype.renderChild = function(childNode, recursive) {
 };
 
 XMLElement.prototype.renderText = function(childNode, prepend) {
-	var textNode = new XMLTextNode(childNode, this.objectType.type, this.editor);
+	var vocabulary = this.editor.getVocabulary(this);
+
+	var textNode = new XMLTextNode(childNode, this.objectType.type, this.editor, vocabulary);
 	textNode.render(this, prepend);
 
 	this.nodeCount++;

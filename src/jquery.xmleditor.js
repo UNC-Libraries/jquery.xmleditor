@@ -1168,19 +1168,20 @@ $.widget( "xml.xmlEditor", {
 	},
 
 	// Finds the associated vocabulary for an xml element
-	getVocabulary: function(self, xmlElement) {
+	getVocabulary: function(xmlElement) {
 		if (!this.options.vocabularies) {
 			return null;
 		}
 
 		var matchingVocab = null;
+		var xmlDocument = this.xmlState.xml;
 		$.each(this.options.vocabularies, function(selector, vocabulary){
 			// find elements in xml document that match this vocabulary's selector
-			var matches = $(selector, self.xmlState.xml);
+			var matches = $(selector, xmlDocument);
 
 			// Check to see if our xmlElement was in the matching list
 			for (var i = 0; i < matches.length; i++) {
-				if (xmlElement.xmlNode === matches[i]) {
+				if (xmlElement.xmlNode[0] === matches[i]) {
 					matchingVocab = vocabulary;
 					return false;
 				}
