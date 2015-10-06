@@ -245,6 +245,7 @@ SchemaProcessor.prototype.build_attribute = function(node, definition) {
 	} else {
 		// Build or retrieve the type definition
 		var type = node.getAttribute("type");
+		definition.use = node.getAttribute("use");
 		if (type == null) {
 			var child = this.getChildren(node)[0];
 			if (child)
