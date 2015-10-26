@@ -33,35 +33,39 @@
 	</div>
 <script>
 	$(function() {
-		var availableTags = [ "Abridger", "Art copyist", "Actor", "Art director", "Adapter", "Author of afterword, colophon, etc.", "Analyst", "Animator", "Annotator", "Bibliographic antecedent", "Appellee", "Appellant", "Applicant", "Author in quotations or text abstracts", "Architect", "Artistic director", "Arranger", "Artist", "Assignee", "Associated name", "Autographer", "Attributed name", "Auctioneer", "Author of dialog", "Author of introduction, etc.", "Screenwriter", "Author", "Binding designer", "Bookjacket designer", "Book designer", "Book producer", "Blurb writer", "Binder", "Bookplate designer", "Broadcaster", "Braille embosser", "Bookseller", "Caster", "Conceptor", "Choreographer", "Client", "Calligrapher", "Colorist", "Collotyper", "Commentator", "Composer", "Compositor", "Conductor", "Cinematographer", "Censor", "Contestant-appellee", "Collector", "Compiler", "Conservator", "Collection registrar", "Contestant", "Contestant-appellant", "Court governed", "Cover designer", "Copyright claimant", "Complainant-appellee", "Copyright holder", "Complainant", "Complainant-appellant", "Creator", "Correspondent", "Corrector", "Court reporter", "Consultant", "Consultant to a project", "Costume designer", "Contributor", "Contestee-appellee", "Cartographer", "Contractor", "Contestee", "Contestee-appellant", "Curator", "Commentator for written text", "Distribution place", "Defendant", "Defendant-appellee", "Defendant-appellant", "Degree granting institution", "Degree supervisor", "Dissertant", "Delineator", "Dancer", "Donor", "Depicted", "Depositor", "Draftsman", "Director", "Designer", "Distributor", "Data contributor", "Dedicatee", "Data manager", "Dedicator", "Dubious author", "Editor of compilation", "Editor of moving image work", "Editor", "Engraver", "Electrician", "Electrotyper", "Engineer", "Enacting jurisdiction", "Etcher", "Event place", "Expert", "Facsimilist", "Film distributor", "Field director", "Film editor", "Film director", "Filmmaker", "Former owner", "Film producer", "Funder", "First party", "Forger", "Geographic information specialist", "Host institution", "Honoree", "Host", "Illustrator", "Illuminator", "Inscriber", "Inventor", "Issuing body", "Instrumentalist", "Interviewee", "Interviewer", "Judge", "Jurisdiction governed", "Laboratory", "Librettist", "Laboratory director", "Lead", "Libelee-appellee", "Libelee", "Lender", "Libelee-appellant", "Lighting designer", "Libelant-appellee", "Libelant", "Libelant-appellant", "Landscape architect", "Licensee", "Licensor", "Lithographer", "Lyricist", "Music copyist", "Metadata contact", "Medium", "Manufacture place", "Manufacturer", "Moderator", "Monitor", "Marbler", "Markup editor", "Musical director", "Metal-engraver", "Minute taker", "Musician", "Narrator", "Opponent", "Originator", "Organizer", "Onscreen presenter", "Other", "Owner", "Panelist", "Patron", "Publishing director", "Publisher", "Project director", "Proofreader", "Photographer", "Platemaker", "Permitting agency", "Production manager", "Printer of plates", "Papermaker", "Puppeteer", "Praeses", "Process contact", "Production personnel", "Presenter", "Performer", "Programmer", "Printmaker", "Production company", "Producer", "Production place", "Production designer", "Printer", "Provider", "Patent applicant", "Plaintiff-appellee", "Plaintiff", "Patent holder", "Plaintiff-appellant", "Publication place", "Rubricator", "Recordist", "Recording engineer", "Addressee", "Radio director", "Redaktor", "Renderer", "Researcher", "Reviewer", "Radio producer", "Repository", "Reporter", "Responsible party", "Respondent-appellee", "Restager", "Respondent", "Restorationist", "Respondent-appellant", "Research team head", "Research team member", "Scientific advisor", "Scenarist", "Sculptor", "Scribe", "Sound designer", "Secretary", "Stage director", "Signer", "Supporting host", "Seller", "Singer", "Speaker", "Sponsor", "Second party", "Surveyor", "Set designer", "Setting", "Storyteller", "Stage manager", "Standards body", "Stereotyper", "Technical director", "Teacher", "Thesis advisor", "Television director", "Television producer", "Transcriber", "Translator", "Type designer", "Typographer", "University place", "Voice actor", "Videographer", "Writer of added commentary", "Writer of added lyrics", "Writer of accompanying material", "Writer of added text", "Woodcutter", "Wood engraver", "Writer of introduction", "Witness", "Writer of preface", "Writer of supplementary textual content" ];
+		var availableTags = "examples/marc_relators.json";
 		var extractor = new Xsd2Json("mods-3-4.xsd", {
 			"schemaURI" : "examples/mods-3-4/"
 		});
 		$("#xml_editor").xmlEditor(
 				{
 					schema : extractor.getSchema(),
-					vocabularies : {
-						"roleTerm" : availableTags
-					}
-					/*elementUpdated : function(event) {
-						if (event.action == 'render'
-								&& this.objectType.localName == 'roleTerm') {
+					vocabularyConfigs : {
+						vocabularies : {
+							"marcRelators" : {
+								"url" : "examples/marc_relators.json"
+							},
+							"departments" : {
+								"values" : ["blah", "Department of Sonoeland Studies"]
+							}/*,
+							"fast" : {
+								url : "example.com",
+								type : "query",
+								keypress : function(input) {
 
-							var textInputs = this.getTextInputs();
-
-							textInputs.keypress(function(event){
-								var keycode = (event.keyCode ? event.keyCode : event.which);
-								if (keycode == '13') {
-									event.preventDefault();
-									event.stopPropagation();
 								}
-							});
-
-							textInputs.autocomplete({
-								source : availableTags
-							});
+							}*/
+						},
+						xpathSelectors: {
+							"mods:mods/mods:name//mods:roleTerm" : "marcRelators"
+						},
+						xpathNamespaces: {
+							"mods" : "http://www.loc.gov/mods/v3"
 						}
-					}*/
+						/*cssSelectors: {
+							"roleTerm": availableTags
+						}*/
+					}
 				});
 	});
 </script>
