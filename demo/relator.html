@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<link rel="stylesheet" href="stylesheets/reset.css" type="text/css" />
+<link rel="stylesheet" href="stylesheets/demo.css" type="text/css" />
+<link rel="stylesheet" href="../css/jquery.xmleditor.css" type="text/css" />
+<script src="../lib/ace/src-min/ace.js"></script>
+<script src="../lib/jquery.min.js"></script>
+<script src="../lib/jquery-ui.min.js"></script>
+<script src="../lib/json2.js"></script>
+<script src="../lib/cycle.js"></script>
+<script src="../lib/jquery.autosize-min.js"></script>
+<script src="../xsd/xsd2json.js"></script>
+<script src="../jquery.xmleditor.js"></script>
+<style>
+.ui-autocomplete { 
+	width: 200px;
+	line-height: 24px;
+}
+</style>
+</head>
+<body>
+
+	<div id="xml_editor">
+		&lt;mods xmlns=&quot;http://www.loc.gov/mods/v3&quot;&gt;
+			&lt;name&gt;
+				&lt;role&gt;
+					&lt;roleTerm /&gt;
+				&lt;/role&gt;
+			&lt;/name&gt;
+		&lt;/mods&gt;
+	</div>
+<script>
+	$(function() {
+		var availableTags = "examples/marc_relators.json";
+		var extractor = new Xsd2Json("mods-3-4.xsd", {
+			"schemaURI" : "examples/mods-3-4/"
+		});
+		$("#xml_editor").xmlEditor(
+				{
+					schema : extractor.getSchema(),
+					vocabularyConfigs : {
+						vocabularies : {
+							"marcRelators" : {
+								"url" : "examples/marc_relators.json"
+							},
+							"departments" : {
+								"values" : ["blah", "Department of Sonoeland Studies"]
+							}/*,
+							"fast" : {
+								url : "example.com",
+								type : "query",
+								keypress : function(input) {
+
+								}
+							}*/
+						},
+						xpathSelectors: {
+							"mods:mods/mods:name//mods:roleTerm" : "marcRelators"
+						},
+						xpathNamespaces: {
+							"mods" : "http://www.loc.gov/mods/v3"
+						}
+						/*cssSelectors: {
+							"roleTerm": availableTags
+						}*/
+					}
+				});
+	});
+</script>
+</body>
+</html>

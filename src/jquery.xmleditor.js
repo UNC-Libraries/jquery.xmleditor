@@ -317,6 +317,9 @@ $.widget( "xml.xmlEditor", {
 			});
 		}
 		
+		// Load any external vocabularies
+		this.loadVocabularies(this.options.vocabularyConfigs);
+
 		// Start loading the document for editing
 		this.loadDocument(this.options.ajaxOptions, localXMLContent);
 	},
@@ -416,6 +419,33 @@ $.widget( "xml.xmlEditor", {
 		}
 	},
 
+	loadVocabularies : function(vocabularyConfigs) {
+		var self = this;
+		this.loadingVocabs = 0;
+
+		$.each(this.options.vocabularyConfigs.vocabularies, function(vocabName, vocabInfo) {
+			if ("url" in vocabInfo) {
+				self.loadingVocabs++;
+			}
+		});
+
+		$.each(this.options.vocabularyConfigs.vocabularies, function(vocabName, vocabInfo) {
+			if ("url" in vocabInfo) {
+				$.ajax({
+					url : vocabInfo["url"],
+					type : "GET",
+					dataType : "json"
+				}).done(function(data){
+					vocabInfo.values = data;
+					self.loadingVocabs--;
+					if (self.loadingVocabs == 0) {
+						self._everythingReady();
+					}
+				});
+			}
+		});
+	},
+
 	_templating : function() {
 		var dialog;
 		var self = this;
@@ -434,7 +464,7 @@ $.widget( "xml.xmlEditor", {
 		this.undoHistory.setStateChangeEvent(function() {
 			self.refreshDisplay();
 		});
-		this._documentAndSchemaReady();
+		this._everythingReady();
 	},
 	
 	// Schema object loaded event
@@ -444,14 +474,14 @@ $.widget( "xml.xmlEditor", {
 		}
 		this.schemaTree = new SchemaTree(this.schema);
 		this.schemaTree.build();
-		this._documentAndSchemaReady();
+		this._everythingReady();
 	},
 	
 	// Performs initialization of editor after rejoining document and schema loading workflows
 	// to support asychronous/multithreaded loading 
-	_documentAndSchemaReady : function() {
+	_everythingReady : function() {
 		// Join back up asynchronous loading of document and schema
-		if (!this.schemaTree || !this.xmlState)
+		if (!this.schemaTree || !this.xmlState || this.loadingVocabs != 0)
 			return;
 
 		this.targetPrefix = this.xmlState.namespaces.getNamespacePrefix(this.options.targetNS);
@@ -1165,5 +1195,57 @@ $.widget( "xml.xmlEditor", {
 				$("#" + xmlMenuHeaderPrefix + this.toString()).removeClass("disabled").data("menuItemData").enabled = true;
 			else $("#" + xmlMenuHeaderPrefix + this.toString()).addClass("disabled").data("menuItemData").enabled = false;
 		});
+	},
+
+	// Finds the associated vocabulary for an xml element
+	getVocabulary: function(xmlElement) {
+		if (!this.options.vocabularyConfigs) {
+			return null;
+		}
+		var self = this;
+		var matchingVocab = null;
+		var xmlDocument = this.xmlState.xml;
+		if (this.options.vocabularyConfigs.cssSelectors) {
+			$.each(this.options.vocabularyConfigs.cssSelectors, function(selector, vocabulary){
+				// find elements in xml document that match this vocabulary's selector
+				var matches = $(selector, xmlDocument);
+
+				// Check to see if our xmlElement was in the matching list
+				for (var i = 0; i < matches.length; i++) {
+					if (xmlElement.xmlNode[0] === matches[i]) {
+						matchingVocab = vocabulary;
+						return false;
+					}
+				}
+			});
+		}
+
+		var nsResolver = function nsResolver(prefix) {
+			return self.options.vocabularyConfigs.xpathNamespaces[prefix] || null;
+		};
+		nsResolver.lookupNamespaceURI = nsResolver;
+
+		if (this.options.vocabularyConfigs.xpathSelectors) {
+			$.each(this.options.vocabularyConfigs.xpathSelectors, function(selector, vocabulary){
+				// find elements in xml document that match this vocabulary's selector
+				var matchesIterate = xmlDocument[0].evaluate(selector, xmlDocument[0], nsResolver, null, null);
+
+				// Check to see if our xmlElement was in the matching 0list
+				var match = matchesIterate.iterateNext()
+				while (match) {
+					if (xmlElement.xmlNode[0] === match) {
+						matchingVocab = vocabulary;
+						return false;
+					}
+					match = matchesIterate.iterateNext();
+				}
+			});
+		}
+
+		if (!matchingVocab || !(matchingVocab in this.options.vocabularyConfigs.vocabularies)) {
+			return null;
+		}
+
+		return this.options.vocabularyConfigs.vocabularies[matchingVocab];	
 	}
 });
