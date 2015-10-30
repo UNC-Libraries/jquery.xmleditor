@@ -317,9 +317,11 @@ $.widget( "xml.xmlEditor", {
 			});
 		}
 		
+		// Load any external vocabularies
+		this.loadVocabularies(this.options.vocabularyConfigs);
+
 		// Start loading the document for editing
 		this.loadDocument(this.options.ajaxOptions, localXMLContent);
-		this.loadVocabularies(this.options.vocabularyConfigs);
 	},
 	
 	// Load the schema object
@@ -1197,7 +1199,7 @@ $.widget( "xml.xmlEditor", {
 
 	// Finds the associated vocabulary for an xml element
 	getVocabulary: function(xmlElement) {
-		if (!this.options.vocabularies) {
+		if (!this.options.vocabularyConfigs) {
 			return null;
 		}
 		var self = this;
@@ -1205,39 +1207,46 @@ $.widget( "xml.xmlEditor", {
 		var xmlDocument = this.xmlState.xml;
 		if (this.options.vocabularyConfigs.cssSelectors) {
 			$.each(this.options.vocabularyConfigs.cssSelectors, function(selector, vocabulary){
-			// find elements in xml document that match this vocabulary's selector
-			var matches = $(selector, xmlDocument);
+				// find elements in xml document that match this vocabulary's selector
+				var matches = $(selector, xmlDocument);
 
-			// Check to see if our xmlElement was in the matching list
-			for (var i = 0; i < matches.length; i++) {
-				if (xmlElement.xmlNode[0] === matches[i]) {
-					matchingVocab = vocabulary;
-					return false;
+				// Check to see if our xmlElement was in the matching list
+				for (var i = 0; i < matches.length; i++) {
+					if (xmlElement.xmlNode[0] === matches[i]) {
+						matchingVocab = vocabulary;
+						return false;
+					}
 				}
-			}
-		});}
+			});
+		}
 
 		var nsResolver = function nsResolver(prefix) {
 			return self.options.vocabularyConfigs.xpathNamespaces[prefix] || null;
 		};
 		nsResolver.lookupNamespaceURI = nsResolver;
 
-		$.each(this.options.vocabularyConfigs.xpathSelectors, function(selector, vocabulary){
-			// find elements in xml document that match this vocabulary's selector
-			var matchesIterate = xmlDocument[0].evaluate(selector, xmlDocument[0], nsResolver, null, null);
+		if (this.options.vocabularyConfigs.xpathSelectors) {
+			$.each(this.options.vocabularyConfigs.xpathSelectors, function(selector, vocabulary){
+				// find elements in xml document that match this vocabulary's selector
+				var matchesIterate = xmlDocument[0].evaluate(selector, xmlDocument[0], nsResolver, null, null);
 
-			// Check to see if our xmlElement was in the matching 0list
-			var match = matchesIterate.iterateNext()
-			while (match) {
-				if (xmlElement.xmlNode[0] === match) {
-					matchingVocab = vocabulary;
-					return false;
+				// Check to see if our xmlElement was in the matching 0list
+				var match = matchesIterate.iterateNext()
+				while (match) {
+					if (xmlElement.xmlNode[0] === match) {
+						matchingVocab = vocabulary;
+						return false;
+					}
+					match = matchesIterate.iterateNext();
 				}
-				match = matchesIterate.iterateNext();
-			}
-		});
+			});
+		}
 
-		return self.options.vocabularyConfigs.vocabularies[matchingVocab]["values"];	
+		if (!matchingVocab || !(matchingVocab in this.options.vocabularyConfigs.vocabularies)) {
+			return null;
+		}
+
+		return this.options.vocabularyConfigs.vocabularies[matchingVocab];	
 	}
 });
 function AbstractXMLObject(objectType, editor) {
@@ -5209,9 +5218,9 @@ XMLTextNode.prototype.render = function(parentElement, prepend) {
 	this.textInput = AbstractXMLObject.prototype.createElementInput.call(this,
 			this.domNodeID + "_text", textValue, inputColumn);
 	this.textInput.addClass('element_text');
-	if (this.vocabulary) {
+	if (this.vocabulary && this.vocabulary.values) {
 		this.textInput.autocomplete({
-				source : this.vocabulary
+				source : this.vocabulary.values
 			});
 	}
 

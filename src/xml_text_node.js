@@ -68,9 +68,9 @@ XMLTextNode.prototype.render = function(parentElement, prepend) {
 	this.textInput = AbstractXMLObject.prototype.createElementInput.call(this,
 			this.domNodeID + "_text", textValue, inputColumn);
 	this.textInput.addClass('element_text');
-	if (this.vocabulary) {
+	if (this.vocabulary && this.vocabulary.values) {
 		this.textInput.autocomplete({
-				source : this.vocabulary
+				source : this.vocabulary.values
 			});
 	}
 
