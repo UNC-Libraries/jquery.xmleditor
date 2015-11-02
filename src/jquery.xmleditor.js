@@ -423,6 +423,10 @@ $.widget( "xml.xmlEditor", {
 		var self = this;
 		this.loadingVocabs = 0;
 
+		if (!this.options.vocabularyConfigs || !this.options.vocabularyConfigs.vocabularies) {
+			return;
+		}
+
 		$.each(this.options.vocabularyConfigs.vocabularies, function(vocabName, vocabInfo) {
 			if ("url" in vocabInfo) {
 				self.loadingVocabs++;
