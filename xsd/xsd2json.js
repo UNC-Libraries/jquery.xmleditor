@@ -783,7 +783,7 @@ SchemaProcessor.prototype.build_complexType = function(node, definition, parentD
 		var child = children[i];
 		switch (child.localName) {
 		case "group" : case "simpleContent" : case "complexContent" : case "choice" : 
-		case "attributeGroup" : case "sequence" : case "all" :
+		case "attributeGroup" : case "sequence" : case "all" : case "anyAttribute" :
 			this.build(child, definition);
 			break;
 		case "attribute" :
@@ -914,6 +914,10 @@ SchemaProcessor.prototype.build_any = function(node, definition) {
 	definition.any = !(node.getAttribute("minOccurs") == "0" && node.getAttribute("maxOccurs") == "0");
 };
 
+SchemaProcessor.prototype.build_anyAttribute = function(node, definition) {
+	definition.anyAttribute = true;
+};
+
 // Process a complexContent tag
 SchemaProcessor.prototype.build_complexContent = function(node, definition) {
 	if (node.getAttribute("mixed") == "true") {
@@ -951,7 +955,7 @@ SchemaProcessor.prototype.build_restriction = function(node, definition) {
 		var child = children[i];
 		switch (child.localName) {
 		case "group" : case "simpleType" : case "choice" : 
-		case "attributeGroup" : case "sequence" : case "all" :
+		case "attributeGroup" : case "sequence" : case "all" : case "anyAttribute":
 			this.build(child, definition);
 			break;
 		case "attribute" :
@@ -979,7 +983,7 @@ SchemaProcessor.prototype.build_extension = function(node, definition) {
 		var child = children[i];
 		switch (child.localName) {
 		case "group" : case "choice" : case "attributeGroup" : 
-		case "sequence" : case "all" :
+		case "sequence" : case "all" : case "anyAttribute":
 			this.build(child, definition);
 			break;
 		case "attribute" :
@@ -1001,7 +1005,7 @@ SchemaProcessor.prototype.build_attributeGroup = function(node, definition) {
 	for (var i in children) {
 		var child = children[i];
 		switch (child.localName) {
-		case "attributeGroup" :
+		case "attributeGroup" : case "anyAttribute" :
 			this.build(child, definition);
 			break;
 		case "attribute" :

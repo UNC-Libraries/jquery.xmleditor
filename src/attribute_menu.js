@@ -40,10 +40,7 @@ AttributeMenu.prototype.populate = function (xmlElement) {
 		$.each(this.target.objectType.attributes, function(){
 			var attribute = this;
 			// Using prefix according to the xml document namespace prefixes
-			var nsPrefix = self.editor.xmlState.namespaces.getNamespacePrefix(attribute.namespace);
-			// Namespace not present in XML, so use prefix from schema
-			if (nsPrefix === undefined)
-				nsPrefix = self.editor.schemaTree.namespaces.getNamespacePrefix(attribute.namespace);
+			var nsPrefix = self.editor.xmlState.getNamespacePrefix(attribute.namespace);
 				
 			var attrName = nsPrefix + attribute.localName;
 			var addButton = $("<li/>").attr({

@@ -21,24 +21,27 @@ ModifyMenuPanel.prototype.initialize = function (parentContainer) {
 
 		if (self.editor.submitButtonConfigs != null){
 			$.each(self.editor.submitButtonConfigs, function(index, config){
-				if (!('createDomElement' in config) || config.createDomElement){
-					var submitButton = $("<input/>").attr({
+				var submitButton;
+				if (config.id && ('createDomElement' in config) && !config.createDomElement) {
+					submitButton = $("#" + config.id);
+				} else {
+					submitButton = $("<input/>").attr({
 						id : config.id,
 						'type' : 'button',
 						'class' : config.cssClass || submitButtonClass,
 						name : config.name || 'submit',
 						value : config.label || 'Submit'
 					}).appendTo(documentStatusPanel);
-
-					if (!('responseHandler' in config) && config.url) {
-						config.responseHandler = this.options.submitResponseHandler
-							|| this.swordSubmitResponseHandler;
-					}
-
-					submitButton.click(function() {
-						self.editor.submitXML(config);
-					});
 				}
+
+				if (!('responseHandler' in config) && config.url) {
+					config.responseHandler = config.responseHandler = self.editor.options.submitResponseHandler
+						|| self.editor.swordSubmitResponseHandler;
+				}
+
+				submitButton.click(function() {
+					self.editor.submitXML(config);
+				});
 			});
 		}
 		documentStatusPanel.appendTo(this.menuColumn);
@@ -75,6 +78,17 @@ ModifyMenuPanel.prototype.addAttributeMenu = function(menuID, label, expanded, e
 	this.menus[menuID] = {
 			"menu" : menu,
 			"contextual": contextual
+		};
+	menu.render(this.menuContainer);
+	menu.initEventHandlers();
+	return menu;
+};
+
+ModifyMenuPanel.prototype.addNodeMenu = function(menuID, label, expanded, enabled) {
+	var menu = new AddNodeMenu(menuID, label, expanded, enabled, this, this.editor);
+	this.menus[menuID] = {
+			"menu" : menu, 
+			"contextual": true
 		};
 	menu.render(this.menuContainer);
 	menu.initEventHandlers();

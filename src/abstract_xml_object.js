@@ -1,7 +1,16 @@
-function AbstractXMLObject(editor, objectType) {
+function AbstractXMLObject(objectType, editor) {
 	this.editor = editor;
 	this.guiEditor = this.editor.guiEditor;
 	this.objectType = objectType;
+
+	// ID of the dom node for this element
+	this.domNodeID = null;
+	// dom node for this element
+	this.domNode = null;
+	// XMLElement which is the parent of this element
+	this.parentElement = null;
+	// Main input for text node of this element
+	this.textInput = null;
 }
 
 // Generates input fields for elements and attributes, depending on the type of value in the definition
@@ -14,7 +23,7 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 	var input = null;
 	var $input = null;
 	// Select input for fields with a predefined set of values
-	if (this.objectType.values.length > 0){
+	if (this.objectType.values && this.objectType.values.length > 0){
 		var selectionValues = this.objectType.values;
 		input = document.createElement('select');
 		input.id = inputID;
@@ -33,8 +42,8 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 			input.selectedIndex = -1;
 		$input = $(input);
 	} // Text area for normal elements and string attributes
-	else if ((this.objectType.element && (this.objectType.type == 'string' || this.objectType.type == 'mixed')) 
-			|| this.objectType.attribute){
+	else if ((this.objectType.text && (this.objectType.type == 'string' || this.objectType.type == 'mixed')) 
+			|| this.objectType.attribute || this.objectType.cdata || this.objectType.comment){
 		input = document.createElement('textarea');
 		input.id = inputID;
 		input.className = 'xml_textarea';
@@ -47,7 +56,7 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 		// Clear out the starting space on first focus.  This space is there to prevent field collapsing
 		// on new elements in the text editor view
 		$input.one('focus', function() {
-			if (!self.objectType.attribute && self.editor.options.expandingTextAreas)
+			if (self.editor.options.expandingTextAreas)
 				$input.autosize();
 			if (this.value == " ")
 				this.value = "";
@@ -88,10 +97,66 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 
 // Change the editors focus to this xml object
 AbstractXMLObject.prototype.focus = function() {
-	if (this.getDomNode() != null)
-		this.guiEditor.focusObject(this.getDomNode());
+	if (this.domNode != null)
+		this.guiEditor.focusObject(this.domNode);
+	if (this.textInput)
+		this.textInput.focus();
 };
 
 AbstractXMLObject.prototype.getDomNode = function () {
 	return this.domNode;
+};
+
+// Remove this element from the xml document and editor
+AbstractXMLObject.prototype.remove = function() {
+	// Remove the element from the xml doc
+	this.xmlNode.remove();
+	
+	if (this.domNode != null) {
+		this.domNode.remove();
+	}
+};
+
+// Swap the gui representation of this element to the location of swapTarget
+AbstractXMLObject.prototype.swap = function (swapTarget) {
+	if (swapTarget == null) {
+		return;
+	}
+	
+	// Swap the xml nodes
+	swapTarget.xmlNode.detach().insertAfter(this.xmlNode);
+	if (swapTarget.domNode != null && this.domNode != null) {
+		// Swap the gui nodes
+		swapTarget.domNode.detach().insertAfter(this.domNode);
+	}
+};
+
+// Move this element up one location in the gui.  Returns true if the swap was able to happen
+AbstractXMLObject.prototype.moveUp = function() {
+	var previousSibling = this.domNode.prev("." + xmlNodeClass);
+	if (previousSibling.length > 0) {
+		this.swap(previousSibling.data("xmlObject"));
+		return true;
+	} else {
+		return false;
+	}
+};
+
+// Move this element down one location in the gui.  Returns true if the swap was able to happen
+AbstractXMLObject.prototype.moveDown = function() {
+	var nextSibling = this.domNode.next("." + xmlNodeClass);
+	if (nextSibling.length > 0) {
+		nextSibling.data("xmlObject").swap(this);
+		return true;
+	} else {
+		return false;
+	}
+};
+
+AbstractXMLObject.prototype.select = function() {
+	this.domNode.addClass("selected");
+};
+
+AbstractXMLObject.prototype.isSelected = function() {
+	return this.domNode.hasClass("selected");
 };
