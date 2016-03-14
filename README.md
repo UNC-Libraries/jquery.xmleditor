@@ -139,7 +139,7 @@ Alternatively, any number of buttons can be created by providing the submitButto
 - url - URL where the document will be sent to via POST.  Optional.  If not provided, then the document is not uploaded, but the submit function is still called.
 - responseHandler - Function called after the document is submitted when there is no HTTP error.  Passed AJAX response object as parameter.  Return true if the upload was considered to be successful.  Optional.
 - errorHandler - Function called when the upload the upload to the server results in an HTTP error response code.  Optional.
-- submitFunction - Function called after clicking the button, before upload.  Passed the config object, called with the context of the editor object.
+- onSubmit - Function called after clicking the button, before upload.  Passed the config object, called with the context of the editor object.
 - createDomElement - Whether or not to create a new button element.  Set to false if using an existing element. Default: true.
 - label - Text displayed on the button.  Default: "Submit Changes"
 - id - id attribute value of the button created.
@@ -150,13 +150,13 @@ Alternatively, any number of buttons can be created by providing the submitButto
 {
   submitButtonConfigs : [
     {
-      url : "/submit"
+      url : "/submit",
       responseHandler : myResponseHandler,
       label : "Upload"
     },
     {
-      label : "Download"
-      submitFunction : function() {
+      label : "Download",
+      onSubmit : function() {
         // do work
       }
     }
