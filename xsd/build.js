@@ -3,7 +3,7 @@ var fs = require("fs");
 var page = require("webpage").create();
 
 if (system.args.length < 1) {
-  console.log("Usage: build.js [<output filename> <path containing schemas> <base schema filename> <root schema element> <JSON variable name>]");
+  console.log("Usage: build.js [<output filename> <path containing schemas> <base schema filename> <JSON variable name>]");
   console.log("Example: phantomjs build.js ../examples/mods.js ../examples/mods-3-4/ mods-3-4.xsd modsSchema mods");
   phantom.exit(1);
 }
@@ -28,27 +28,17 @@ var variableName = null;
 if (system.args.length > 4) {
 	variableName = system.args[4];
 }
-// If the schema defines a root element for documents, it can be specified here.  Otherwise a placeholder root element is generated
-var rootElement = null;
-if (system.args.length > 5) {
-	rootElement = system.args[5];
-}
 
 page.open("./build.html", function() {
-  var json = page.evaluate(function(schemaPath, baseSchema, rootElement) {
+  var json = page.evaluate(function(schemaPath, baseSchema) {
     var options = {
         'schemaURI': schemaPath
-    }
-    if (rootElement) {
-    	options['rootElement'] = rootElement;
-    } else {
-    	options['generateRoot'] = true;
     }
     
     var extractor = new Xsd2Json(baseSchema, options);
     
     return extractor.stringify();
-  }, schemaPath, baseSchema, rootElement);
+  }, schemaPath, baseSchema);
   
   if (json) {
     if (variableName != null)
