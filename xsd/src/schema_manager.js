@@ -6,7 +6,6 @@
  */
 function SchemaManager(originatingXsdName, options) {
 	var defaults = {
-			rootElement : undefined,
 			globalNamespaces : {}
 	};
 	
@@ -197,36 +196,22 @@ SchemaManager.prototype.processIncludes = function(schema) {
 };
 
 SchemaManager.prototype.setOriginatingRoot = function() {
-
-	// Select root element if one is specified
-	if (this.options.rootElement != null) {
-		this.originatingRoot = this.originatingSchema.root;
+	this.originatingRoot = {
+			schema : true,
+			ns : this.originatingSchema.targetNSIndex,
+			namespaces : [],
+			elements : [],
+			np : true
+		};
+	
+	for (var ns in this.imports) {
+		var importSet = this.imports[ns];
 		
-		for (var index in this.originatingRoot.elements) {
-			var topLevelElement = this.originatingRoot.elements[index];
+		for (var index in importSet) {
+			var schema = importSet[index];
 			
-			if (this.options.rootElement != topLevelElement.name) {
-				this.originatingRoot = topLevelElement;
-			}
-		}
-	} else {
-		this.originatingRoot = {
-				schema : true,
-				ns : this.originatingSchema.targetNSIndex,
-				namespaces : [],
-				elements : [],
-				np : true
-			};
-		
-		for (var ns in this.imports) {
-			var importSet = this.imports[ns];
-			
-			for (var index in importSet) {
-				var schema = importSet[index];
-				
-				for (var elIndex in schema.root.elements) {
-					this.originatingRoot.elements.push(schema.root.elements[elIndex]);
-				}
+			for (var elIndex in schema.root.elements) {
+				this.originatingRoot.elements.push(schema.root.elements[elIndex]);
 			}
 		}
 	}
