@@ -2,7 +2,7 @@ var system = require("system");
 var fs = require("fs");
 var page = require("webpage").create();
 
-if (system.args.length < 1) {
+if (system.args.length < 2) {
   console.log("Usage: build.js [<output filename> <path containing schemas> <base schema filename> <JSON variable name>]");
   console.log("Example: phantomjs build.js ../examples/mods.js ../examples/mods-3-4/ mods-3-4.xsd modsSchema mods");
   phantom.exit(1);
