@@ -74,12 +74,7 @@ SchemaProcessor.prototype.extractNamespaces = function() {
 		// Store the target namespace of this schema.
 		this.targetNS = this.xsd.getAttribute("targetNamespace");
 		
-		// Determine if the targetNS is already registered locally
-		var localPrefix = this.getLocalNamespacePrefix(this.targetNS);
-		if (localPrefix == null) {
-			// Register the target namespace as the default namespace
-			localPrefix = "";
-		}
+		// Register the target namespace as the default namespace
 		this.targetNSIndex = this.registerNamespace(this.targetNS, "");
 	}
 	
