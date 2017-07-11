@@ -77,11 +77,6 @@ SchemaProcessor.prototype.extractNamespaces = function() {
 	
 	// Register the target namespace as the default namespace
 	this.targetNSIndex = this.registerNamespace(this.targetNS, "");
-
-	// Register the target ns as the default ns if none was specified
-	if (!("" in this.localNamespaces)) {
-		this.localNamespaces[""] = this.targetNS;
-	}
 };
 
 SchemaProcessor.prototype.createDefinition = function(node, nameParts) {
