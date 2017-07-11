@@ -234,18 +234,47 @@ SchemaManager.prototype.mergeRootLevelElements = function() {
 SchemaManager.prototype.exportNamespaces = function() {
 
 	// Add all the namespaces from imported schemas into the registry of namespaces for the root schema
-	var namespaceRegistry = [];
-	for (var index in this.namespaceIndexes) {
-		var namespaceUri = this.namespaceIndexes[index];
-		$.each(this.originatingSchema.localNamespaces, function(key, val){
-			if (val == namespaceUri) {
-				namespaceRegistry.push({'prefix' : key, 'uri' : val});
-				return false;
-			}
+	var self = this;
+	var namespacePrefixes = {};
+	var prefixUsed = {};
+	this.addNamespacePrefixes(namespacePrefixes, prefixUsed, self.originatingSchema.localNamespaces);
+	for (var targetNS in self.imports) {
+		self.imports[targetNS].forEach(function(schema) {
+			self.addNamespacePrefixes(namespacePrefixes, prefixUsed, schema.localNamespaces);
 		});
 	}
+	var namespaceRegistry = [];
+	var anonymousNamespaceIndex = 1;
+	this.namespaceIndexes.forEach(function(namespaceUri) {
+		var prefix = namespacePrefixes[namespaceUri];
+		if (prefix === undefined) {
+			while (true) {
+				prefix = 'ns' + anonymousNamespaceIndex;
+				anonymousNamespaceIndex++;
+				if (prefixUsed[prefix] === undefined) {
+					break;
+				}
+			}
+		}
+		namespaceRegistry.push({'prefix' : prefix, 'uri' : namespaceUri});
+	});
 	
 	this.originatingRoot.namespaces = namespaceRegistry;
+};
+
+SchemaManager.prototype.addNamespacePrefixes = function(namespacePrefixes, prefixUsed, namespaces) {
+
+	for (var prefix in namespaces) {
+		if (prefixUsed[prefix] !== undefined) {
+			continue;
+		}
+		var namespaceUri = namespaces[prefix];
+		if (namespacePrefixes[namespaceUri] !== undefined) {
+			continue;
+		}
+		namespacePrefixes[namespaceUri] = prefix;
+		prefixUsed[prefix] = true;
+	}
 };
 
 //Post processing step which recursively walks the schema tree and merges type definitions
