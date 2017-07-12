@@ -224,7 +224,12 @@ SchemaProcessor.prototype.build_element = function(node, definition, parentDef) 
 		// Build or retrieve the type definition
 		var type = node.getAttribute("type");
 		if (type == null) {
-			this.build(this.getChildren(node)[0], definition);
+			var child = this.getChildren(node)[0];
+			if (child) {
+				this.build(child, definition);
+			} else {
+				definition.type = 'anyType';
+			}
 		} else {
 			// Check to see if it is a built in type
 			definition.type = this.getBuiltInType(type, definition);
