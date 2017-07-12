@@ -515,13 +515,9 @@ SchemaProcessor.prototype.build_attributeGroup = function(node, definition) {
 SchemaProcessor.prototype.getBuiltInType = function(type, definition) {
 	if (definition.type != null)
 		return definition.type;
-	if (type.indexOf(":") == -1) {
-		if (this.xsPrefix == "")
-			return type;
-	} else {
-		if (type.indexOf(this.xsPrefix) == 0){
-			return type.substring(this.xsPrefix.length);
-		}
+	var nameParts = this.extractName(type);
+	if (nameParts.namespaceUri === this.xsdManager.xsNS) {
+		return nameParts.localName;
 	}
 	return null;
 };
