@@ -302,7 +302,7 @@ SchemaProcessor.prototype.build_simpleType = function(node, definition) {
 // Process a list tag, which allows for a single tag with multiple values
 SchemaProcessor.prototype.build_list = function(node, definition) {
 	// For the moment, lists will just be treated as free text fields
-	definition.type = this.xsPrefix + "string";
+	definition.type = "string";
 	definition.multivalued = true;
 };
 
