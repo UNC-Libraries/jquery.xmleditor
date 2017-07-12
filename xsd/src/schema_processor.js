@@ -574,7 +574,8 @@ SchemaProcessor.prototype.extractName = function(name) {
 		result['localName'] = name.substring(index + 1);
 		result['prefix'] = name.substring(0, index);
 	}
-	result['namespace'] = this.xsdManager.getNamespaceIndex(this.localNamespaces[result.prefix]);
+	var namespaceUri = this.localNamespaces[result.prefix];
+	result['namespace'] = this.xsdManager.getNamespaceIndex(namespaceUri);
 	result['indexedName'] = result.namespace + ":" + result.localName;
 	return result;
 };
