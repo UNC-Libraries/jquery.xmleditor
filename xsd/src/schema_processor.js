@@ -22,8 +22,6 @@ function SchemaProcessor(xsdDocument, xsdManager, schemaUrl, parentNSIndex) {
 	// Local namespace prefix registry
 	this.localNamespaces = $.extend({}, this.xsdManager.globalNamespaces);
 
-	this.xsPrefix = "xs:";
-	
 	if (parentNSIndex !== undefined) {
 		this.targetNSIndex = parentNSIndex;
 		this.targetNS = this.xsdManager.getNamespaceUri(parentNSIndex);
@@ -59,13 +57,6 @@ SchemaProcessor.prototype.extractNamespaces = function() {
 			var namespacePrefix = attr.nodeName.substring(5).replace(":", "");
 			var namespaceUri = attr.nodeValue;
 			this.registerNamespace(namespaceUri, namespacePrefix);
-			
-			// Store the namespace prefix for the xs namespace
-			if (attr.nodeValue == this.xsdManager.xsNS){
-				this.xsPrefix = namespacePrefix;
-				if (this.xsPrefix != "")
-					this.xsPrefix = this.xsPrefix + ":";
-			}
 		}
 	}
 	
