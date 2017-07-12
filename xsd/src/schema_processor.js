@@ -73,20 +73,10 @@ SchemaProcessor.prototype.extractNamespaces = function() {
 	if (!this.targetNS) {
 		// Store the target namespace of this schema.
 		this.targetNS = this.xsd.getAttribute("targetNamespace");
-		
-		// Determine if the targetNS is already registered locally
-		var localPrefix = this.getLocalNamespacePrefix(this.targetNS);
-		if (localPrefix == null) {
-			// Register the target namespace as the default namespace
-			localPrefix = "";
-		}
-		this.targetNSIndex = this.registerNamespace(this.targetNS, "");
 	}
 	
-	// Register the target ns as the default ns if none was specified
-	if (!("" in this.localNamespaces)) {
-		this.localNamespaces[""] = this.targetNS;
-	}
+	// Register the target namespace as the default namespace
+	this.targetNSIndex = this.registerNamespace(this.targetNS, "");
 };
 
 SchemaProcessor.prototype.createDefinition = function(node, nameParts) {
