@@ -22,8 +22,6 @@ function SchemaProcessor(xsdDocument, xsdManager, schemaUrl, parentNSIndex) {
 	// Local namespace prefix registry
 	this.localNamespaces = $.extend({}, this.xsdManager.globalNamespaces);
 
-	this.xsPrefix = "xs:";
-	
 	if (parentNSIndex !== undefined) {
 		this.targetNSIndex = parentNSIndex;
 		this.targetNS = this.xsdManager.getNamespaceUri(parentNSIndex);
@@ -59,13 +57,6 @@ SchemaProcessor.prototype.extractNamespaces = function() {
 			var namespacePrefix = attr.nodeName.substring(5).replace(":", "");
 			var namespaceUri = attr.nodeValue;
 			this.registerNamespace(namespaceUri, namespacePrefix);
-			
-			// Store the namespace prefix for the xs namespace
-			if (attr.nodeValue == this.xsdManager.xsNS){
-				this.xsPrefix = namespacePrefix;
-				if (this.xsPrefix != "")
-					this.xsPrefix = this.xsPrefix + ":";
-			}
 		}
 	}
 	
@@ -292,7 +283,7 @@ SchemaProcessor.prototype.build_simpleType = function(node, definition) {
 // Process a list tag, which allows for a single tag with multiple values
 SchemaProcessor.prototype.build_list = function(node, definition) {
 	// For the moment, lists will just be treated as free text fields
-	definition.type = this.xsPrefix + "string";
+	definition.type = "string";
 	definition.multivalued = true;
 };
 
@@ -505,13 +496,9 @@ SchemaProcessor.prototype.build_attributeGroup = function(node, definition) {
 SchemaProcessor.prototype.getBuiltInType = function(type, definition) {
 	if (definition.type != null)
 		return definition.type;
-	if (type.indexOf(":") == -1) {
-		if (this.xsPrefix == "")
-			return type;
-	} else {
-		if (type.indexOf(this.xsPrefix) == 0){
-			return type.substring(this.xsPrefix.length);
-		}
+	var nameParts = this.extractName(type);
+	if (nameParts.namespaceUri === this.xsdManager.xsNS) {
+		return nameParts.localName;
 	}
 	return null;
 };
@@ -564,7 +551,9 @@ SchemaProcessor.prototype.extractName = function(name) {
 		result['localName'] = name.substring(index + 1);
 		result['prefix'] = name.substring(0, index);
 	}
-	result['namespace'] = this.xsdManager.getNamespaceIndex(this.localNamespaces[result.prefix]);
+	var namespaceUri = this.localNamespaces[result.prefix];
+	result['namespaceUri'] = namespaceUri;
+	result['namespace'] = this.xsdManager.getNamespaceIndex(namespaceUri);
 	result['indexedName'] = result.namespace + ":" + result.localName;
 	return result;
 };
