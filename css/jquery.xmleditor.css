@@ -1,14 +1,7 @@
 .xml_editor_container ul {
     list-style: none;
     margin: 0;
-}
-.xml_editor_container .xml_menu_bar ul {
     padding: 0;
-}
-.xml_editor_container .xml_menu_column ul {
-    padding: 0;
-}
-.xml_editor_container ul.element_header {
     box-sizing: content-box;
 }
 .xml_editor_container a {
