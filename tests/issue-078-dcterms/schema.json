@@ -1,0 +1,1436 @@
+{
+  "schema": true,
+  "ns": 6,
+  "namespaces": [
+    {
+      "prefix": "xml",
+      "uri": "http://www.w3.org/XML/1998/namespace"
+    },
+    {
+      "prefix": "xmlns",
+      "uri": "http://www.w3.org/2000/xmlns/"
+    },
+    {
+      "prefix": "html",
+      "uri": "http://www.w3.org/1999/xhtml/"
+    },
+    {
+      "prefix": "xs",
+      "uri": "http://www.w3.org/2001/XMLSchema"
+    },
+    {
+      "prefix": "dc",
+      "uri": "http://purl.org/dc/elements/1.1/"
+    },
+    {
+      "prefix": "dcmitype",
+      "uri": "http://purl.org/dc/dcmitype/"
+    },
+    {
+      "prefix": "",
+      "uri": "http://purl.org/dc/terms/"
+    }
+  ],
+  "elements": [
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "title",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "creator",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "subject",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "description",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "publisher",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "contributor",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "date",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "type",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "format",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "identifier",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "source",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "language",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "relation",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "coverage",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "rights",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "alternative",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "tableOfContents",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "abstract",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "created",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "valid",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "available",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "issued",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "modified",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "dateAccepted",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "dateCopyrighted",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "dateSubmitted",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "extent",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "medium",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "isVersionOf",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "hasVersion",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "isReplacedBy",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "replaces",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "isRequiredBy",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "requires",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "isPartOf",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "hasPart",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "isReferencedBy",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "references",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "isFormatOf",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "hasFormat",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "conformsTo",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "spatial",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "temporal",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "audience",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "accrualMethod",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "accrualPeriodicity",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "accrualPolicy",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "instructionalMethod",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "provenance",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "rightsHolder",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "mediator",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "educationLevel",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "accessRights",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "license",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 6,
+      "name": "bibliographicCitation",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 4,
+      "name": "title",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 4,
+      "name": "creator",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 4,
+      "name": "subject",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 4,
+      "name": "description",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 4,
+      "name": "publisher",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 4,
+      "name": "contributor",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 4,
+      "name": "date",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 4,
+      "name": "type",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 4,
+      "name": "format",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 4,
+      "name": "identifier",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 4,
+      "name": "source",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 4,
+      "name": "language",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 4,
+      "name": "relation",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 4,
+      "name": "coverage",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 4,
+      "name": "rights",
+      "element": true,
+      "attributes": [
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [],
+      "any": false
+    }
+  ]
+}

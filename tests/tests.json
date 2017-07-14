@@ -1,0 +1,17 @@
+{
+  "testcases": [
+    "issue-078-mods-3-4",
+    "issue-078-dcterms",
+    "issue-078-atom",
+    "issue-071-2",
+    "issue-071-1",
+    "issue-068-2",
+    "issue-068-1",
+    "issue-067-3",
+    "issue-067-2",
+    "issue-067-1",
+    "issue-066-3",
+    "issue-066-2",
+    "issue-066-1"
+  ]
+}

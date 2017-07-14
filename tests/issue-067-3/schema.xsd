@@ -1,0 +1,4 @@
+<xs:schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:foo="http://example.com/foo" targetNamespace="http://example.com/foo" elementFormDefault="qualified">
+  <xs:element name="AbstractFoo" type="xs:string" abstract="true"/>
+  <xs:element name="Foo" type="xs:string" substitutionGroup="foo:AbstractFoo"/>
+</xs:schema>
