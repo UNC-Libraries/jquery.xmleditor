@@ -1,0 +1,3 @@
+<otherxsns:schema xmlns:otherxsns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://example.com/foo" elementFormDefault="qualified">
+  <otherxsns:element name="Foo" type="otherxsns:string"/>
+</otherxsns:schema>
