@@ -239,6 +239,7 @@ SchemaManager.prototype.exportNamespaces = function() {
 	var prefixUsed = {};
 	this.addNamespacePrefixes(namespacePrefixes, prefixUsed, {'xs': self.xsNS});
 	this.addNamespacePrefixes(namespacePrefixes, prefixUsed, self.originatingSchema.localNamespaces);
+	this.addNamespacePrefixes(namespacePrefixes, prefixUsed, {'': self.originatingSchema.targetNS});
 	for (var targetNS in self.imports) {
 		self.imports[targetNS].forEach(function(schema) {
 			self.addNamespacePrefixes(namespacePrefixes, prefixUsed, schema.localNamespaces);
