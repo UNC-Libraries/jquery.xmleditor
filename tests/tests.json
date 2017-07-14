@@ -1,5 +1,7 @@
 {
   "testcases": [
+    "issue-080-3",
+    "issue-080-2",
     "issue-080-1",
     "issue-078-mods-3-4",
     "issue-078-dcterms",
