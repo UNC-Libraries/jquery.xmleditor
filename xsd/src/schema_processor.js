@@ -22,20 +22,18 @@ function SchemaProcessor(xsdDocument, xsdManager, schemaUrl, parentNSIndex) {
 	// Local namespace prefix registry
 	this.localNamespaces = $.extend({}, this.xsdManager.globalNamespaces);
 
+	this.extractNamespaces();
+
 	if (parentNSIndex !== undefined) {
 		this.targetNSIndex = parentNSIndex;
 		this.targetNS = this.xsdManager.getNamespaceUri(parentNSIndex);
 	} else {
-		// The target namespace for this schema
-		this.targetNS = null;
-		// The index of the target namespace in namespaceIndexes
-		this.targetNSIndex = null;
+		this.targetNS = this.xsd.getAttribute('targetNamespace');
+		this.targetNSIndex = this.xsdManager.registerNamespace(this.targetNS);
 	}
 	
 	// Root definition for this schema, either an element or a schema object
 	this.root = null;
-	
-	this.extractNamespaces();
 };
 
 // Process the schema file to extract its structure into javascript objects
@@ -60,15 +58,6 @@ SchemaProcessor.prototype.extractNamespaces = function() {
 		}
 	}
 	
-	// Only use target namespace if not already being provided with a namespace uri
-	if (!this.targetNS) {
-		// Store the target namespace of this schema.
-		this.targetNS = this.xsd.getAttribute("targetNamespace");
-	}
-	
-	// Register the target namespace
-	this.targetNSIndex = this.xsdManager.registerNamespace(this.targetNS);
-
 	// Register the XML Schema namespace as the default namespace if none was specified
 	if (!('' in this.localNamespaces)) {
 		this.localNamespaces[''] = this.xsdManager.xsNS;
