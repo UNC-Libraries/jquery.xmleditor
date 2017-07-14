@@ -1,0 +1,41 @@
+{
+  "schema": true,
+  "ns": 5,
+  "namespaces": [
+    {
+      "prefix": "xml",
+      "uri": "http://www.w3.org/XML/1998/namespace"
+    },
+    {
+      "prefix": "xmlns",
+      "uri": "http://www.w3.org/2000/xmlns/"
+    },
+    {
+      "prefix": "html",
+      "uri": "http://www.w3.org/1999/xhtml/"
+    },
+    {
+      "prefix": "xs",
+      "uri": "http://www.w3.org/2001/XMLSchema"
+    },
+    {
+      "prefix": "bar",
+      "uri": "http://example.com/bar"
+    },
+    {
+      "prefix": "",
+      "uri": "http://example.com/foo"
+    }
+  ],
+  "elements": [
+    {
+      "values": [],
+      "type": "string",
+      "ns": 4,
+      "name": "Bar",
+      "element": true,
+      "attributes": [],
+      "elements": []
+    }
+  ]
+}

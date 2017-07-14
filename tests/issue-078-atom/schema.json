@@ -1,0 +1,5417 @@
+{
+  "schema": true,
+  "ns": 4,
+  "namespaces": [
+    {
+      "prefix": "xml",
+      "uri": "http://www.w3.org/XML/1998/namespace"
+    },
+    {
+      "prefix": "xmlns",
+      "uri": "http://www.w3.org/2000/xmlns/"
+    },
+    {
+      "prefix": "html",
+      "uri": "http://www.w3.org/1999/xhtml/"
+    },
+    {
+      "prefix": "xs",
+      "uri": "http://www.w3.org/2001/XMLSchema"
+    },
+    {
+      "prefix": "atom",
+      "uri": "http://www.w3.org/2005/Atom"
+    },
+    {
+      "prefix": "xhtml",
+      "uri": "http://www.w3.org/1999/xhtml"
+    },
+    {
+      "prefix": "cmis",
+      "uri": "http://docs.oasis-open.org/ns/cmis/core/200901"
+    },
+    {
+      "prefix": "jaxb",
+      "uri": "http://java.sun.com/xml/ns/jaxb"
+    },
+    {
+      "prefix": "xjc",
+      "uri": "http://java.sun.com/xml/ns/jaxb/xjc"
+    },
+    {
+      "prefix": "cmisra",
+      "uri": "http://docs.oasis-open.org/ns/cmis/restatom/200901"
+    }
+  ],
+  "elements": [
+    {
+      "values": [],
+      "type": "string",
+      "ns": 4,
+      "name": "name",
+      "element": true,
+      "attributes": [],
+      "elements": []
+    },
+    {
+      "values": [],
+      "type": "string",
+      "ns": 4,
+      "name": "uri",
+      "element": true,
+      "attributes": [],
+      "elements": []
+    },
+    {
+      "values": [],
+      "type": "string",
+      "ns": 4,
+      "name": "email",
+      "element": true,
+      "attributes": [],
+      "elements": []
+    },
+    {
+      "values": [],
+      "type": null,
+      "ns": 4,
+      "name": "feed",
+      "element": true,
+      "attributes": [
+        {
+          "values": [],
+          "type": "anyURI",
+          "ns": 0,
+          "attribute": true,
+          "name": "base"
+        },
+        {
+          "values": [
+            ""
+          ],
+          "type": "language",
+          "ns": 0,
+          "attribute": true,
+          "name": "lang"
+        }
+      ],
+      "elements": [
+        {
+          "values": [],
+          "type": null,
+          "ns": 4,
+          "element": true,
+          "attributes": [
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+            }
+          ],
+          "elements": [
+            {
+              "values": [],
+              "type": "string",
+              "ns": 4,
+              "element": true,
+              "attributes": [],
+              "elements": [],
+              "name": "name"
+            },
+            {
+              "values": [],
+              "type": "string",
+              "ns": 4,
+              "element": true,
+              "attributes": [],
+              "elements": [],
+              "name": "uri"
+            },
+            {
+              "values": [],
+              "type": "string",
+              "ns": 4,
+              "element": true,
+              "attributes": [],
+              "elements": [],
+              "name": "email"
+            }
+          ],
+          "name": "author",
+          "occurs": {
+            "4:name": {
+              "min": "0",
+              "max": "1"
+            },
+            "4:uri": {
+              "min": "0",
+              "max": "1"
+            },
+            "4:email": {
+              "min": "0",
+              "max": "1"
+            }
+          },
+          "any": true,
+          "anyAttribute": true
+        },
+        {
+          "values": [],
+          "type": null,
+          "ns": 4,
+          "element": true,
+          "attributes": [
+            {
+              "values": [],
+              "type": "string",
+              "ns": 4,
+              "name": "term",
+              "attribute": true
+            },
+            {
+              "values": [],
+              "type": "string",
+              "ns": 4,
+              "name": "scheme",
+              "attribute": true
+            },
+            {
+              "values": [],
+              "type": "string",
+              "ns": 4,
+              "name": "label",
+              "attribute": true
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+            }
+          ],
+          "elements": [],
+          "name": "category",
+          "any": true,
+          "anyAttribute": true
+        },
+        {
+          "values": [],
+          "type": null,
+          "ns": 4,
+          "element": true,
+          "attributes": [
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+            }
+          ],
+          "elements": [
+            {
+              "$ref": "$[\"elements\"][3][\"elements\"][0][\"elements\"][0]"
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"elements\"][0][\"elements\"][1]"
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"elements\"][0][\"elements\"][2]"
+            }
+          ],
+          "name": "contributor",
+          "occurs": {
+            "$ref": "$[\"elements\"][3][\"elements\"][0][\"occurs\"]"
+          },
+          "any": true,
+          "anyAttribute": true
+        },
+        {
+          "values": [],
+          "type": "mixed",
+          "ns": 4,
+          "element": true,
+          "attributes": [
+            {
+              "values": [],
+              "type": "string",
+              "ns": 4,
+              "name": "uri",
+              "attribute": true
+            },
+            {
+              "values": [],
+              "type": "string",
+              "ns": 4,
+              "name": "version",
+              "attribute": true
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+            }
+          ],
+          "elements": [],
+          "name": "generator",
+          "anyAttribute": true
+        },
+        {
+          "values": [],
+          "type": "mixed",
+          "ns": 4,
+          "element": true,
+          "attributes": [
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+            }
+          ],
+          "elements": [],
+          "name": "icon",
+          "anyAttribute": true
+        },
+        {
+          "values": [],
+          "type": "mixed",
+          "ns": 4,
+          "element": true,
+          "attributes": [
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+            }
+          ],
+          "elements": [],
+          "name": "id",
+          "anyAttribute": true
+        },
+        {
+          "values": [],
+          "type": null,
+          "ns": 4,
+          "element": true,
+          "attributes": [
+            {
+              "values": [],
+              "type": "string",
+              "ns": 4,
+              "name": "href",
+              "attribute": true
+            },
+            {
+              "values": [],
+              "type": "string",
+              "ns": 4,
+              "name": "rel",
+              "attribute": true
+            },
+            {
+              "values": [],
+              "type": "string",
+              "ns": 4,
+              "name": "type",
+              "attribute": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": "string",
+              "ns": 4,
+              "name": "hreflang",
+              "attribute": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": "string",
+              "ns": 4,
+              "name": "title",
+              "attribute": true
+            },
+            {
+              "values": [],
+              "type": "string",
+              "ns": 4,
+              "name": "length",
+              "attribute": true
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+            }
+          ],
+          "elements": [],
+          "name": "link",
+          "any": true,
+          "anyAttribute": true
+        },
+        {
+          "values": [],
+          "type": "mixed",
+          "ns": 4,
+          "element": true,
+          "attributes": [
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+            }
+          ],
+          "elements": [],
+          "name": "logo",
+          "anyAttribute": true
+        },
+        {
+          "values": [],
+          "type": "mixed",
+          "ns": 4,
+          "element": true,
+          "attributes": [
+            {
+              "values": [
+                "text",
+                "html",
+                "xhtml"
+              ],
+              "type": "token",
+              "ns": 4,
+              "name": "type",
+              "attribute": true
+            },
+            {
+              "values": [
+                "xhtml"
+              ],
+              "type": "token",
+              "ns": 4,
+              "name": "type",
+              "attribute": true
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+            }
+          ],
+          "elements": [],
+          "name": "rights",
+          "anyAttribute": true
+        },
+        {
+          "values": [],
+          "type": "mixed",
+          "ns": 4,
+          "element": true,
+          "attributes": [
+            {
+              "$ref": "$[\"elements\"][3][\"elements\"][8][\"attributes\"][0]"
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"elements\"][8][\"attributes\"][1]"
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+            }
+          ],
+          "elements": [],
+          "name": "subtitle",
+          "anyAttribute": true
+        },
+        {
+          "values": [],
+          "type": "mixed",
+          "ns": 4,
+          "element": true,
+          "attributes": [
+            {
+              "$ref": "$[\"elements\"][3][\"elements\"][8][\"attributes\"][0]"
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"elements\"][8][\"attributes\"][1]"
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+            }
+          ],
+          "elements": [],
+          "name": "title",
+          "anyAttribute": true
+        },
+        {
+          "values": [],
+          "type": "dateTime",
+          "ns": 4,
+          "element": true,
+          "attributes": [
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+            }
+          ],
+          "elements": [],
+          "name": "updated",
+          "anyAttribute": true
+        },
+        {
+          "values": [],
+          "type": null,
+          "ns": 4,
+          "element": true,
+          "attributes": [
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+            },
+            {
+              "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+            }
+          ],
+          "elements": [
+            {
+              "values": [],
+              "type": null,
+              "ns": 4,
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                }
+              ],
+              "elements": [
+                {
+                  "$ref": "$[\"elements\"][3][\"elements\"][0][\"elements\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"elements\"][0][\"elements\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"elements\"][0][\"elements\"][2]"
+                }
+              ],
+              "name": "author",
+              "occurs": {
+                "$ref": "$[\"elements\"][3][\"elements\"][0][\"occurs\"]"
+              },
+              "any": true,
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 4,
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][3][\"elements\"][1][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"elements\"][1][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"elements\"][1][\"attributes\"][2]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                }
+              ],
+              "elements": [],
+              "name": "category",
+              "any": true,
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": "mixed",
+              "ns": 4,
+              "element": true,
+              "attributes": [
+                {
+                  "values": [
+                    "text",
+                    "html",
+                    "xhtml"
+                  ],
+                  "type": "token",
+                  "ns": 4,
+                  "name": "type",
+                  "attribute": true,
+                  "attributes": {
+                    "$ref": "$[\"elements\"][3][\"elements\"][6][\"attributes\"][2][\"attributes\"]"
+                  },
+                  "elements": {
+                    "$ref": "$[\"elements\"][3][\"elements\"][6][\"attributes\"][2][\"elements\"]"
+                  }
+                },
+                {
+                  "values": [],
+                  "type": "string",
+                  "ns": 4,
+                  "name": "src",
+                  "attribute": true
+                },
+                {
+                  "values": [
+                    "xhtml"
+                  ],
+                  "type": "token",
+                  "ns": 4,
+                  "name": "type",
+                  "attribute": true,
+                  "attributes": {
+                    "$ref": "$[\"elements\"][3][\"elements\"][6][\"attributes\"][2][\"attributes\"]"
+                  },
+                  "elements": {
+                    "$ref": "$[\"elements\"][3][\"elements\"][6][\"attributes\"][2][\"elements\"]"
+                  }
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                }
+              ],
+              "elements": [],
+              "name": "content",
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 4,
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                }
+              ],
+              "elements": [
+                {
+                  "$ref": "$[\"elements\"][3][\"elements\"][0][\"elements\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"elements\"][0][\"elements\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"elements\"][0][\"elements\"][2]"
+                }
+              ],
+              "name": "contributor",
+              "occurs": {
+                "$ref": "$[\"elements\"][3][\"elements\"][0][\"occurs\"]"
+              },
+              "any": true,
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": "mixed",
+              "ns": 4,
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                }
+              ],
+              "elements": [],
+              "name": "id",
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 4,
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][3][\"elements\"][6][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"elements\"][6][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"elements\"][6][\"attributes\"][2]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"elements\"][6][\"attributes\"][3]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"elements\"][6][\"attributes\"][4]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"elements\"][6][\"attributes\"][5]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                }
+              ],
+              "elements": [],
+              "name": "link",
+              "any": true,
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": "dateTime",
+              "ns": 4,
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                }
+              ],
+              "elements": [],
+              "name": "published",
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": "mixed",
+              "ns": 4,
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][3][\"elements\"][8][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"elements\"][8][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                }
+              ],
+              "elements": [],
+              "name": "rights",
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 4,
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                }
+              ],
+              "elements": [
+                {
+                  "values": [],
+                  "type": null,
+                  "ns": 4,
+                  "element": true,
+                  "attributes": [
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                    }
+                  ],
+                  "elements": [
+                    {
+                      "$ref": "$[\"elements\"][3][\"elements\"][0][\"elements\"][0]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"elements\"][0][\"elements\"][1]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"elements\"][0][\"elements\"][2]"
+                    }
+                  ],
+                  "name": "author",
+                  "occurs": {
+                    "$ref": "$[\"elements\"][3][\"elements\"][0][\"occurs\"]"
+                  },
+                  "any": true,
+                  "anyAttribute": true
+                },
+                {
+                  "values": [],
+                  "type": null,
+                  "ns": 4,
+                  "element": true,
+                  "attributes": [
+                    {
+                      "$ref": "$[\"elements\"][3][\"elements\"][1][\"attributes\"][0]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"elements\"][1][\"attributes\"][1]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"elements\"][1][\"attributes\"][2]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                    }
+                  ],
+                  "elements": [],
+                  "name": "category",
+                  "any": true,
+                  "anyAttribute": true
+                },
+                {
+                  "values": [],
+                  "type": null,
+                  "ns": 4,
+                  "element": true,
+                  "attributes": [
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                    }
+                  ],
+                  "elements": [
+                    {
+                      "$ref": "$[\"elements\"][3][\"elements\"][0][\"elements\"][0]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"elements\"][0][\"elements\"][1]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"elements\"][0][\"elements\"][2]"
+                    }
+                  ],
+                  "name": "contributor",
+                  "occurs": {
+                    "$ref": "$[\"elements\"][3][\"elements\"][0][\"occurs\"]"
+                  },
+                  "any": true,
+                  "anyAttribute": true
+                },
+                {
+                  "values": [],
+                  "type": "mixed",
+                  "ns": 4,
+                  "element": true,
+                  "attributes": [
+                    {
+                      "$ref": "$[\"elements\"][3][\"elements\"][3][\"attributes\"][0]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"elements\"][3][\"attributes\"][1]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                    }
+                  ],
+                  "elements": [],
+                  "name": "generator",
+                  "anyAttribute": true
+                },
+                {
+                  "values": [],
+                  "type": "mixed",
+                  "ns": 4,
+                  "element": true,
+                  "attributes": [
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                    }
+                  ],
+                  "elements": [],
+                  "name": "icon",
+                  "anyAttribute": true
+                },
+                {
+                  "values": [],
+                  "type": "mixed",
+                  "ns": 4,
+                  "element": true,
+                  "attributes": [
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                    }
+                  ],
+                  "elements": [],
+                  "name": "id",
+                  "anyAttribute": true
+                },
+                {
+                  "values": [],
+                  "type": null,
+                  "ns": 4,
+                  "element": true,
+                  "attributes": [
+                    {
+                      "$ref": "$[\"elements\"][3][\"elements\"][6][\"attributes\"][0]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"elements\"][6][\"attributes\"][1]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"elements\"][6][\"attributes\"][2]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"elements\"][6][\"attributes\"][3]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"elements\"][6][\"attributes\"][4]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"elements\"][6][\"attributes\"][5]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                    }
+                  ],
+                  "elements": [],
+                  "name": "link",
+                  "any": true,
+                  "anyAttribute": true
+                },
+                {
+                  "values": [],
+                  "type": "mixed",
+                  "ns": 4,
+                  "element": true,
+                  "attributes": [
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                    }
+                  ],
+                  "elements": [],
+                  "name": "logo",
+                  "anyAttribute": true
+                },
+                {
+                  "values": [],
+                  "type": "mixed",
+                  "ns": 4,
+                  "element": true,
+                  "attributes": [
+                    {
+                      "$ref": "$[\"elements\"][3][\"elements\"][8][\"attributes\"][0]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"elements\"][8][\"attributes\"][1]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                    }
+                  ],
+                  "elements": [],
+                  "name": "rights",
+                  "anyAttribute": true
+                },
+                {
+                  "values": [],
+                  "type": "mixed",
+                  "ns": 4,
+                  "element": true,
+                  "attributes": [
+                    {
+                      "$ref": "$[\"elements\"][3][\"elements\"][8][\"attributes\"][0]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"elements\"][8][\"attributes\"][1]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                    }
+                  ],
+                  "elements": [],
+                  "name": "subtitle",
+                  "anyAttribute": true
+                },
+                {
+                  "values": [],
+                  "type": "mixed",
+                  "ns": 4,
+                  "element": true,
+                  "attributes": [
+                    {
+                      "$ref": "$[\"elements\"][3][\"elements\"][8][\"attributes\"][0]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"elements\"][8][\"attributes\"][1]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                    }
+                  ],
+                  "elements": [],
+                  "name": "title",
+                  "anyAttribute": true
+                },
+                {
+                  "values": [],
+                  "type": "dateTime",
+                  "ns": 4,
+                  "element": true,
+                  "attributes": [
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                    },
+                    {
+                      "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                    }
+                  ],
+                  "elements": [],
+                  "name": "updated",
+                  "anyAttribute": true
+                }
+              ],
+              "name": "source",
+              "choices": [
+                {
+                  "elements": [
+                    "4:author",
+                    "4:category",
+                    "4:contributor",
+                    "4:generator",
+                    "4:icon",
+                    "4:id",
+                    "4:link",
+                    "4:logo",
+                    "4:rights",
+                    "4:subtitle",
+                    "4:title",
+                    "4:updated"
+                  ],
+                  "minOccurs": "0",
+                  "maxOccurs": "unbounded"
+                }
+              ],
+              "any": true,
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": "mixed",
+              "ns": 4,
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][3][\"elements\"][8][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"elements\"][8][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                }
+              ],
+              "elements": [],
+              "name": "summary",
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": "mixed",
+              "ns": 4,
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][3][\"elements\"][8][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"elements\"][8][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                }
+              ],
+              "elements": [],
+              "name": "title",
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": "dateTime",
+              "ns": 4,
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+                }
+              ],
+              "elements": [],
+              "name": "updated",
+              "anyAttribute": true
+            }
+          ],
+          "name": "entry",
+          "choices": [
+            {
+              "elements": [
+                "4:author",
+                "4:category",
+                "4:content",
+                "4:contributor",
+                "4:id",
+                "4:link",
+                "4:published",
+                "4:rights",
+                "4:source",
+                "4:summary",
+                "4:title",
+                "4:updated"
+              ],
+              "minOccurs": null,
+              "maxOccurs": "unbounded"
+            }
+          ],
+          "any": true,
+          "anyAttribute": true
+        }
+      ],
+      "choices": [
+        {
+          "elements": [
+            "4:author",
+            "4:category",
+            "4:contributor",
+            "4:generator",
+            "4:icon",
+            "4:id",
+            "4:link",
+            "4:logo",
+            "4:rights",
+            "4:subtitle",
+            "4:title",
+            "4:updated"
+          ],
+          "minOccurs": null,
+          "maxOccurs": "unbounded"
+        }
+      ],
+      "occurs": {
+        "4:entry": {
+          "min": "0",
+          "max": "unbounded"
+        }
+      },
+      "any": true,
+      "anyAttribute": true
+    },
+    {
+      "values": [],
+      "type": null,
+      "ns": 4,
+      "name": "entry",
+      "element": true,
+      "attributes": [
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+        }
+      ],
+      "elements": [
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][1]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][2]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][3]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][4]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][5]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][6]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][7]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][8]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][9]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][10]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][11]"
+        }
+      ],
+      "choices": {
+        "$ref": "$[\"elements\"][3][\"elements\"][12][\"choices\"]"
+      },
+      "any": true,
+      "anyAttribute": true
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 4,
+      "name": "content",
+      "element": true,
+      "attributes": [
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][2][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][2][\"attributes\"][1]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][2][\"attributes\"][2]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+        }
+      ],
+      "elements": [],
+      "anyAttribute": true
+    },
+    {
+      "values": [],
+      "type": null,
+      "ns": 4,
+      "name": "author",
+      "element": true,
+      "attributes": [
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+        }
+      ],
+      "elements": [
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][0][\"elements\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][0][\"elements\"][1]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][0][\"elements\"][2]"
+        }
+      ],
+      "occurs": {
+        "$ref": "$[\"elements\"][3][\"elements\"][0][\"occurs\"]"
+      },
+      "any": true,
+      "anyAttribute": true
+    },
+    {
+      "values": [],
+      "type": null,
+      "ns": 4,
+      "name": "category",
+      "element": true,
+      "attributes": [
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][1][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][1][\"attributes\"][1]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][1][\"attributes\"][2]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+        }
+      ],
+      "elements": [],
+      "any": true,
+      "anyAttribute": true
+    },
+    {
+      "values": [],
+      "type": null,
+      "ns": 4,
+      "name": "contributor",
+      "element": true,
+      "attributes": [
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+        }
+      ],
+      "elements": [
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][0][\"elements\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][0][\"elements\"][1]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][0][\"elements\"][2]"
+        }
+      ],
+      "occurs": {
+        "$ref": "$[\"elements\"][3][\"elements\"][0][\"occurs\"]"
+      },
+      "any": true,
+      "anyAttribute": true
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 4,
+      "name": "generator",
+      "element": true,
+      "attributes": [
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][3][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][3][\"attributes\"][1]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+        }
+      ],
+      "elements": [],
+      "anyAttribute": true
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 4,
+      "name": "icon",
+      "element": true,
+      "attributes": [
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+        }
+      ],
+      "elements": [],
+      "anyAttribute": true
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 4,
+      "name": "id",
+      "element": true,
+      "attributes": [
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+        }
+      ],
+      "elements": [],
+      "anyAttribute": true
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 4,
+      "name": "logo",
+      "element": true,
+      "attributes": [
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+        }
+      ],
+      "elements": [],
+      "anyAttribute": true
+    },
+    {
+      "values": [],
+      "type": null,
+      "ns": 4,
+      "name": "link",
+      "element": true,
+      "attributes": [
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][6][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][6][\"attributes\"][1]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][6][\"attributes\"][2]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][6][\"attributes\"][3]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][6][\"attributes\"][4]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][6][\"attributes\"][5]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+        }
+      ],
+      "elements": [],
+      "any": true,
+      "anyAttribute": true
+    },
+    {
+      "values": [],
+      "type": "dateTime",
+      "ns": 4,
+      "name": "published",
+      "element": true,
+      "attributes": [
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+        }
+      ],
+      "elements": [],
+      "anyAttribute": true
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 4,
+      "name": "rights",
+      "element": true,
+      "attributes": [
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][8][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][8][\"attributes\"][1]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+        }
+      ],
+      "elements": [],
+      "anyAttribute": true
+    },
+    {
+      "values": [],
+      "type": null,
+      "ns": 4,
+      "name": "source",
+      "element": true,
+      "attributes": [
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+        }
+      ],
+      "elements": [
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][8][\"elements\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][8][\"elements\"][1]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][8][\"elements\"][2]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][8][\"elements\"][3]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][8][\"elements\"][4]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][8][\"elements\"][5]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][8][\"elements\"][6]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][8][\"elements\"][7]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][8][\"elements\"][8]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][8][\"elements\"][9]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][8][\"elements\"][10]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][8][\"elements\"][11]"
+        }
+      ],
+      "choices": {
+        "$ref": "$[\"elements\"][3][\"elements\"][12][\"elements\"][8][\"choices\"]"
+      },
+      "any": true,
+      "anyAttribute": true
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 4,
+      "name": "subtitle",
+      "element": true,
+      "attributes": [
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][8][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][8][\"attributes\"][1]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+        }
+      ],
+      "elements": [],
+      "anyAttribute": true
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 4,
+      "name": "summary",
+      "element": true,
+      "attributes": [
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][8][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][8][\"attributes\"][1]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+        }
+      ],
+      "elements": [],
+      "anyAttribute": true
+    },
+    {
+      "values": [],
+      "type": "mixed",
+      "ns": 4,
+      "name": "title",
+      "element": true,
+      "attributes": [
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][8][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][8][\"attributes\"][1]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+        }
+      ],
+      "elements": [],
+      "anyAttribute": true
+    },
+    {
+      "values": [],
+      "type": "dateTime",
+      "ns": 4,
+      "name": "updated",
+      "element": true,
+      "attributes": [
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+        }
+      ],
+      "elements": [],
+      "anyAttribute": true
+    },
+    {
+      "values": [],
+      "type": null,
+      "ns": 6,
+      "name": "allowableActions",
+      "element": true,
+      "attributes": [],
+      "elements": [
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canDeleteObject",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canUpdateProperties",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canGetProperties",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canGetRelationships",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canGetObjectParents",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canGetFolderParent",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canGetDescendants",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canMoveObject",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canDeleteContentStream",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canCheckOut",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canCancelCheckOut",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canCheckIn",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canSetContentStream",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canGetAllVersions",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canAddObjectToFolder",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canRemoveObjectFromFolder",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canGetContentStream",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canApplyPolicy",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canGetAppliedPolicies",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canRemovePolicy",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canGetChildren",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canCreateDocument",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canCreateFolder",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canCreateRelationship",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canCreatePolicy",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canDeleteTree",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canGetRenditions",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canGetACL",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "canApplyACL",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        }
+      ],
+      "occurs": {
+        "6:canDeleteObject": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canUpdateProperties": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canGetProperties": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canGetRelationships": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canGetObjectParents": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canGetFolderParent": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canGetDescendants": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canMoveObject": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canDeleteContentStream": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canCheckOut": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canCancelCheckOut": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canCheckIn": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canSetContentStream": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canGetAllVersions": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canAddObjectToFolder": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canRemoveObjectFromFolder": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canGetContentStream": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canApplyPolicy": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canGetAppliedPolicies": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canRemovePolicy": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canGetChildren": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canCreateDocument": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canCreateFolder": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canCreateRelationship": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canCreatePolicy": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canDeleteTree": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canGetRenditions": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canGetACL": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:canApplyACL": {
+          "min": "0",
+          "max": "1"
+        }
+      },
+      "any": true,
+      "anyAttribute": true
+    },
+    {
+      "values": [],
+      "type": null,
+      "ns": 6,
+      "name": "query",
+      "element": true,
+      "attributes": [],
+      "elements": [
+        {
+          "values": [],
+          "type": "string",
+          "ns": 6,
+          "name": "repositoryId",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "string",
+          "ns": 6,
+          "name": "statement",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "searchAllVersions",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "integer",
+          "ns": 6,
+          "name": "maxItems",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "integer",
+          "ns": 6,
+          "name": "skipCount",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "includeAllowableActions",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [
+            "none",
+            "source",
+            "target",
+            "both"
+          ],
+          "type": "string",
+          "ns": 6,
+          "name": "includeRelationships",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "includeRenditions",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        }
+      ],
+      "occurs": {
+        "6:repositoryId": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:statement": {
+          "min": "1",
+          "max": "1"
+        },
+        "6:searchAllVersions": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:maxItems": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:skipCount": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:includeAllowableActions": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:includeRelationships": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:includeRenditions": {
+          "min": "0",
+          "max": "1"
+        }
+      },
+      "any": true,
+      "anyAttribute": true
+    },
+    {
+      "values": [],
+      "type": null,
+      "ns": 6,
+      "name": "acl",
+      "element": true,
+      "attributes": [],
+      "elements": [
+        {
+          "values": [],
+          "type": null,
+          "ns": 6,
+          "name": "permission",
+          "element": true,
+          "attributes": [],
+          "elements": [
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "principal",
+              "element": true,
+              "attributes": [],
+              "elements": [
+                {
+                  "values": [],
+                  "type": "string",
+                  "ns": 6,
+                  "name": "principalId",
+                  "element": true,
+                  "attributes": [],
+                  "elements": []
+                }
+              ],
+              "any": true
+            },
+            {
+              "values": [],
+              "type": "string",
+              "ns": 6,
+              "name": "permission",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": "boolean",
+              "ns": 6,
+              "name": "direct",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            }
+          ],
+          "any": true
+        }
+      ],
+      "occurs": {
+        "6:permission": {
+          "min": "1",
+          "max": "unbounded"
+        }
+      },
+      "any": true
+    },
+    {
+      "values": [],
+      "type": null,
+      "ns": 9,
+      "name": "repositoryInfo",
+      "element": true,
+      "attributes": [],
+      "elements": [
+        {
+          "values": [],
+          "type": "string",
+          "ns": 6,
+          "name": "repositoryId",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "string",
+          "ns": 6,
+          "name": "repositoryName",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "string",
+          "ns": 6,
+          "name": "repositoryRelationship",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "string",
+          "ns": 6,
+          "name": "repositoryDescription",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "string",
+          "ns": 6,
+          "name": "vendorName",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "string",
+          "ns": 6,
+          "name": "productName",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "string",
+          "ns": 6,
+          "name": "productVersion",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "string",
+          "ns": 6,
+          "name": "rootFolderId",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "string",
+          "ns": 6,
+          "name": "latestChangeToken",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": null,
+          "ns": 6,
+          "name": "capabilities",
+          "element": true,
+          "attributes": [],
+          "elements": [
+            {
+              "values": [
+                "none",
+                "discover",
+                "manage"
+              ],
+              "type": "string",
+              "ns": 6,
+              "name": "capabilityACL",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": "boolean",
+              "ns": 6,
+              "name": "capabilityAllVersionsSearchable",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [
+                "none",
+                "objectIdsOnly",
+                "properties",
+                "all"
+              ],
+              "type": "string",
+              "ns": 6,
+              "name": "capabilityChanges",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [
+                "cmis:document",
+                "cmis:folder",
+                "cmis:relationship",
+                "cmis:policy"
+              ],
+              "type": "string",
+              "ns": 6,
+              "name": "capabilityChangesOnType",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [
+                "anytime",
+                "pwc-only"
+              ],
+              "type": "string",
+              "ns": 6,
+              "name": "capabilityContentStreamUpdatability",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": "boolean",
+              "ns": 6,
+              "name": "capabilityGetDescendants",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": "boolean",
+              "ns": 6,
+              "name": "capabilityMultifiling",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": "boolean",
+              "ns": 6,
+              "name": "capabilityPWCSearchable",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": "boolean",
+              "ns": 6,
+              "name": "capabilityPWCUpdateable",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [
+                "none",
+                "metadataonly",
+                "fulltextonly",
+                "bothseparate",
+                "bothcombined"
+              ],
+              "type": "string",
+              "ns": 6,
+              "name": "capabilityQuery",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [
+                "none",
+                "read"
+              ],
+              "type": "string",
+              "ns": 6,
+              "name": "capabilityRenditions",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": "boolean",
+              "ns": 6,
+              "name": "capabilityUnfiling",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": "boolean",
+              "ns": 6,
+              "name": "capabilityVersionSpecificFiling",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [
+                "none",
+                "inneronly",
+                "innerandouter"
+              ],
+              "type": "string",
+              "ns": 6,
+              "name": "capabilityJoin",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            }
+          ],
+          "occurs": {
+            "6:capabilityACL": {
+              "min": "0",
+              "max": "1"
+            },
+            "6:capabilityAllVersionsSearchable": {
+              "min": "1",
+              "max": "1"
+            },
+            "6:capabilityChangesOnType": {
+              "min": "1",
+              "max": "unbounded"
+            },
+            "6:capabilityContentStreamUpdatability": {
+              "min": "1",
+              "max": "1"
+            },
+            "6:capabilityGetDescendants": {
+              "min": "1",
+              "max": "1"
+            },
+            "6:capabilityMultifiling": {
+              "min": "1",
+              "max": "1"
+            },
+            "6:capabilityPWCSearchable": {
+              "min": "1",
+              "max": "1"
+            },
+            "6:capabilityPWCUpdateable": {
+              "min": "1",
+              "max": "1"
+            },
+            "6:capabilityQuery": {
+              "min": "1",
+              "max": "1"
+            },
+            "6:capabilityRenditions": {
+              "min": "1",
+              "max": "1"
+            },
+            "6:capabilityUnfiling": {
+              "min": "1",
+              "max": "1"
+            },
+            "6:capabilityVersionSpecificFiling": {
+              "min": "1",
+              "max": "1"
+            },
+            "6:capabilityJoin": {
+              "min": "1",
+              "max": "1"
+            }
+          },
+          "any": true,
+          "anyAttribute": true
+        },
+        {
+          "values": [],
+          "type": null,
+          "ns": 6,
+          "name": "aclCapability",
+          "element": true,
+          "attributes": [],
+          "elements": [
+            {
+              "values": [
+                "repository-determined",
+                "object-only",
+                "propagate"
+              ],
+              "type": "string",
+              "ns": 6,
+              "name": "setType",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "permissions",
+              "element": true,
+              "attributes": [],
+              "elements": [
+                {
+                  "values": [],
+                  "type": "string",
+                  "ns": 6,
+                  "name": "permission",
+                  "element": true,
+                  "attributes": [],
+                  "elements": []
+                },
+                {
+                  "values": [],
+                  "type": "string",
+                  "ns": 6,
+                  "name": "description",
+                  "element": true,
+                  "attributes": [],
+                  "elements": []
+                }
+              ],
+              "occurs": {
+                "6:description": {
+                  "min": "0",
+                  "max": "1"
+                }
+              },
+              "any": true
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "mapping",
+              "element": true,
+              "attributes": [],
+              "elements": [
+                {
+                  "values": [
+                    "canGetDescendents.Folder",
+                    "canGetChildren.Folder",
+                    "canGetParents.Folder",
+                    "canGetFolderParent.Object",
+                    "canCreateDocument.Type",
+                    "canCreateDocument.Folder",
+                    "canCreateFolder.Type",
+                    "canCreateFolder.Folder",
+                    "canCreateRelationship.Type",
+                    "canCreateRelationship.Source",
+                    "canCreateRelationship.Target",
+                    "canCreatePolicy.Type",
+                    "canGetProperties.Object",
+                    "canViewContent.Object",
+                    "canUpdateProperties.Object",
+                    "canMove.Object",
+                    "canMove.Target",
+                    "canMove.Source",
+                    "canDelete.Object",
+                    "canDeleteTree.Folder",
+                    "canSetContent.Document",
+                    "canDeleteContent.Document",
+                    "canAddToFolder.Object",
+                    "canAddToFolder.Folder",
+                    "canRemoveFromFolder.Object",
+                    "canRemoveFromFolder.Folder",
+                    "canCheckout.Document",
+                    "canCancelCheckout.Document",
+                    "canCheckin.Document",
+                    "canGetAllVersions.VersionSeries",
+                    "canGetRelationship.Object",
+                    "canAddPolicy.Object",
+                    "canAddPolicy.Policy",
+                    "canRemovePolicy.Object",
+                    "canRemovePolicy.Policy",
+                    "canGetAppliedPolicies.Object",
+                    "canGetACL.Object",
+                    "canApplyACL.Object"
+                  ],
+                  "type": "string",
+                  "ns": 6,
+                  "name": "key",
+                  "element": true,
+                  "attributes": [],
+                  "elements": []
+                },
+                {
+                  "values": [],
+                  "type": "string",
+                  "ns": 6,
+                  "name": "permission",
+                  "element": true,
+                  "attributes": [],
+                  "elements": []
+                }
+              ],
+              "occurs": {
+                "6:key": {
+                  "min": "1",
+                  "max": "1"
+                },
+                "6:permission": {
+                  "min": "1",
+                  "max": "1"
+                }
+              },
+              "any": true
+            }
+          ],
+          "occurs": {
+            "6:permissions": {
+              "min": "1",
+              "max": "unbounded"
+            },
+            "6:mapping": {
+              "min": "0",
+              "max": "unbounded"
+            }
+          }
+        },
+        {
+          "values": [],
+          "type": "decimal",
+          "ns": 6,
+          "name": "cmisVersionSupported",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "anyURI",
+          "ns": 6,
+          "name": "thinClientURI",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "changesIncomplete",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        }
+      ],
+      "occurs": {
+        "6:repositoryId": {
+          "min": "1",
+          "max": "1"
+        },
+        "6:repositoryName": {
+          "min": "1",
+          "max": "1"
+        },
+        "6:repositoryRelationship": {
+          "min": "1",
+          "max": "1"
+        },
+        "6:repositoryDescription": {
+          "min": "1",
+          "max": "1"
+        },
+        "6:vendorName": {
+          "min": "1",
+          "max": "1"
+        },
+        "6:productName": {
+          "min": "1",
+          "max": "1"
+        },
+        "6:productVersion": {
+          "min": "1",
+          "max": "1"
+        },
+        "6:capabilities": {
+          "min": "1",
+          "max": "1"
+        },
+        "6:aclCapability": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:cmisVersionSupported": {
+          "min": "1",
+          "max": "1"
+        },
+        "6:thinClientURI": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:changesIncomplete": {
+          "min": "0",
+          "max": "1"
+        }
+      },
+      "any": true,
+      "anyAttribute": true
+    },
+    {
+      "values": [],
+      "type": null,
+      "ns": 9,
+      "name": "type",
+      "element": true,
+      "attributes": [],
+      "elements": [
+        {
+          "values": [],
+          "type": "string",
+          "ns": 6,
+          "name": "id",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "string",
+          "ns": 6,
+          "name": "localName",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "anyURI",
+          "ns": 6,
+          "name": "localNamespace",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "string",
+          "ns": 6,
+          "name": "displayName",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "string",
+          "ns": 6,
+          "name": "queryName",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "string",
+          "ns": 6,
+          "name": "description",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [
+            "cmis:document",
+            "cmis:folder",
+            "cmis:relationship",
+            "cmis:policy"
+          ],
+          "type": "string",
+          "ns": 6,
+          "name": "baseTypeId",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "string",
+          "ns": 6,
+          "name": "parentId",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "creatable",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "fileable",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "queryable",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "fulltextindexed",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "includedInSupertypeQuery",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "controllablePolicy",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "boolean",
+          "ns": 6,
+          "name": "controllableACL",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": null,
+          "ns": 6,
+          "name": "propertyBooleanDefinition",
+          "element": true,
+          "attributes": [],
+          "elements": [
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "defaultValue",
+              "element": true,
+              "attributes": [
+                {
+                  "values": [],
+                  "type": "string",
+                  "ns": 6,
+                  "name": "pdid",
+                  "attribute": true
+                },
+                {
+                  "values": [],
+                  "type": "string",
+                  "ns": 6,
+                  "name": "localname",
+                  "attribute": true
+                },
+                {
+                  "values": [],
+                  "type": "string",
+                  "ns": 6,
+                  "name": "displayname",
+                  "attribute": true
+                }
+              ],
+              "elements": [
+                {
+                  "values": [],
+                  "type": "boolean",
+                  "ns": 6,
+                  "name": "value",
+                  "element": true,
+                  "attributes": [],
+                  "elements": []
+                }
+              ],
+              "occurs": {
+                "6:value": {
+                  "min": "0",
+                  "max": "unbounded"
+                }
+              },
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "choice",
+              "element": true,
+              "attributes": [
+                {
+                  "values": [],
+                  "type": "string",
+                  "ns": 6,
+                  "name": "displayName",
+                  "attribute": true
+                }
+              ],
+              "elements": [
+                {
+                  "values": [],
+                  "type": "boolean",
+                  "ns": 6,
+                  "name": "value",
+                  "element": true,
+                  "attributes": [],
+                  "elements": []
+                }
+              ],
+              "occurs": {
+                "6:value": {
+                  "min": "0",
+                  "max": "unbounded"
+                }
+              },
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": "string",
+              "ns": 6,
+              "name": "id",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": "string",
+              "ns": 6,
+              "name": "localName",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": "anyURI",
+              "ns": 6,
+              "name": "localNamespace",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": "string",
+              "ns": 6,
+              "name": "displayName",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": "string",
+              "ns": 6,
+              "name": "queryName",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": "string",
+              "ns": 6,
+              "name": "description",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [
+                "boolean",
+                "id",
+                "integer",
+                "datetime",
+                "decimal",
+                "html",
+                "xhtml",
+                "string",
+                "uri",
+                "xml"
+              ],
+              "type": "string",
+              "ns": 6,
+              "name": "propertyType",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [
+                "single",
+                "multi"
+              ],
+              "type": "string",
+              "ns": 6,
+              "name": "cardinality",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [
+                "readonly",
+                "readwrite",
+                "whencheckedout"
+              ],
+              "type": "string",
+              "ns": 6,
+              "name": "updatability",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": "boolean",
+              "ns": 6,
+              "name": "inherited",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": "boolean",
+              "ns": 6,
+              "name": "required",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": "boolean",
+              "ns": 6,
+              "name": "queryable",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": "boolean",
+              "ns": 6,
+              "name": "orderable",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": "boolean",
+              "ns": 6,
+              "name": "openChoice",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            }
+          ],
+          "occurs": {
+            "6:defaultValue": {
+              "min": "0",
+              "max": "1"
+            },
+            "6:choice": {
+              "min": "0",
+              "max": "unbounded"
+            }
+          },
+          "any": true,
+          "anyAttribute": true
+        },
+        {
+          "values": [],
+          "type": null,
+          "ns": 6,
+          "name": "propertyDateTimeDefinition",
+          "element": true,
+          "attributes": [],
+          "elements": [
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "defaultValue",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][2]"
+                }
+              ],
+              "elements": [
+                {
+                  "values": [],
+                  "type": "dateTime",
+                  "ns": 6,
+                  "name": "value",
+                  "element": true,
+                  "attributes": [],
+                  "elements": []
+                }
+              ],
+              "occurs": {
+                "6:value": {
+                  "min": "0",
+                  "max": "unbounded"
+                }
+              },
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "choice",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][1][\"attributes\"][0]"
+                }
+              ],
+              "elements": [
+                {
+                  "values": [],
+                  "type": "dateTime",
+                  "ns": 6,
+                  "name": "value",
+                  "element": true,
+                  "attributes": [],
+                  "elements": []
+                }
+              ],
+              "occurs": {
+                "6:value": {
+                  "min": "0",
+                  "max": "unbounded"
+                }
+              },
+              "anyAttribute": true
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][2]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][3]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][4]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][5]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][6]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][7]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][8]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][9]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][10]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][11]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][12]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][13]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][14]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][15]"
+            }
+          ],
+          "occurs": {
+            "6:defaultValue": {
+              "min": "0",
+              "max": "1"
+            },
+            "6:choice": {
+              "min": "0",
+              "max": "unbounded"
+            }
+          },
+          "any": true,
+          "anyAttribute": true
+        },
+        {
+          "values": [],
+          "type": null,
+          "ns": 6,
+          "name": "propertyDecimalDefinition",
+          "element": true,
+          "attributes": [],
+          "elements": [
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "defaultValue",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][2]"
+                }
+              ],
+              "elements": [
+                {
+                  "values": [],
+                  "type": "decimal",
+                  "ns": 6,
+                  "name": "value",
+                  "element": true,
+                  "attributes": [],
+                  "elements": []
+                }
+              ],
+              "occurs": {
+                "6:value": {
+                  "min": "0",
+                  "max": "unbounded"
+                }
+              },
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": "decimal",
+              "ns": 6,
+              "name": "maxValue",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": "decimal",
+              "ns": 6,
+              "name": "minValue",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [
+                "32",
+                "64"
+              ],
+              "type": "integer",
+              "ns": 6,
+              "name": "precision",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "choice",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][1][\"attributes\"][0]"
+                }
+              ],
+              "elements": [
+                {
+                  "values": [],
+                  "type": "decimal",
+                  "ns": 6,
+                  "name": "value",
+                  "element": true,
+                  "attributes": [],
+                  "elements": []
+                }
+              ],
+              "occurs": {
+                "6:value": {
+                  "min": "0",
+                  "max": "unbounded"
+                }
+              },
+              "anyAttribute": true
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][2]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][3]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][4]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][5]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][6]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][7]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][8]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][9]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][10]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][11]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][12]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][13]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][14]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][15]"
+            }
+          ],
+          "occurs": {
+            "6:defaultValue": {
+              "min": "0",
+              "max": "1"
+            },
+            "6:maxValue": {
+              "min": "0",
+              "max": "1"
+            },
+            "6:minValue": {
+              "min": "0",
+              "max": "1"
+            },
+            "6:precision": {
+              "min": "0",
+              "max": "1"
+            },
+            "6:choice": {
+              "min": "0",
+              "max": "unbounded"
+            }
+          },
+          "any": true,
+          "anyAttribute": true
+        },
+        {
+          "values": [],
+          "type": null,
+          "ns": 6,
+          "name": "propertyIdDefinition",
+          "element": true,
+          "attributes": [],
+          "elements": [
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "defaultValue",
+              "element": true,
+              "attributes": [
+                {
+                  "values": [],
+                  "type": "anyURI",
+                  "ns": 6,
+                  "attribute": true,
+                  "name": "href"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][2]"
+                }
+              ],
+              "elements": [
+                {
+                  "values": [],
+                  "type": "string",
+                  "ns": 6,
+                  "name": "value",
+                  "element": true,
+                  "attributes": [],
+                  "elements": []
+                }
+              ],
+              "occurs": {
+                "6:value": {
+                  "min": "0",
+                  "max": "unbounded"
+                }
+              },
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "choice",
+              "element": true,
+              "attributes": [
+                {
+                  "values": [],
+                  "type": "anyURI",
+                  "ns": 6,
+                  "attribute": true,
+                  "name": "href"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][1][\"attributes\"][0]"
+                }
+              ],
+              "elements": [
+                {
+                  "values": [],
+                  "type": "string",
+                  "ns": 6,
+                  "name": "value",
+                  "element": true,
+                  "attributes": [],
+                  "elements": []
+                }
+              ],
+              "occurs": {
+                "6:value": {
+                  "min": "0",
+                  "max": "unbounded"
+                }
+              },
+              "anyAttribute": true
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][2]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][3]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][4]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][5]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][6]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][7]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][8]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][9]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][10]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][11]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][12]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][13]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][14]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][15]"
+            }
+          ],
+          "occurs": {
+            "6:defaultValue": {
+              "min": "0",
+              "max": "1"
+            },
+            "6:choice": {
+              "min": "0",
+              "max": "unbounded"
+            }
+          },
+          "any": true,
+          "anyAttribute": true
+        },
+        {
+          "values": [],
+          "type": null,
+          "ns": 6,
+          "name": "propertyIntegerDefinition",
+          "element": true,
+          "attributes": [],
+          "elements": [
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "defaultValue",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][2]"
+                }
+              ],
+              "elements": [
+                {
+                  "values": [],
+                  "type": "integer",
+                  "ns": 6,
+                  "name": "value",
+                  "element": true,
+                  "attributes": [],
+                  "elements": []
+                }
+              ],
+              "occurs": {
+                "6:value": {
+                  "min": "0",
+                  "max": "unbounded"
+                }
+              },
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": "integer",
+              "ns": 6,
+              "name": "maxValue",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": "integer",
+              "ns": 6,
+              "name": "minValue",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "choice",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][1][\"attributes\"][0]"
+                }
+              ],
+              "elements": [
+                {
+                  "values": [],
+                  "type": "integer",
+                  "ns": 6,
+                  "name": "value",
+                  "element": true,
+                  "attributes": [],
+                  "elements": []
+                }
+              ],
+              "occurs": {
+                "6:value": {
+                  "min": "0",
+                  "max": "unbounded"
+                }
+              },
+              "anyAttribute": true
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][2]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][3]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][4]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][5]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][6]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][7]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][8]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][9]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][10]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][11]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][12]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][13]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][14]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][15]"
+            }
+          ],
+          "occurs": {
+            "6:defaultValue": {
+              "min": "0",
+              "max": "1"
+            },
+            "6:maxValue": {
+              "min": "0",
+              "max": "1"
+            },
+            "6:minValue": {
+              "min": "0",
+              "max": "1"
+            },
+            "6:choice": {
+              "min": "0",
+              "max": "unbounded"
+            }
+          },
+          "any": true,
+          "anyAttribute": true
+        },
+        {
+          "values": [],
+          "type": null,
+          "ns": 6,
+          "name": "propertyHtmlDefinition",
+          "element": true,
+          "attributes": [],
+          "elements": [
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "defaultValue",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][2]"
+                }
+              ],
+              "elements": [
+                {
+                  "values": [],
+                  "type": null,
+                  "ns": 6,
+                  "name": "value",
+                  "element": true,
+                  "attributes": [],
+                  "elements": [],
+                  "any": true
+                }
+              ],
+              "occurs": {
+                "6:value": {
+                  "min": "0",
+                  "max": "unbounded"
+                }
+              },
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "choice",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][1][\"attributes\"][0]"
+                }
+              ],
+              "elements": [
+                {
+                  "values": [],
+                  "type": null,
+                  "ns": 6,
+                  "name": "value",
+                  "element": true,
+                  "attributes": [],
+                  "elements": [],
+                  "any": true
+                }
+              ],
+              "occurs": {
+                "6:value": {
+                  "min": "0",
+                  "max": "unbounded"
+                }
+              },
+              "anyAttribute": true
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][2]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][3]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][4]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][5]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][6]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][7]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][8]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][9]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][10]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][11]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][12]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][13]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][14]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][15]"
+            }
+          ],
+          "occurs": {
+            "6:defaultValue": {
+              "min": "0",
+              "max": "1"
+            },
+            "6:choice": {
+              "min": "0",
+              "max": "unbounded"
+            }
+          },
+          "any": true,
+          "anyAttribute": true
+        },
+        {
+          "values": [],
+          "type": null,
+          "ns": 6,
+          "name": "propertyXhtmlDefinition",
+          "element": true,
+          "attributes": [],
+          "elements": [
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "defaultValue",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][2]"
+                }
+              ],
+              "elements": [
+                {
+                  "values": [],
+                  "type": null,
+                  "ns": 6,
+                  "name": "value",
+                  "element": true,
+                  "attributes": [],
+                  "elements": [],
+                  "any": true
+                }
+              ],
+              "occurs": {
+                "6:value": {
+                  "min": "0",
+                  "max": "unbounded"
+                }
+              },
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "choice",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][1][\"attributes\"][0]"
+                }
+              ],
+              "elements": [
+                {
+                  "values": [],
+                  "type": null,
+                  "ns": 6,
+                  "name": "value",
+                  "element": true,
+                  "attributes": [],
+                  "elements": [],
+                  "any": true
+                }
+              ],
+              "occurs": {
+                "6:value": {
+                  "min": "0",
+                  "max": "unbounded"
+                }
+              },
+              "anyAttribute": true
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][2]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][3]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][4]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][5]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][6]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][7]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][8]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][9]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][10]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][11]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][12]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][13]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][14]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][15]"
+            }
+          ],
+          "occurs": {
+            "6:defaultValue": {
+              "min": "0",
+              "max": "1"
+            },
+            "6:choice": {
+              "min": "0",
+              "max": "unbounded"
+            }
+          },
+          "any": true,
+          "anyAttribute": true
+        },
+        {
+          "values": [],
+          "type": null,
+          "ns": 6,
+          "name": "propertyStringDefinition",
+          "element": true,
+          "attributes": [],
+          "elements": [
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "defaultValue",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][2]"
+                }
+              ],
+              "elements": [
+                {
+                  "values": [],
+                  "type": "string",
+                  "ns": 6,
+                  "name": "value",
+                  "element": true,
+                  "attributes": [],
+                  "elements": []
+                }
+              ],
+              "occurs": {
+                "6:value": {
+                  "min": "0",
+                  "max": "unbounded"
+                }
+              },
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": "integer",
+              "ns": 6,
+              "name": "maxLength",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "choice",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][1][\"attributes\"][0]"
+                }
+              ],
+              "elements": [
+                {
+                  "values": [],
+                  "type": "string",
+                  "ns": 6,
+                  "name": "value",
+                  "element": true,
+                  "attributes": [],
+                  "elements": []
+                }
+              ],
+              "occurs": {
+                "6:value": {
+                  "min": "0",
+                  "max": "unbounded"
+                }
+              },
+              "anyAttribute": true
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][2]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][3]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][4]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][5]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][6]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][7]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][8]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][9]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][10]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][11]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][12]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][13]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][14]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][15]"
+            }
+          ],
+          "occurs": {
+            "6:defaultValue": {
+              "min": "0",
+              "max": "1"
+            },
+            "6:maxLength": {
+              "min": "0",
+              "max": "1"
+            },
+            "6:choice": {
+              "min": "0",
+              "max": "unbounded"
+            }
+          },
+          "any": true,
+          "anyAttribute": true
+        },
+        {
+          "values": [],
+          "type": null,
+          "ns": 6,
+          "name": "propertyXmlDefinition",
+          "element": true,
+          "attributes": [],
+          "elements": [
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "defaultValue",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][2]"
+                }
+              ],
+              "elements": [
+                {
+                  "values": [],
+                  "type": null,
+                  "ns": 6,
+                  "name": "value",
+                  "element": true,
+                  "attributes": [],
+                  "elements": [],
+                  "any": true
+                }
+              ],
+              "occurs": {
+                "6:value": {
+                  "min": "0",
+                  "max": "unbounded"
+                }
+              },
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": "anyURI",
+              "ns": 6,
+              "name": "schemaURI",
+              "element": true,
+              "attributes": [],
+              "elements": []
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "choice",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][1][\"attributes\"][0]"
+                }
+              ],
+              "elements": [
+                {
+                  "values": [],
+                  "type": null,
+                  "ns": 6,
+                  "name": "value",
+                  "element": true,
+                  "attributes": [],
+                  "elements": [],
+                  "any": true
+                }
+              ],
+              "occurs": {
+                "6:value": {
+                  "min": "0",
+                  "max": "unbounded"
+                }
+              },
+              "anyAttribute": true
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][2]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][3]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][4]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][5]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][6]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][7]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][8]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][9]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][10]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][11]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][12]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][13]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][14]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][15]"
+            }
+          ],
+          "occurs": {
+            "6:defaultValue": {
+              "min": "0",
+              "max": "1"
+            },
+            "6:schemaURI": {
+              "min": "0",
+              "max": "1"
+            },
+            "6:choice": {
+              "min": "0",
+              "max": "unbounded"
+            }
+          },
+          "any": true,
+          "anyAttribute": true
+        },
+        {
+          "values": [],
+          "type": null,
+          "ns": 6,
+          "name": "propertyUriDefinition",
+          "element": true,
+          "attributes": [],
+          "elements": [
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "defaultValue",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][2]"
+                }
+              ],
+              "elements": [
+                {
+                  "values": [],
+                  "type": "anyURI",
+                  "ns": 6,
+                  "name": "value",
+                  "element": true,
+                  "attributes": [],
+                  "elements": []
+                }
+              ],
+              "occurs": {
+                "6:value": {
+                  "min": "0",
+                  "max": "unbounded"
+                }
+              },
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "choice",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][1][\"attributes\"][0]"
+                }
+              ],
+              "elements": [
+                {
+                  "values": [],
+                  "type": "anyURI",
+                  "ns": 6,
+                  "name": "value",
+                  "element": true,
+                  "attributes": [],
+                  "elements": []
+                }
+              ],
+              "occurs": {
+                "6:value": {
+                  "min": "0",
+                  "max": "unbounded"
+                }
+              },
+              "anyAttribute": true
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][2]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][3]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][4]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][5]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][6]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][7]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][8]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][9]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][10]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][11]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][12]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][13]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][14]"
+            },
+            {
+              "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][15]"
+            }
+          ],
+          "occurs": {
+            "6:defaultValue": {
+              "min": "0",
+              "max": "1"
+            },
+            "6:choice": {
+              "min": "0",
+              "max": "unbounded"
+            }
+          },
+          "any": true,
+          "anyAttribute": true
+        }
+      ],
+      "occurs": {
+        "6:id": {
+          "min": "1",
+          "max": "1"
+        },
+        "6:localName": {
+          "min": "1",
+          "max": "1"
+        },
+        "6:localNamespace": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:displayName": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:queryName": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:description": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:baseTypeId": {
+          "min": "1",
+          "max": "1"
+        },
+        "6:parentId": {
+          "min": "0",
+          "max": "1"
+        },
+        "6:creatable": {
+          "min": "1",
+          "max": "1"
+        },
+        "6:fileable": {
+          "min": "1",
+          "max": "1"
+        },
+        "6:queryable": {
+          "min": "1",
+          "max": "1"
+        },
+        "6:fulltextindexed": {
+          "min": "1",
+          "max": "1"
+        },
+        "6:includedInSupertypeQuery": {
+          "min": "1",
+          "max": "1"
+        },
+        "6:controllablePolicy": {
+          "min": "1",
+          "max": "1"
+        },
+        "6:controllableACL": {
+          "min": "1",
+          "max": "1"
+        }
+      },
+      "choices": [
+        {
+          "elements": [
+            "6:propertyBooleanDefinition",
+            "6:propertyDateTimeDefinition",
+            "6:propertyDecimalDefinition",
+            "6:propertyIdDefinition",
+            "6:propertyIntegerDefinition",
+            "6:propertyHtmlDefinition",
+            "6:propertyXhtmlDefinition",
+            "6:propertyStringDefinition",
+            "6:propertyXmlDefinition",
+            "6:propertyUriDefinition"
+          ],
+          "minOccurs": "0",
+          "maxOccurs": "unbounded"
+        }
+      ],
+      "any": true,
+      "anyAttribute": true
+    },
+    {
+      "values": [],
+      "type": null,
+      "ns": 9,
+      "name": "children",
+      "element": true,
+      "attributes": [
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"attributes\"][1]"
+        }
+      ],
+      "elements": [
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][0]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][1]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][2]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][3]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][4]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][5]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][6]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][7]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][8]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][9]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][10]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][11]"
+        },
+        {
+          "$ref": "$[\"elements\"][3][\"elements\"][12]"
+        }
+      ],
+      "choices": {
+        "$ref": "$[\"elements\"][3][\"choices\"]"
+      },
+      "occurs": {
+        "$ref": "$[\"elements\"][3][\"occurs\"]"
+      },
+      "any": true,
+      "anyAttribute": true
+    },
+    {
+      "values": [],
+      "type": null,
+      "ns": 9,
+      "name": "uritemplate",
+      "element": true,
+      "attributes": [],
+      "elements": [
+        {
+          "values": [],
+          "type": "string",
+          "ns": 9,
+          "name": "template",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "string",
+          "ns": 9,
+          "name": "type",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        },
+        {
+          "values": [],
+          "type": "string",
+          "ns": 9,
+          "name": "mediatype",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        }
+      ],
+      "any": true
+    },
+    {
+      "values": [],
+      "type": null,
+      "ns": 9,
+      "name": "object",
+      "element": true,
+      "attributes": [],
+      "elements": [
+        {
+          "values": [],
+          "type": null,
+          "ns": 6,
+          "name": "properties",
+          "element": true,
+          "attributes": [],
+          "elements": [
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "propertyBoolean",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][2]"
+                }
+              ],
+              "elements": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"elements\"][0]"
+                }
+              ],
+              "occurs": {
+                "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"occurs\"]"
+              },
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "propertyId",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][18][\"elements\"][0][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][2]"
+                }
+              ],
+              "elements": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][18][\"elements\"][0][\"elements\"][0]"
+                }
+              ],
+              "occurs": {
+                "$ref": "$[\"elements\"][25][\"elements\"][18][\"elements\"][0][\"occurs\"]"
+              },
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "propertyInteger",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][2]"
+                }
+              ],
+              "elements": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][19][\"elements\"][0][\"elements\"][0]"
+                }
+              ],
+              "occurs": {
+                "$ref": "$[\"elements\"][25][\"elements\"][19][\"elements\"][0][\"occurs\"]"
+              },
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "propertyDateTime",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][2]"
+                }
+              ],
+              "elements": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][16][\"elements\"][0][\"elements\"][0]"
+                }
+              ],
+              "occurs": {
+                "$ref": "$[\"elements\"][25][\"elements\"][16][\"elements\"][0][\"occurs\"]"
+              },
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "propertyDecimal",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][2]"
+                }
+              ],
+              "elements": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][17][\"elements\"][0][\"elements\"][0]"
+                }
+              ],
+              "occurs": {
+                "$ref": "$[\"elements\"][25][\"elements\"][17][\"elements\"][0][\"occurs\"]"
+              },
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "propertyHtml",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][2]"
+                }
+              ],
+              "elements": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][20][\"elements\"][0][\"elements\"][0]"
+                }
+              ],
+              "occurs": {
+                "$ref": "$[\"elements\"][25][\"elements\"][20][\"elements\"][0][\"occurs\"]"
+              },
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "propertyXhtml",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][2]"
+                }
+              ],
+              "elements": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][21][\"elements\"][0][\"elements\"][0]"
+                }
+              ],
+              "occurs": {
+                "$ref": "$[\"elements\"][25][\"elements\"][21][\"elements\"][0][\"occurs\"]"
+              },
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "propertyString",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][2]"
+                }
+              ],
+              "elements": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][22][\"elements\"][0][\"elements\"][0]"
+                }
+              ],
+              "occurs": {
+                "$ref": "$[\"elements\"][25][\"elements\"][22][\"elements\"][0][\"occurs\"]"
+              },
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "propertyUri",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][2]"
+                }
+              ],
+              "elements": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][24][\"elements\"][0][\"elements\"][0]"
+                }
+              ],
+              "occurs": {
+                "$ref": "$[\"elements\"][25][\"elements\"][24][\"elements\"][0][\"occurs\"]"
+              },
+              "anyAttribute": true
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "propertyXml",
+              "element": true,
+              "attributes": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][15][\"elements\"][0][\"attributes\"][2]"
+                }
+              ],
+              "elements": [
+                {
+                  "$ref": "$[\"elements\"][25][\"elements\"][23][\"elements\"][0][\"elements\"][0]"
+                }
+              ],
+              "occurs": {
+                "$ref": "$[\"elements\"][25][\"elements\"][23][\"elements\"][0][\"occurs\"]"
+              },
+              "anyAttribute": true
+            }
+          ],
+          "choices": [
+            {
+              "elements": [
+                "6:propertyBoolean",
+                "6:propertyId",
+                "6:propertyInteger",
+                "6:propertyDateTime",
+                "6:propertyDecimal",
+                "6:propertyHtml",
+                "6:propertyXhtml",
+                "6:propertyString",
+                "6:propertyUri",
+                "6:propertyXml"
+              ],
+              "minOccurs": "0",
+              "maxOccurs": "unbounded"
+            }
+          ],
+          "any": true,
+          "anyAttribute": true
+        },
+        {
+          "values": [],
+          "type": null,
+          "ns": 6,
+          "element": true,
+          "attributes": [],
+          "elements": [
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][0]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][1]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][2]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][3]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][4]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][5]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][6]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][7]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][8]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][9]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][10]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][11]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][12]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][13]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][14]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][15]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][16]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][17]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][18]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][19]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][20]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][21]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][22]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][23]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][24]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][25]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][26]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][27]"
+            },
+            {
+              "$ref": "$[\"elements\"][21][\"elements\"][28]"
+            }
+          ],
+          "name": "allowableActions",
+          "occurs": {
+            "$ref": "$[\"elements\"][21][\"occurs\"]"
+          },
+          "any": true,
+          "anyAttribute": true
+        },
+        {
+          "values": [],
+          "type": null,
+          "ns": 6,
+          "name": "relationship",
+          "element": true,
+          "attributes": [],
+          "elements": [
+            {
+              "$ref": "$[\"elements\"][28][\"elements\"][0]"
+            },
+            {
+              "$ref": "$[\"elements\"][28][\"elements\"][1]"
+            },
+            {
+              "$ref": "$[\"elements\"][28][\"elements\"][2]"
+            },
+            {
+              "values": [],
+              "type": null,
+              "ns": 6,
+              "name": "child",
+              "element": true,
+              "attributes": [],
+              "elements": [
+                {
+                  "$ref": "$[\"elements\"][28][\"elements\"][0]"
+                },
+                {
+                  "$ref": "$[\"elements\"][28][\"elements\"][1]"
+                },
+                {
+                  "$ref": "$[\"elements\"][28][\"elements\"][2]"
+                },
+                {
+                  "$ref": "$[\"elements\"][28][\"elements\"][2][\"elements\"][3]"
+                },
+                {
+                  "values": [],
+                  "type": null,
+                  "ns": 6,
+                  "name": "changeEventInfo",
+                  "element": true,
+                  "attributes": [],
+                  "elements": [
+                    {
+                      "values": [
+                        "created",
+                        "updated",
+                        "deleted",
+                        "security"
+                      ],
+                      "type": "string",
+                      "ns": 6,
+                      "name": "changeType",
+                      "element": true,
+                      "attributes": [],
+                      "elements": []
+                    },
+                    {
+                      "values": [],
+                      "type": "dateTime",
+                      "ns": 6,
+                      "name": "changeTime",
+                      "element": true,
+                      "attributes": [],
+                      "elements": []
+                    }
+                  ],
+                  "any": true
+                },
+                {
+                  "values": [],
+                  "type": null,
+                  "ns": 6,
+                  "name": "acl",
+                  "element": true,
+                  "attributes": [],
+                  "elements": [
+                    {
+                      "$ref": "$[\"elements\"][23][\"elements\"][0]"
+                    }
+                  ],
+                  "occurs": {
+                    "$ref": "$[\"elements\"][23][\"occurs\"]"
+                  },
+                  "any": true
+                },
+                {
+                  "values": [],
+                  "type": "boolean",
+                  "ns": 6,
+                  "name": "exactACL",
+                  "element": true,
+                  "attributes": [],
+                  "elements": []
+                },
+                {
+                  "values": [],
+                  "type": null,
+                  "ns": 6,
+                  "name": "rendition",
+                  "element": true,
+                  "attributes": [],
+                  "elements": [
+                    {
+                      "values": [],
+                      "type": "string",
+                      "ns": 6,
+                      "name": "streamId",
+                      "element": true,
+                      "attributes": [],
+                      "elements": []
+                    },
+                    {
+                      "values": [],
+                      "type": "string",
+                      "ns": 6,
+                      "name": "mimetype",
+                      "element": true,
+                      "attributes": [],
+                      "elements": []
+                    },
+                    {
+                      "values": [],
+                      "type": "integer",
+                      "ns": 6,
+                      "name": "length",
+                      "element": true,
+                      "attributes": [],
+                      "elements": []
+                    },
+                    {
+                      "values": [],
+                      "type": "string",
+                      "ns": 6,
+                      "name": "title",
+                      "element": true,
+                      "attributes": [],
+                      "elements": []
+                    },
+                    {
+                      "values": [],
+                      "type": "string",
+                      "ns": 6,
+                      "name": "kind",
+                      "element": true,
+                      "attributes": [],
+                      "elements": []
+                    },
+                    {
+                      "values": [],
+                      "type": "integer",
+                      "ns": 6,
+                      "name": "height",
+                      "element": true,
+                      "attributes": [],
+                      "elements": []
+                    },
+                    {
+                      "values": [],
+                      "type": "integer",
+                      "ns": 6,
+                      "name": "width",
+                      "element": true,
+                      "attributes": [],
+                      "elements": []
+                    },
+                    {
+                      "values": [],
+                      "type": "string",
+                      "ns": 6,
+                      "name": "renditionDocumentId",
+                      "element": true,
+                      "attributes": [],
+                      "elements": []
+                    }
+                  ],
+                  "occurs": {
+                    "6:mimetype": {
+                      "min": "0",
+                      "max": null
+                    },
+                    "6:length": {
+                      "min": "0",
+                      "max": null
+                    },
+                    "6:title": {
+                      "min": "0",
+                      "max": null
+                    },
+                    "6:kind": {
+                      "min": "0",
+                      "max": null
+                    },
+                    "6:height": {
+                      "min": "0",
+                      "max": null
+                    },
+                    "6:width": {
+                      "min": "0",
+                      "max": null
+                    },
+                    "6:renditionDocumentId": {
+                      "min": "0",
+                      "max": null
+                    }
+                  },
+                  "any": true
+                }
+              ],
+              "occurs": {
+                "6:properties": {
+                  "min": "0",
+                  "max": "1"
+                },
+                "6:allowableActions": {
+                  "min": "0",
+                  "max": "1"
+                },
+                "6:relationship": {
+                  "min": "0",
+                  "max": "unbounded"
+                },
+                "6:child": {
+                  "min": "0",
+                  "max": "unbounded"
+                },
+                "6:changeEventInfo": {
+                  "min": "0",
+                  "max": "1"
+                },
+                "6:acl": {
+                  "min": "0",
+                  "max": "1"
+                },
+                "6:exactACL": {
+                  "min": "0",
+                  "max": "1"
+                },
+                "6:rendition": {
+                  "min": "0",
+                  "max": "unbounded"
+                }
+              },
+              "any": true,
+              "typeRef": [
+                "6:cmisUndefinedAttribute"
+              ]
+            },
+            {
+              "$ref": "$[\"elements\"][28][\"elements\"][2][\"elements\"][3][\"elements\"][4]"
+            },
+            {
+              "$ref": "$[\"elements\"][28][\"elements\"][2][\"elements\"][3][\"elements\"][5]"
+            },
+            {
+              "$ref": "$[\"elements\"][28][\"elements\"][2][\"elements\"][3][\"elements\"][6]"
+            },
+            {
+              "$ref": "$[\"elements\"][28][\"elements\"][2][\"elements\"][3][\"elements\"][7]"
+            }
+          ],
+          "occurs": {
+            "$ref": "$[\"elements\"][28][\"elements\"][2][\"elements\"][3][\"occurs\"]"
+          },
+          "any": true,
+          "typeRef": {
+            "$ref": "$[\"elements\"][28][\"elements\"][2][\"elements\"][3][\"typeRef\"]"
+          }
+        },
+        {
+          "$ref": "$[\"elements\"][28][\"elements\"][2][\"elements\"][3]"
+        },
+        {
+          "$ref": "$[\"elements\"][28][\"elements\"][2][\"elements\"][3][\"elements\"][4]"
+        },
+        {
+          "$ref": "$[\"elements\"][28][\"elements\"][2][\"elements\"][3][\"elements\"][5]"
+        },
+        {
+          "$ref": "$[\"elements\"][28][\"elements\"][2][\"elements\"][3][\"elements\"][6]"
+        },
+        {
+          "$ref": "$[\"elements\"][28][\"elements\"][2][\"elements\"][3][\"elements\"][7]"
+        }
+      ],
+      "occurs": {
+        "$ref": "$[\"elements\"][28][\"elements\"][2][\"elements\"][3][\"occurs\"]"
+      },
+      "any": true,
+      "anyAttribute": true
+    }
+  ]
+}
