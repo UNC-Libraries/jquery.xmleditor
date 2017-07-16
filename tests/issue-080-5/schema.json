@@ -1,0 +1,56 @@
+{
+  "schema": true,
+  "ns": 4,
+  "namespaces": [
+    {
+      "prefix": "xml",
+      "uri": "http://www.w3.org/XML/1998/namespace"
+    },
+    {
+      "prefix": "xmlns",
+      "uri": "http://www.w3.org/2000/xmlns/"
+    },
+    {
+      "prefix": "html",
+      "uri": "http://www.w3.org/1999/xhtml/"
+    },
+    {
+      "prefix": "xs",
+      "uri": "http://www.w3.org/2001/XMLSchema"
+    },
+    {
+      "prefix": "",
+      "uri": null
+    }
+  ],
+  "elements": [
+    {
+      "values": [],
+      "type": null,
+      "ns": 4,
+      "name": "root",
+      "element": true,
+      "attributes": [],
+      "elements": [
+        {
+          "values": [],
+          "type": "string",
+          "ns": 4,
+          "name": "name",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        }
+      ],
+      "choices": [
+        {
+          "elements": [
+            "4:name"
+          ],
+          "minOccurs": null,
+          "maxOccurs": 1
+        }
+      ]
+    }
+  ]
+}

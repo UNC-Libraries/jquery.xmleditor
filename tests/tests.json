@@ -1,5 +1,7 @@
 {
   "testcases": [
+    "issue-080-5",
+    "issue-080-4",
     "issue-080-3",
     "issue-080-2",
     "issue-080-1",
