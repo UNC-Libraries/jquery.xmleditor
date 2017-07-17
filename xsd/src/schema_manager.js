@@ -314,9 +314,9 @@ SchemaManager.prototype.resolveTypeReferences = function(definition) {
 				var typeRef = typeRefs[index];
 				
 				// Find the definition being referenced across all schemas
-				var typeDef = this.resolveDefinition(typeRef);
+				var typeDef = this.resolveDefinition(typeRef.indexedName);
 				if (!typeDef)
-					throw new Error("Could not resolve reference to type " + typeRef 
+					throw new Error("Could not resolve reference to type " + typeRef.indexedName
 							+ " from definition " + definition.name);
 				
 				// Compute nested types depth first before merging in this type

@@ -142,7 +142,7 @@ SchemaProcessor.prototype.addTypeReference = function(definition, refName) {
 		definition.typeRef = [];
 	}
 	
-	definition.typeRef.push(nameParts.indexedName);
+	definition.typeRef.push({indexedName: nameParts.indexedName});
 };
 
 // Build the schema tag
