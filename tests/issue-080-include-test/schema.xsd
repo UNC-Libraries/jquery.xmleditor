@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	targetNamespace="http://example.com">
+	
+	<xs:include schemaLocation="no-target-ns.xsd"></xs:include>
+	
+	<xs:element name="wrapper" type="wrapperType" />
+	
+	<xs:complexType name="wrapperType">
+		<xs:choice>
+			<xs:element name="name" type="xs:string" />
+			<xs:element name="uri" type="xs:string" />
+			<xs:element name="dc" type="dcElements" />
+		</xs:choice>
+	</xs:complexType>
+	
+</xs:schema>
