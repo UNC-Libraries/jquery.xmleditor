@@ -1,0 +1,64 @@
+{
+  "schema": true,
+  "ns": 3,
+  "namespaces": [
+    {
+      "prefix": "xml",
+      "uri": "http://www.w3.org/XML/1998/namespace"
+    },
+    {
+      "prefix": "xmlns",
+      "uri": "http://www.w3.org/2000/xmlns/"
+    },
+    {
+      "prefix": "html",
+      "uri": "http://www.w3.org/1999/xhtml/"
+    },
+    {
+      "prefix": "foo",
+      "uri": "http://example.com/foo"
+    },
+    {
+      "prefix": "xs",
+      "uri": "http://www.w3.org/2001/XMLSchema"
+    }
+  ],
+  "elements": [
+    {
+      "values": [],
+      "type": null,
+      "ns": 3,
+      "name": "Base",
+      "element": true,
+      "attributes": [],
+      "elements": []
+    },
+    {
+      "values": [],
+      "type": null,
+      "ns": 3,
+      "name": "Foo",
+      "element": true,
+      "attributes": [],
+      "elements": [
+        {
+          "values": [],
+          "type": "string",
+          "ns": 3,
+          "name": "Bar",
+          "element": true,
+          "attributes": [
+            {
+              "values": [],
+              "type": "string",
+              "ns": 3,
+              "name": "bar",
+              "attribute": true
+            }
+          ],
+          "elements": []
+        }
+      ]
+    }
+  ]
+}
