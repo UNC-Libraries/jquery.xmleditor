@@ -322,7 +322,7 @@ SchemaManager.prototype.resolveTypeReferences = function(definition) {
 				// Compute nested types depth first before merging in this type
 				this.resolveTypeReferences(typeDef);
 				
-				this.mergeType(definition, typeDef);
+				this.mergeType(definition, typeDef, typeRef.mergeMode);
 			}
 		}
 		if (definition.elements) {
@@ -372,7 +372,7 @@ SchemaManager.prototype.resolveSchema = function(schema, name) {
 	return this;
 };
 
-SchemaManager.prototype.mergeType = function(base, type) {
+SchemaManager.prototype.mergeType = function(base, type, mergeMode) {
 	for (var key in type) {
 		if (type.hasOwnProperty(key)) {
 			var value = type[key];
@@ -390,7 +390,8 @@ SchemaManager.prototype.mergeRef = function(base, ref) {
 		base.name = ref.name;
 	base.ns = ref.ns;
 	
-	this.mergeType(base, ref);
+	var mergeMode = 'extension';
+	this.mergeType(base, ref, mergeMode);
 }
 
 //Register a namespace if it is new

@@ -136,13 +136,13 @@ SchemaProcessor.prototype.addReference = function(definition, refName) {
 	definition.ref = nameParts.indexedName;
 };
 
-SchemaProcessor.prototype.addTypeReference = function(definition, refName) {
+SchemaProcessor.prototype.addTypeReference = function(definition, refName, mergeMode) {
 	var nameParts = this.extractName(refName);
 	if (!definition.typeRef) {
 		definition.typeRef = [];
 	}
 	
-	definition.typeRef.push({indexedName: nameParts.indexedName});
+	definition.typeRef.push({indexedName: nameParts.indexedName, mergeMode: mergeMode});
 };
 
 // Build the schema tag
@@ -197,7 +197,7 @@ SchemaProcessor.prototype.build_element = function(node, definition, parentDef) 
 	if (ref) {
 		this.addReference(definition, ref);
 	} else if (subGroup) {
-		this.addTypeReference(definition, subGroup);
+		this.addTypeReference(definition, subGroup, 'extension');
 	} else {
 		// Build or retrieve the type definition
 		var type = node.getAttribute("type");
@@ -213,7 +213,7 @@ SchemaProcessor.prototype.build_element = function(node, definition, parentDef) 
 			definition.type = this.getBuiltInType(type, definition);
 			if (definition.type == null) {
 				// Was not built in, make a reference to resolve later
-				this.addTypeReference(definition, type);
+				this.addTypeReference(definition, type, 'extension');
 			}
 		}
 	}
@@ -239,7 +239,7 @@ SchemaProcessor.prototype.build_attribute = function(node, definition) {
 			definition.type = this.getBuiltInType(type, definition);
 			if (definition.type == null) {
 				// Was not built in, make a reference to resolve later
-				this.addTypeReference(definition, type);
+				this.addTypeReference(definition, type, 'extension');
 			}
 		}
 	}
@@ -295,7 +295,7 @@ SchemaProcessor.prototype.build_union = function(node, definition) {
 			
 			definition.type = this.getBuiltInType(memberType, definition);
 			if (definition.type == null) {
-				this.addTypeReference(definition, memberType);
+				this.addTypeReference(definition, memberType, 'extension');
 			}
 		}
 	}
@@ -310,7 +310,7 @@ SchemaProcessor.prototype.build_union = function(node, definition) {
 SchemaProcessor.prototype.build_group = function(node, definition) {
 	var ref = node.getAttribute("ref");
 	if (ref){
-		this.addTypeReference(definition, ref);
+		this.addTypeReference(definition, ref, 'extension');
 		return definition;
 	}
 	var self = this;
@@ -421,7 +421,7 @@ SchemaProcessor.prototype.build_restriction = function(node, definition) {
 	
 	definition.type = this.getBuiltInType(base, definition);
 	if (definition.type == null) {
-		this.addTypeReference(definition, base);
+		this.addTypeReference(definition, base, 'restriction');
 	}
 	
 	var self = this;
@@ -449,7 +449,7 @@ SchemaProcessor.prototype.build_extension = function(node, definition) {
 	
 	definition.type = this.getBuiltInType(base, definition);
 	if (definition.type == null) {
-		this.addTypeReference(definition, base);
+		this.addTypeReference(definition, base, 'extension');
 	}
 	
 	var self = this;
@@ -472,7 +472,7 @@ SchemaProcessor.prototype.build_extension = function(node, definition) {
 SchemaProcessor.prototype.build_attributeGroup = function(node, definition) {
 	var ref = node.getAttribute("ref");
 	if (ref){
-		this.addTypeReference(definition, ref);
+		this.addTypeReference(definition, ref, 'extension');
 		return definition;
 	}
 	
