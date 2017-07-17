@@ -379,10 +379,50 @@ SchemaManager.prototype.mergeType = function(base, type, mergeMode) {
 			if (value != null && base[key] == null){
 				base[key] = value;
 			} else if ($.isArray(value) && $.isArray(base[key])){
-				base[key] = base[key].concat(value);
+				base[key] = this.mergeTypeArray(base[key], value, key, mergeMode);
 			}
 		}
 	}
+};
+
+SchemaManager.prototype.mergeTypeArray = function(baseArray, typeArray, key, mergeMode) {
+	var mergeFunction = this['mergeType_' + key + '_' + mergeMode];
+	if (mergeFunction === undefined) {
+		throw Error('Invalid definition key ' + JSON.stringify(key) + ' or merge mode ' + JSON.stringify(mergeMode));
+	}
+	return mergeFunction.call(this, baseArray, typeArray);
+};
+
+SchemaManager.prototype.mergeType_choices_extension = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
+};
+
+SchemaManager.prototype.mergeType_choices_restriction = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
+};
+
+SchemaManager.prototype.mergeType_attributes_extension = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
+};
+
+SchemaManager.prototype.mergeType_attributes_restriction = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
+};
+
+SchemaManager.prototype.mergeType_elements_extension = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
+};
+
+SchemaManager.prototype.mergeType_elements_restriction = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
+};
+
+SchemaManager.prototype.mergeType_values_extension = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
+};
+
+SchemaManager.prototype.mergeType_values_restriction = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
 };
 
 SchemaManager.prototype.mergeRef = function(base, ref) {
