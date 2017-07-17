@@ -1,5 +1,7 @@
 {
   "testcases": [
+    "issue-082-2",
+    "issue-082-1",
     "issue-080-no-target-ns",
     "issue-080-include-test",
     "issue-080-5",

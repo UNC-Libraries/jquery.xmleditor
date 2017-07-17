@@ -406,7 +406,18 @@ SchemaManager.prototype.mergeType_attributes_extension = function(baseArray, typ
 };
 
 SchemaManager.prototype.mergeType_attributes_restriction = function(baseArray, typeArray) {
-	return baseArray.concat(typeArray);
+	var baseNames = {};
+	for (var i = 0; i < baseArray.length; i++) {
+		baseNames[baseArray[i].name] = true;
+	}
+	var typeResult = [];
+	for (var j = 0; j < typeArray.length; j++) {
+		var typeItem = typeArray[j];
+		if (!baseNames[typeItem.name]) {
+			typeResult.push(typeItem);
+		}
+	}
+	return typeResult.concat(baseArray);
 };
 
 SchemaManager.prototype.mergeType_elements_extension = function(baseArray, typeArray) {
@@ -422,7 +433,7 @@ SchemaManager.prototype.mergeType_values_extension = function(baseArray, typeArr
 };
 
 SchemaManager.prototype.mergeType_values_restriction = function(baseArray, typeArray) {
-	return baseArray.concat(typeArray);
+	return baseArray;
 };
 
 SchemaManager.prototype.mergeRef = function(base, ref) {
