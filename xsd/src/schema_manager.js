@@ -376,7 +376,7 @@ SchemaManager.prototype.mergeType = function(base, type) {
 			var value = type[key];
 			if (value != null && base[key] == null){
 				base[key] = value;
-			} else if ($.isArray(value) && $.isArray(type[key])){
+			} else if ($.isArray(value) && $.isArray(base[key])){
 				base[key] = base[key].concat(value);
 			}
 		}
