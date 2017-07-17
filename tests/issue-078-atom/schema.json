@@ -5366,9 +5366,7 @@
                 }
               },
               "any": true,
-              "typeRef": [
-                "6:cmisUndefinedAttribute"
-              ]
+              "anyAttribute": true
             },
             {
               "$ref": "$[\"elements\"][28][\"elements\"][2][\"elements\"][3][\"elements\"][4]"
@@ -5387,9 +5385,7 @@
             "$ref": "$[\"elements\"][28][\"elements\"][2][\"elements\"][3][\"occurs\"]"
           },
           "any": true,
-          "typeRef": {
-            "$ref": "$[\"elements\"][28][\"elements\"][2][\"elements\"][3][\"typeRef\"]"
-          }
+          "anyAttribute": true
         },
         {
           "$ref": "$[\"elements\"][28][\"elements\"][2][\"elements\"][3]"

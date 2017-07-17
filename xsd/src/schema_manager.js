@@ -303,17 +303,6 @@ SchemaManager.prototype.resolveTypeReferences = function(definition) {
 	} else {
 		// Process children
 		var self = this;
-		if (definition.elements) {
-			$.each(definition.elements, function(){
-				self.resolveTypeReferences(this);
-			});
-		}
-		if (definition.attributes != null) {
-			$.each(definition.attributes, function(){
-				self.resolveTypeReferences(this);
-			});
-		}
-		
 		if (definition.typeRef) {
 			// Merge in any type references
 			var typeRefs = definition.typeRef;
@@ -333,6 +322,16 @@ SchemaManager.prototype.resolveTypeReferences = function(definition) {
 				
 				this.mergeType(definition, typeDef);
 			}
+		}
+		if (definition.elements) {
+			$.each(definition.elements, function(){
+				self.resolveTypeReferences(this);
+			});
+		}
+		if (definition.attributes != null) {
+			$.each(definition.attributes, function(){
+				self.resolveTypeReferences(this);
+			});
 		}
 	}
 };
