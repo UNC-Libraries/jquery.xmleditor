@@ -193,11 +193,8 @@ SchemaProcessor.prototype.build = function(node, definition, parentDef) {
 SchemaProcessor.prototype.build_element = function(node, definition, parentDef) {
 	
 	var ref = node.getAttribute("ref");
-	var subGroup = node.getAttribute("substitutionGroup");
 	if (ref) {
 		this.addReference(definition, ref);
-	} else if (subGroup) {
-		this.addTypeReference(definition, subGroup, 'extension');
 	} else {
 		// Build or retrieve the type definition
 		var type = node.getAttribute("type");
@@ -206,7 +203,12 @@ SchemaProcessor.prototype.build_element = function(node, definition, parentDef) 
 			if (child) {
 				this.build(child, definition);
 			} else {
-				definition.type = 'anyType';
+				var subGroup = node.getAttribute('substitutionGroup');
+				if (subGroup) {
+					this.addTypeReference(definition, subGroup, 'extension');
+				} else {
+					definition.type = 'anyType';
+				}
 			}
 		} else {
 			// Check to see if it is a built in type
