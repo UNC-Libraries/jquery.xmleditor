@@ -1,0 +1,24 @@
+<schema xmlns:foo="http://example.com/foo" xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://example.com/foo" elementFormDefault="qualified">
+  <complexType name="BaseType">
+    <sequence/>
+  </complexType>
+  <complexType name="FooType">
+    <complexContent>
+      <restriction base="foo:BaseType">
+        <sequence>
+          <element name="Bar">
+            <complexType>
+              <simpleContent>
+                <extension base="string">
+                  <attribute name="bar" type="string"/>
+                </extension>
+              </simpleContent>
+            </complexType>
+          </element>
+        </sequence>
+      </restriction>
+    </complexContent>
+  </complexType>
+  <element name="Base" type="foo:BaseType"/>
+  <element name="Foo" type="foo:FooType"/>
+</schema>
