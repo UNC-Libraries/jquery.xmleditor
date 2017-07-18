@@ -32,6 +32,17 @@ function SchemaProcessor(xsdDocument, xsdManager, schemaUrl, parentNSIndex) {
 		this.targetNSIndex = this.xsdManager.registerNamespace(this.targetNS);
 	}
 	
+	// Register the correct default namespace if none was specified, see:
+	// * https://www.w3.org/TR/xmlschema11-1/#src-include
+	// * https://www.w3.org/TR/xmlschema11-1/#sec-src-resolve
+	if (!('' in this.localNamespaces)) {
+		if (this.xsd.getAttribute('targetNamespace') === null) {
+			this.localNamespaces[''] = this.targetNS;
+		} else {
+			this.localNamespaces[''] = this.xsdManager.xsNS;
+		}
+	}
+
 	// Root definition for this schema, either an element or a schema object
 	this.root = null;
 };
@@ -56,11 +67,6 @@ SchemaProcessor.prototype.extractNamespaces = function() {
 			var namespaceUri = attr.nodeValue;
 			this.registerNamespace(namespaceUri, namespacePrefix);
 		}
-	}
-	
-	// Register the XML Schema namespace as the default namespace if none was specified
-	if (!('' in this.localNamespaces)) {
-		this.localNamespaces[''] = this.xsdManager.xsNS;
 	}
 };
 
