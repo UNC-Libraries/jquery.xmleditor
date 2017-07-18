@@ -2,7 +2,8 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
 	xmlns:dc="http://purl.org/dc/elements/1.1/"
 	xmlns="http://example.com"
-	targetNamespace="http://example.com">
+	targetNamespace="http://example.com"
+	elementFormDefault="qualified">
 	
 	<xs:include schemaLocation="no-target-ns.xsd"></xs:include>
 	
