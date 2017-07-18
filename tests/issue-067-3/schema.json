@@ -19,7 +19,7 @@
       "uri": "http://www.w3.org/2001/XMLSchema"
     },
     {
-      "prefix": "",
+      "prefix": "foo",
       "uri": "http://example.com/foo"
     }
   ],

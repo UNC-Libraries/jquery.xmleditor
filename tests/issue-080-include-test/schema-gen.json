@@ -1,0 +1,422 @@
+{
+    "schema": true,
+    "ns": 5,
+    "namespaces": [
+        {
+            "prefix": "xml",
+            "uri": "http://www.w3.org/XML/1998/namespace"
+        },
+        {
+            "prefix": "xmlns",
+            "uri": "http://www.w3.org/2000/xmlns/"
+        },
+        {
+            "prefix": "html",
+            "uri": "http://www.w3.org/1999/xhtml/"
+        },
+        {
+            "prefix": "xs",
+            "uri": "http://www.w3.org/2001/XMLSchema"
+        },
+        {
+            "prefix": "dc",
+            "uri": "http://purl.org/dc/elements/1.1/"
+        },
+        {
+            "prefix": "",
+            "uri": "http://example.com"
+        }
+    ],
+    "elements": [
+        {
+            "values": [
+
+            ],
+            "type": "wrapperType",
+            "ns": 5,
+            "name": "wrapper",
+            "element": true,
+            "attributes": [
+
+            ],
+            "elements": [
+
+            ]
+        },
+        {
+            "values": [
+
+            ],
+            "type": "rootType",
+            "ns": 5,
+            "name": "root",
+            "element": true,
+            "attributes": [
+
+            ],
+            "elements": [
+
+            ]
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "title",
+            "element": true,
+            "attributes": [
+                {
+                    "values": [
+                        ""
+                    ],
+                    "type": "language",
+                    "ns": 0,
+                    "attribute": true,
+                    "name": "lang"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "creator",
+            "element": true,
+            "attributes": [
+                {
+                    "values": [
+                        ""
+                    ],
+                    "type": "language",
+                    "ns": 0,
+                    "attribute": true,
+                    "name": "lang"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "subject",
+            "element": true,
+            "attributes": [
+                {
+                    "values": [
+                        ""
+                    ],
+                    "type": "language",
+                    "ns": 0,
+                    "attribute": true,
+                    "name": "lang"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "description",
+            "element": true,
+            "attributes": [
+                {
+                    "values": [
+                        ""
+                    ],
+                    "type": "language",
+                    "ns": 0,
+                    "attribute": true,
+                    "name": "lang"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "publisher",
+            "element": true,
+            "attributes": [
+                {
+                    "values": [
+                        ""
+                    ],
+                    "type": "language",
+                    "ns": 0,
+                    "attribute": true,
+                    "name": "lang"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "contributor",
+            "element": true,
+            "attributes": [
+                {
+                    "values": [
+                        ""
+                    ],
+                    "type": "language",
+                    "ns": 0,
+                    "attribute": true,
+                    "name": "lang"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "date",
+            "element": true,
+            "attributes": [
+                {
+                    "values": [
+                        ""
+                    ],
+                    "type": "language",
+                    "ns": 0,
+                    "attribute": true,
+                    "name": "lang"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "type",
+            "element": true,
+            "attributes": [
+                {
+                    "values": [
+                        ""
+                    ],
+                    "type": "language",
+                    "ns": 0,
+                    "attribute": true,
+                    "name": "lang"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "format",
+            "element": true,
+            "attributes": [
+                {
+                    "values": [
+                        ""
+                    ],
+                    "type": "language",
+                    "ns": 0,
+                    "attribute": true,
+                    "name": "lang"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "identifier",
+            "element": true,
+            "attributes": [
+                {
+                    "values": [
+                        ""
+                    ],
+                    "type": "language",
+                    "ns": 0,
+                    "attribute": true,
+                    "name": "lang"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "source",
+            "element": true,
+            "attributes": [
+                {
+                    "values": [
+                        ""
+                    ],
+                    "type": "language",
+                    "ns": 0,
+                    "attribute": true,
+                    "name": "lang"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "language",
+            "element": true,
+            "attributes": [
+                {
+                    "values": [
+                        ""
+                    ],
+                    "type": "language",
+                    "ns": 0,
+                    "attribute": true,
+                    "name": "lang"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "relation",
+            "element": true,
+            "attributes": [
+                {
+                    "values": [
+                        ""
+                    ],
+                    "type": "language",
+                    "ns": 0,
+                    "attribute": true,
+                    "name": "lang"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "coverage",
+            "element": true,
+            "attributes": [
+                {
+                    "values": [
+                        ""
+                    ],
+                    "type": "language",
+                    "ns": 0,
+                    "attribute": true,
+                    "name": "lang"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "rights",
+            "element": true,
+            "attributes": [
+                {
+                    "values": [
+                        ""
+                    ],
+                    "type": "language",
+                    "ns": 0,
+                    "attribute": true,
+                    "name": "lang"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        }
+    ]
+}

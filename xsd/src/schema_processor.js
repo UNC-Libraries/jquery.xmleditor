@@ -22,20 +22,29 @@ function SchemaProcessor(xsdDocument, xsdManager, schemaUrl, parentNSIndex) {
 	// Local namespace prefix registry
 	this.localNamespaces = $.extend({}, this.xsdManager.globalNamespaces);
 
+	this.extractNamespaces();
+
 	if (parentNSIndex !== undefined) {
 		this.targetNSIndex = parentNSIndex;
 		this.targetNS = this.xsdManager.getNamespaceUri(parentNSIndex);
 	} else {
-		// The target namespace for this schema
-		this.targetNS = null;
-		// The index of the target namespace in namespaceIndexes
-		this.targetNSIndex = null;
+		this.targetNS = this.xsd.getAttribute('targetNamespace');
+		this.targetNSIndex = this.xsdManager.registerNamespace(this.targetNS);
 	}
 	
+	// Register the correct default namespace if none was specified, see:
+	// * https://www.w3.org/TR/xmlschema11-1/#src-include
+	// * https://www.w3.org/TR/xmlschema11-1/#sec-src-resolve
+	if (!('' in this.localNamespaces)) {
+		if (this.xsd.getAttribute('targetNamespace') === null) {
+			this.localNamespaces[''] = this.targetNS;
+		} else {
+			this.localNamespaces[''] = this.xsdManager.xsNS;
+		}
+	}
+
 	// Root definition for this schema, either an element or a schema object
 	this.root = null;
-	
-	this.extractNamespaces();
 };
 
 // Process the schema file to extract its structure into javascript objects
@@ -59,22 +68,11 @@ SchemaProcessor.prototype.extractNamespaces = function() {
 			this.registerNamespace(namespaceUri, namespacePrefix);
 		}
 	}
-	
-	// Only use target namespace if not already being provided with a namespace uri
-	if (!this.targetNS) {
-		// Store the target namespace of this schema.
-		this.targetNS = this.xsd.getAttribute("targetNamespace");
-	}
-	
-	// Register the target namespace as the default namespace
-	this.targetNSIndex = this.registerNamespace(this.targetNS, "");
 };
 
-SchemaProcessor.prototype.createDefinition = function(node, nameParts) {
-	if (!nameParts) {
-		var name = node.getAttribute("name");
-		if (name)
-			nameParts = this.extractName(name);
+SchemaProcessor.prototype.createDefinition = function(node, name) {
+	if (!name) {
+		name = node.getAttribute("name");
 	}
 		
 	// New root definition
@@ -85,8 +83,8 @@ SchemaProcessor.prototype.createDefinition = function(node, nameParts) {
 		np : true
 	};
 	
-	if (nameParts && nameParts.localName)
-		definition.name = nameParts.localName;
+	if (name)
+		definition.name = name;
 	
 	if (node.localName == "attribute") {
 		definition.attribute = true;
@@ -108,11 +106,11 @@ SchemaProcessor.prototype.addElement = function(node, definition, parentDef) {
 		var minOccurs = node.getAttribute("minOccurs");
 		var maxOccurs = node.getAttribute("maxOccurs");
 		if (parentDef && (minOccurs || maxOccurs)) {
-			var nameOrRef = node.getAttribute("name") || node.getAttribute("ref");
-			var nameOrRefParts = this.extractName(nameOrRef);
+			var name = node.getAttribute('name');
+			var indexedNameOrRef = name ? this.indexedDefinitionName(name) : this.extractName(node.getAttribute('ref')).indexedName;
 			if (!("occurs" in parentDef))
 				parentDef.occurs = {};
-			parentDef.occurs[nameOrRefParts.indexedName] = {
+			parentDef.occurs[indexedNameOrRef] = {
 					'min' : minOccurs,
 					'max' : maxOccurs
 			};
@@ -177,11 +175,10 @@ SchemaProcessor.prototype.buildTopLevel = function(node) {
 	// Root level definitions must have a name attribute
 	if (!name)
 		return;
-	var nameParts = this.extractName(name);
 	
 	// New root definition
-	var definition = this.createDefinition(node, nameParts);
-	this.rootDefinitions[nameParts.indexedName] = definition;
+	var definition = this.createDefinition(node, name);
+	this.rootDefinitions[this.indexedDefinitionName(name)] = definition;
 	
 	return this.build(node, definition);
 };
@@ -537,6 +534,10 @@ SchemaProcessor.prototype.containsChild = function(definition, child) {
 		}
 	}
 	return false;
+};
+
+SchemaProcessor.prototype.indexedDefinitionName = function(name) {
+	return this.targetNSIndex + ':' + name;
 };
 
 SchemaProcessor.prototype.extractName = function(name) {

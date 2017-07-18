@@ -19,19 +19,38 @@
       "uri": "http://www.w3.org/2001/XMLSchema"
     },
     {
-      "prefix": "foo",
-      "uri": "http://example.com/foo"
+      "prefix": "",
+      "uri": null
     }
   ],
   "elements": [
     {
       "values": [],
-      "type": "string",
+      "type": null,
       "ns": 4,
-      "name": "Foo",
+      "name": "root",
       "element": true,
       "attributes": [],
-      "elements": []
+      "elements": [
+        {
+          "values": [],
+          "type": "string",
+          "ns": 4,
+          "name": "name",
+          "element": true,
+          "attributes": [],
+          "elements": []
+        }
+      ],
+      "choices": [
+        {
+          "elements": [
+            "4:name"
+          ],
+          "minOccurs": null,
+          "maxOccurs": 1
+        }
+      ]
     }
   ]
 }

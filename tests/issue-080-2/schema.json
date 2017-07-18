@@ -28,7 +28,25 @@
       "values": [],
       "type": "string",
       "ns": 4,
-      "name": "Foo",
+      "name": "Foo1",
+      "element": true,
+      "attributes": [],
+      "elements": []
+    },
+    {
+      "values": [],
+      "type": "string",
+      "ns": 4,
+      "name": "Foo2",
+      "element": true,
+      "attributes": [],
+      "elements": []
+    },
+    {
+      "values": [],
+      "type": "string",
+      "ns": 4,
+      "name": "Foo3",
       "element": true,
       "attributes": [],
       "elements": []
