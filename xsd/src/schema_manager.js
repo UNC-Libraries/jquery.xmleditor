@@ -314,15 +314,15 @@ SchemaManager.prototype.resolveTypeReferences = function(definition) {
 				var typeRef = typeRefs[index];
 				
 				// Find the definition being referenced across all schemas
-				var typeDef = this.resolveDefinition(typeRef);
+				var typeDef = this.resolveDefinition(typeRef.indexedName);
 				if (!typeDef)
-					throw new Error("Could not resolve reference to type " + typeRef 
+					throw new Error("Could not resolve reference to type " + typeRef.indexedName
 							+ " from definition " + definition.name);
 				
 				// Compute nested types depth first before merging in this type
 				this.resolveTypeReferences(typeDef);
 				
-				this.mergeType(definition, typeDef);
+				this.mergeType(definition, typeDef, typeRef.mergeMode);
 			}
 		}
 		if (definition.elements) {
@@ -372,17 +372,68 @@ SchemaManager.prototype.resolveSchema = function(schema, name) {
 	return this;
 };
 
-SchemaManager.prototype.mergeType = function(base, type) {
+SchemaManager.prototype.mergeType = function(base, type, mergeMode) {
 	for (var key in type) {
 		if (type.hasOwnProperty(key)) {
 			var value = type[key];
 			if (value != null && base[key] == null){
 				base[key] = value;
 			} else if ($.isArray(value) && $.isArray(base[key])){
-				base[key] = base[key].concat(value);
+				base[key] = this.mergeTypeArray(base[key], value, key, mergeMode);
 			}
 		}
 	}
+};
+
+SchemaManager.prototype.mergeTypeArray = function(baseArray, typeArray, key, mergeMode) {
+	var mergeFunction = this['mergeType_' + key + '_' + mergeMode];
+	if (mergeFunction === undefined) {
+		throw Error('Invalid definition key ' + JSON.stringify(key) + ' or merge mode ' + JSON.stringify(mergeMode));
+	}
+	return mergeFunction.call(this, baseArray, typeArray);
+};
+
+SchemaManager.prototype.mergeType_choices_extension = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
+};
+
+SchemaManager.prototype.mergeType_choices_restriction = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
+};
+
+SchemaManager.prototype.mergeType_attributes_extension = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
+};
+
+SchemaManager.prototype.mergeType_attributes_restriction = function(baseArray, typeArray) {
+	var baseNames = {};
+	for (var i = 0; i < baseArray.length; i++) {
+		baseNames[baseArray[i].name] = true;
+	}
+	var typeResult = [];
+	for (var j = 0; j < typeArray.length; j++) {
+		var typeItem = typeArray[j];
+		if (!baseNames[typeItem.name]) {
+			typeResult.push(typeItem);
+		}
+	}
+	return typeResult.concat(baseArray);
+};
+
+SchemaManager.prototype.mergeType_elements_extension = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
+};
+
+SchemaManager.prototype.mergeType_elements_restriction = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
+};
+
+SchemaManager.prototype.mergeType_values_extension = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
+};
+
+SchemaManager.prototype.mergeType_values_restriction = function(baseArray, typeArray) {
+	return baseArray;
 };
 
 SchemaManager.prototype.mergeRef = function(base, ref) {
@@ -390,7 +441,8 @@ SchemaManager.prototype.mergeRef = function(base, ref) {
 		base.name = ref.name;
 	base.ns = ref.ns;
 	
-	this.mergeType(base, ref);
+	var mergeMode = 'extension';
+	this.mergeType(base, ref, mergeMode);
 }
 
 //Register a namespace if it is new
