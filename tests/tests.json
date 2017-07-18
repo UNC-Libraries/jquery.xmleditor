@@ -1,7 +1,7 @@
 {
   "testcases": [
-    "issue-080-include-test",
     "issue-080-no-target-ns",
+    "issue-080-include-test",
     "issue-080-5",
     "issue-080-4",
     "issue-080-3",
