@@ -827,6 +827,13 @@ $.widget( "xml.xmlEditor", {
 		return this.xml2Str(this.xmlState.xml);
 	},
 
+	getText: function() {
+		if (this.textEditor.active) {
+			return this.textEditor.aceEditor.getValue();
+		}
+		return this.xml2Str(this.xmlState.xml);
+	},
+
 	// Callback for submit button pressing.  Performs a submit function and then uploads the 
 	// document to the provided URL, if configured to do either
 	submitXML: function(config) {
