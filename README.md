@@ -202,6 +202,8 @@ Authors
 
 [Dean Farrell](https://github.com/lfarrell)
 
+[Volker Diels-Grabsch (m-click.aero)](https://github.com/m-click)
+
 Attribution
 ------
 
