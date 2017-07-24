@@ -174,6 +174,11 @@ Providing a submitButtonConfigs option will override the creation of the standar
 - confirmExitWhenUnsubmitted - Causes web browsers to prompt users if they try to navigate away from the editor while there are unsubmitted changes.  Valid values: True or false.
 - undoHistorySize - The number of history states remembered by the undo/redo feature.  Default is 20.
 
+### Interacting with the editor
+There are two ways to externally retrieve the contents of the editor as a string:
+- `$("#xml_editor").xmlEditor("getXMLString")` retrieves the most recent validated contents.  If the text mode is active and invalid, the last time it was determined to be valid will be returned.
+- `$("#xml_editor").xmlEditor("getText")` retrieves the current contents from the editor.  If the text mode is active, its value will be returned without validation.
+
 ### Building the plugin yourself
 If we wish to build the combined jquery.xmleditor.js yourself, you can use the provided rake script.  With rake installed, simple type "rake" in the root directory of this project.
 Note: You'll need the sprockets gem installed for the rake task to complete properly.
