@@ -815,6 +815,25 @@ $.widget( "xml.xmlEditor", {
 		}
 	},
 	
+	getXMLString: function() {
+		if (this.textEditor.active) {
+			var xmlString = this.textEditor.aceEditor.getValue();
+			try {
+				this.xmlState.setXMLFromString(xmlString);
+			} catch (e) {
+				// Ignore error, continue to return last GUI value instead
+			}
+		}
+		return this.xml2Str(this.xmlState.xml);
+	},
+
+	getText: function() {
+		if (this.textEditor.active) {
+			return this.textEditor.aceEditor.getValue();
+		}
+		return this.xml2Str(this.xmlState.xml);
+	},
+
 	// Callback for submit button pressing.  Performs a submit function and then uploads the 
 	// document to the provided URL, if configured to do either
 	submitXML: function(config) {
