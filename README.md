@@ -166,6 +166,21 @@ Alternatively, any number of buttons can be created by providing the submitButto
 
 Providing a submitButtonConfigs option will override the creation of the standard submit/export button.
 
+#### Translated UI
+
+Use URL parameters or the userLang parameter of the editor options to switch between the available UI languages "en" (original English) or "de" (German translation).
+
+Two options: Add URL parameter lang= 
+.../index.html?lang=de
+
+or set target language in the options:
+
+```javascript
+$("#xml_editor").xmlEditor({
+  userLang : "de"
+});
+```
+
 #### Other editor configuration
 
 - documentTitle - Title for the document being edited, which is displayed at the top of the editor.
