@@ -1,0 +1,499 @@
+{
+    "schema": true,
+    "ns": 5,
+    "namespaces": [
+        {
+            "prefix": "xml",
+            "uri": "http://www.w3.org/XML/1998/namespace"
+        },
+        {
+            "prefix": "xmlns",
+            "uri": "http://www.w3.org/2000/xmlns/"
+        },
+        {
+            "prefix": "html",
+            "uri": "http://www.w3.org/1999/xhtml/"
+        },
+        {
+            "prefix": "xs",
+            "uri": "http://www.w3.org/2001/XMLSchema"
+        },
+        {
+            "prefix": "dc",
+            "uri": "http://purl.org/dc/elements/1.1/"
+        },
+        {
+            "prefix": "",
+            "uri": null
+        }
+    ],
+    "elements": [
+        {
+            "values": [
+
+            ],
+            "type": null,
+            "ns": 5,
+            "name": "root",
+            "element": true,
+            "attributes": [
+
+            ],
+            "elements": [
+                {
+                    "values": [
+
+                    ],
+                    "type": "string",
+                    "ns": 5,
+                    "name": "name",
+                    "element": true,
+                    "attributes": [
+
+                    ],
+                    "elements": [
+
+                    ]
+                },
+                {
+                    "values": [
+
+                    ],
+                    "type": "string",
+                    "ns": 5,
+                    "name": "uri",
+                    "element": true,
+                    "attributes": [
+
+                    ],
+                    "elements": [
+
+                    ]
+                },
+                {
+                    "values": [
+
+                    ],
+                    "type": null,
+                    "ns": 5,
+                    "name": "dc",
+                    "element": true,
+                    "attributes": [
+
+                    ],
+                    "elements": [
+                        {
+                            "values": [
+
+                            ],
+                            "type": "mixed",
+                            "ns": 4,
+                            "element": true,
+                            "attributes": [
+                                {
+                                    "values": [
+                                        ""
+                                    ],
+                                    "type": "language",
+                                    "ns": 0,
+                                    "attribute": true,
+                                    "name": "lang"
+                                }
+                            ],
+                            "elements": [
+
+                            ],
+                            "name": "title",
+                            "any": false
+                        },
+                        {
+                            "values": [
+
+                            ],
+                            "type": "mixed",
+                            "ns": 4,
+                            "element": true,
+                            "attributes": [
+                                {
+                                    "$ref": "$[\"elements\"][0][\"elements\"][2][\"elements\"][0][\"attributes\"][0]"
+                                }
+                            ],
+                            "elements": [
+
+                            ],
+                            "name": "creator",
+                            "any": false
+                        },
+                        {
+                            "values": [
+
+                            ],
+                            "type": "mixed",
+                            "ns": 4,
+                            "element": true,
+                            "attributes": [
+                                {
+                                    "$ref": "$[\"elements\"][0][\"elements\"][2][\"elements\"][0][\"attributes\"][0]"
+                                }
+                            ],
+                            "elements": [
+
+                            ],
+                            "name": "subject",
+                            "any": false
+                        },
+                        {
+                            "values": [
+
+                            ],
+                            "type": "mixed",
+                            "ns": 4,
+                            "element": true,
+                            "attributes": [
+                                {
+                                    "$ref": "$[\"elements\"][0][\"elements\"][2][\"elements\"][0][\"attributes\"][0]"
+                                }
+                            ],
+                            "elements": [
+
+                            ],
+                            "name": "description",
+                            "any": false
+                        },
+                        {
+                            "values": [
+
+                            ],
+                            "type": "mixed",
+                            "ns": 4,
+                            "element": true,
+                            "attributes": [
+                                {
+                                    "$ref": "$[\"elements\"][0][\"elements\"][2][\"elements\"][0][\"attributes\"][0]"
+                                }
+                            ],
+                            "elements": [
+
+                            ],
+                            "name": "publisher",
+                            "any": false
+                        },
+                        {
+                            "values": [
+
+                            ],
+                            "type": "mixed",
+                            "ns": 4,
+                            "element": true,
+                            "attributes": [
+                                {
+                                    "$ref": "$[\"elements\"][0][\"elements\"][2][\"elements\"][0][\"attributes\"][0]"
+                                }
+                            ],
+                            "elements": [
+
+                            ],
+                            "name": "contributor",
+                            "any": false
+                        }
+                    ],
+                    "choices": [
+                        {
+                            "elements": [
+                                "4:title",
+                                "4:creator",
+                                "4:subject",
+                                "4:description",
+                                "4:publisher",
+                                "4:contributor"
+                            ],
+                            "minOccurs": null,
+                            "maxOccurs": 1
+                        }
+                    ]
+                }
+            ],
+            "choices": [
+                {
+                    "elements": [
+                        "5:name",
+                        "5:uri",
+                        "5:dc"
+                    ],
+                    "minOccurs": null,
+                    "maxOccurs": 1
+                }
+            ]
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "title",
+            "element": true,
+            "attributes": [
+                {
+                    "$ref": "$[\"elements\"][0][\"elements\"][2][\"elements\"][0][\"attributes\"][0]"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "creator",
+            "element": true,
+            "attributes": [
+                {
+                    "$ref": "$[\"elements\"][0][\"elements\"][2][\"elements\"][0][\"attributes\"][0]"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "subject",
+            "element": true,
+            "attributes": [
+                {
+                    "$ref": "$[\"elements\"][0][\"elements\"][2][\"elements\"][0][\"attributes\"][0]"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "description",
+            "element": true,
+            "attributes": [
+                {
+                    "$ref": "$[\"elements\"][0][\"elements\"][2][\"elements\"][0][\"attributes\"][0]"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "publisher",
+            "element": true,
+            "attributes": [
+                {
+                    "$ref": "$[\"elements\"][0][\"elements\"][2][\"elements\"][0][\"attributes\"][0]"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "contributor",
+            "element": true,
+            "attributes": [
+                {
+                    "$ref": "$[\"elements\"][0][\"elements\"][2][\"elements\"][0][\"attributes\"][0]"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "date",
+            "element": true,
+            "attributes": [
+                {
+                    "$ref": "$[\"elements\"][0][\"elements\"][2][\"elements\"][0][\"attributes\"][0]"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "type",
+            "element": true,
+            "attributes": [
+                {
+                    "$ref": "$[\"elements\"][0][\"elements\"][2][\"elements\"][0][\"attributes\"][0]"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "format",
+            "element": true,
+            "attributes": [
+                {
+                    "$ref": "$[\"elements\"][0][\"elements\"][2][\"elements\"][0][\"attributes\"][0]"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "identifier",
+            "element": true,
+            "attributes": [
+                {
+                    "$ref": "$[\"elements\"][0][\"elements\"][2][\"elements\"][0][\"attributes\"][0]"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "source",
+            "element": true,
+            "attributes": [
+                {
+                    "$ref": "$[\"elements\"][0][\"elements\"][2][\"elements\"][0][\"attributes\"][0]"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "language",
+            "element": true,
+            "attributes": [
+                {
+                    "$ref": "$[\"elements\"][0][\"elements\"][2][\"elements\"][0][\"attributes\"][0]"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "relation",
+            "element": true,
+            "attributes": [
+                {
+                    "$ref": "$[\"elements\"][0][\"elements\"][2][\"elements\"][0][\"attributes\"][0]"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "coverage",
+            "element": true,
+            "attributes": [
+                {
+                    "$ref": "$[\"elements\"][0][\"elements\"][2][\"elements\"][0][\"attributes\"][0]"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        },
+        {
+            "values": [
+
+            ],
+            "type": "mixed",
+            "ns": 4,
+            "name": "rights",
+            "element": true,
+            "attributes": [
+                {
+                    "$ref": "$[\"elements\"][0][\"elements\"][2][\"elements\"][0][\"attributes\"][0]"
+                }
+            ],
+            "elements": [
+
+            ],
+            "any": false
+        }
+    ]
+}

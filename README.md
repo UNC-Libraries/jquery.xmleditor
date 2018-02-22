@@ -195,6 +195,11 @@ $("#xml_editor").xmlEditor({
 - i18n - This is a map in form ["en"] or ["de"] which holds all the labels used in the application for translation. More translations can be added.
 
 
+### Interacting with the editor
+There are two ways to externally retrieve the contents of the editor as a string:
+- `$("#xml_editor").xmlEditor("getXMLString")` retrieves the most recent validated contents.  If the text mode is active and invalid, the last time it was determined to be valid will be returned.
+- `$("#xml_editor").xmlEditor("getText")` retrieves the current contents from the editor.  If the text mode is active, its value will be returned without validation.
+
 ### Building the plugin yourself
 If we wish to build the combined jquery.xmleditor.js yourself, you can use the provided rake script.  With rake installed, simple type "rake" in the root directory of this project.
 Note: You'll need the sprockets gem installed for the rake task to complete properly.
@@ -222,6 +227,8 @@ Authors
 [Mike Daines](https://github.com/mdaines)
 
 [Dean Farrell](https://github.com/lfarrell)
+
+[Volker Diels-Grabsch (m-click.aero)](https://github.com/m-click)
 
 Attribution
 ------

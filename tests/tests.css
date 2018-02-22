@@ -1,0 +1,16 @@
+.ok {
+  color: #0a0;
+}
+.failure {
+  color: #e00;
+}
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #00a;
+}
+th {
+  text-align: left;
+}

@@ -1,0 +1,8 @@
+<otherxsns:schema xmlns:otherxsns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://example.com/foo" xmlns:foo="http://example.com/foo" xmlns:bar="http://example.com/foo" elementFormDefault="qualified">
+  <otherxsns:simpleType name="foostring">
+    <otherxsns:restriction base="otherxsns:string"/>
+  </otherxsns:simpleType>
+  <otherxsns:element name="Foo1" type="string"/>
+  <otherxsns:element name="Foo2" type="otherxsns:string"/>
+  <otherxsns:element name="Foo3" type="foo:foostring"/>
+</otherxsns:schema>

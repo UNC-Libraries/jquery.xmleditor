@@ -1,3 +1,13 @@
+.xml_editor_container ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    box-sizing: content-box;
+}
+.xml_editor_container a {
+    color: inherit;
+    text-decoration: none;
+}
 /*
     Steven Spungin <steven@spungin.tv>
     Use box sizing to cause (text input and area) to fit within parent div instead of using 99% width hack
@@ -245,7 +255,7 @@
 	margin-left: 0px;
 }
 
-.element_header {
+.xml_content .element_header {
 	padding: 4px 1px 1px 7px;
 	line-height: 22px;
 	height: 22px;

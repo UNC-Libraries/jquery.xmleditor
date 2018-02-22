@@ -1,0 +1,18 @@
+#!/usr/bin/env python
+
+from json import dump
+from os import chdir
+from os import listdir
+from os.path import dirname
+from os.path import isdir
+
+chdir(dirname(__file__))
+with open('tests.json', 'w') as f:
+    dump(fp=f, indent=2, separators=(',', ': '), obj={
+        'testcases': [
+            entry
+            for entry in reversed(sorted(listdir('.')))
+            if isdir(entry)
+        ],
+    })
+    f.write('\n')
