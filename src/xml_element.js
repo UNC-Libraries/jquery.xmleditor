@@ -2,6 +2,7 @@
  * Stores data related to a single xml element as it is represented in both the base XML 
  * document and GUI
  */
+
 function XMLElement(xmlNode, objectType, editor) {
 	AbstractXMLObject.call(this, objectType, editor);
 	// jquery object reference to the xml node represented by this object in the active xml document
@@ -223,6 +224,14 @@ XMLElement.prototype.populateChildren = function() {
 			}
 		}
 	});
+	// Patch to add "required" attributes. Does require a secondary change to know the "use" attribute also. See xsd2json-use.js : SchemaProcessor.prototype.createDefinition
+	$.each(this.objectType.attributes, function(){
+		if ("required" == this.use) {
+			var childElement = self.addAttribute(this);
+			// Needs a patch in addAttributeEvent, too -> non-provided addButton parameter must be handled.
+			self.editor.activeEditor.addAttributeEvent(self, childElement);
+		}
+	});
 };
 
 XMLElement.prototype.initializeGUI = function () {
@@ -251,24 +260,25 @@ XMLElement.prototype.addTopActions = function () {
 	this.toggleCollapse.appendChild(document.createTextNode('_'));
 	topActionSpan.appendChild(this.toggleCollapse);
 	
-	var moveDown = document.createElement('span');
-	moveDown.className = 'move_down';
-	moveDown.id = this.domNodeID + '_down';
-	moveDown.appendChild(document.createTextNode('\u2193'));
-	topActionSpan.appendChild(moveDown);
-	
-	var moveUp = document.createElement('span');
-	moveUp.className = 'move_up';
-	moveUp.id = this.domNodeID + '_up';
-	moveUp.appendChild(document.createTextNode('\u2191'));
-	topActionSpan.appendChild(moveUp);
-	
-	var deleteButton = document.createElement('span');
-	deleteButton.className = 'xml_delete';
-	deleteButton.id = this.domNodeID + '_del';
-	deleteButton.appendChild(document.createTextNode('X'));
-	topActionSpan.appendChild(deleteButton);
-	
+	if (this.editor.options.enableEdit) { // Only show menu entries in edit mode, not readonly mode
+		var moveDown = document.createElement('span');
+		moveDown.className = 'move_down';
+		moveDown.id = this.domNodeID + '_down';
+		moveDown.appendChild(document.createTextNode('\u2193'));
+		topActionSpan.appendChild(moveDown);
+		
+		var moveUp = document.createElement('span');
+		moveUp.className = 'move_up';
+		moveUp.id = this.domNodeID + '_up';
+		moveUp.appendChild(document.createTextNode('\u2191'));
+		topActionSpan.appendChild(moveUp);
+		
+		var deleteButton = document.createElement('span');
+		deleteButton.className = 'xml_delete';
+		deleteButton.id = this.domNodeID + '_del';
+		deleteButton.appendChild(document.createTextNode('X'));
+		topActionSpan.appendChild(deleteButton);
+	}
 	return topActionSpan;
 };
 
@@ -287,24 +297,24 @@ XMLElement.prototype.addContentContainers = function (recursive) {
 	if (this.allowText) {
 		if (this.allowAttributes) {
 			if (this.allowChildren) {
-				placeholder.appendChild(document.createTextNode('Use the menu to add subelements, attributes and text.'));
+				placeholder.appendChild(document.createTextNode(this.editor.options.i18n[this.editor.options.userLang].useMenuToAdd));
 			} else {
-				placeholder.appendChild(document.createTextNode('Use the menu to add attributes and text.'));
+				placeholder.appendChild(document.createTextNode(this.editor.options.i18n[this.editor.options.userLang].useMenuToAddAttributesText));
 			}
 		} else if (this.allowChildren) {
-			placeholder.appendChild(document.createTextNode('Use the menu to add subelements and text.'));
+			placeholder.appendChild(document.createTextNode(this.editor.options.i18n[this.editor.options.userLang].useMenuToAddSubelementsText));
 		} else {
-			placeholder.appendChild(document.createTextNode('Use the menu to add text.'));
+			placeholder.appendChild(document.createTextNode(this.editor.options.i18n[this.editor.options.userLang].useMenuToAddText));
 		}
 	} else {
 		if (this.allowAttributes) {
 			if (this.allowChildren) {
-				placeholder.appendChild(document.createTextNode('Use the menu to add subelements and attributes.'));
+				placeholder.appendChild(document.createTextNode(this.editor.options.i18n[this.editor.options.userLang].useMenuToAddSubelementsAttributes));
 			} else {
-				placeholder.appendChild(document.createTextNode('Use the menu to add attributes.'));
+				placeholder.appendChild(document.createTextNode(this.editor.options.i18n[this.editor.options.userLang].useMenuToAddAttributes));
 			}
 		} else if (this.allowChildren) {
-			placeholder.appendChild(document.createTextNode('Use the menu to add subelements.'));
+			placeholder.appendChild(document.createTextNode(this.editor.options.i18n[this.editor.options.userLang].useMenuToAddSubelements));
 		}
 	}
 

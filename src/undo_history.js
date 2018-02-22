@@ -4,6 +4,7 @@
  * Current implementation involves storing previous states of the XML document,
  * recorded each time a significant change occurs or the document is regenerated
  */
+
 function UndoHistory(xmlState, editor) {
 	this.xmlState = xmlState;
 	this.editor = editor;

@@ -173,6 +173,12 @@ Providing a submitButtonConfigs option will override the creation of the standar
 - menuEntries - A list of additional entries to add to the top menu bar, such as adding new help entries.
 - confirmExitWhenUnsubmitted - Causes web browsers to prompt users if they try to navigate away from the editor while there are unsubmitted changes.  Valid values: True or false.
 - undoHistorySize - The number of history states remembered by the undo/redo feature.  Default is 20.
+- showExport - This is true by default - allows to hide the "Export" button.
+- enableEdit - This is true by default - if set to false, the editor will behave as a viewer and will also set the ace editor to readonly (plus removing some menus).
+- sourceDesignSwitch - This is true by default - allows to hide the switch between Text and XML display
+- initialEditMode - Switch to predefined view: XML or HTML-DIV editor. 0=HTML-DIV editor, 1=XML Source editor
+- i18n - This is a map in form ["en"] or ["de"] which holds all the labels used in the application for translation. More translations can be added.
+
 
 ### Building the plugin yourself
 If we wish to build the combined jquery.xmleditor.js yourself, you can use the provided rake script.  With rake installed, simple type "rake" in the root directory of this project.

@@ -234,18 +234,49 @@ SchemaManager.prototype.mergeRootLevelElements = function() {
 SchemaManager.prototype.exportNamespaces = function() {
 
 	// Add all the namespaces from imported schemas into the registry of namespaces for the root schema
-	var namespaceRegistry = [];
-	for (var index in this.namespaceIndexes) {
-		var namespaceUri = this.namespaceIndexes[index];
-		$.each(this.originatingSchema.localNamespaces, function(key, val){
-			if (val == namespaceUri) {
-				namespaceRegistry.push({'prefix' : key, 'uri' : val});
-				return false;
-			}
+	var self = this;
+	var namespacePrefixes = {};
+	var prefixUsed = {};
+	this.addNamespacePrefixes(namespacePrefixes, prefixUsed, {'xs': self.xsNS});
+	this.addNamespacePrefixes(namespacePrefixes, prefixUsed, self.originatingSchema.localNamespaces);
+	this.addNamespacePrefixes(namespacePrefixes, prefixUsed, {'': self.originatingSchema.targetNS});
+	for (var targetNS in self.imports) {
+		self.imports[targetNS].forEach(function(schema) {
+			self.addNamespacePrefixes(namespacePrefixes, prefixUsed, schema.localNamespaces);
 		});
 	}
+	var namespaceRegistry = [];
+	var anonymousNamespaceIndex = 1;
+	this.namespaceIndexes.forEach(function(namespaceUri) {
+		var prefix = namespacePrefixes[namespaceUri];
+		if (prefix === undefined) {
+			while (true) {
+				prefix = 'ns' + anonymousNamespaceIndex;
+				anonymousNamespaceIndex++;
+				if (prefixUsed[prefix] === undefined) {
+					break;
+				}
+			}
+		}
+		namespaceRegistry.push({'prefix' : prefix, 'uri' : namespaceUri});
+	});
 	
 	this.originatingRoot.namespaces = namespaceRegistry;
+};
+
+SchemaManager.prototype.addNamespacePrefixes = function(namespacePrefixes, prefixUsed, namespaces) {
+
+	for (var prefix in namespaces) {
+		if (prefixUsed[prefix] !== undefined) {
+			continue;
+		}
+		var namespaceUri = namespaces[prefix];
+		if (namespacePrefixes[namespaceUri] !== undefined) {
+			continue;
+		}
+		namespacePrefixes[namespaceUri] = prefix;
+		prefixUsed[prefix] = true;
+	}
 };
 
 //Post processing step which recursively walks the schema tree and merges type definitions
@@ -274,17 +305,6 @@ SchemaManager.prototype.resolveTypeReferences = function(definition) {
 	} else {
 		// Process children
 		var self = this;
-		if (definition.elements) {
-			$.each(definition.elements, function(){
-				self.resolveTypeReferences(this);
-			});
-		}
-		if (definition.attributes != null) {
-			$.each(definition.attributes, function(){
-				self.resolveTypeReferences(this);
-			});
-		}
-		
 		if (definition.typeRef) {
 			// Merge in any type references
 			var typeRefs = definition.typeRef;
@@ -294,16 +314,26 @@ SchemaManager.prototype.resolveTypeReferences = function(definition) {
 				var typeRef = typeRefs[index];
 				
 				// Find the definition being referenced across all schemas
-				var typeDef = this.resolveDefinition(typeRef);
+				var typeDef = this.resolveDefinition(typeRef.indexedName);
 				if (!typeDef)
-					throw new Error("Could not resolve reference to type " + typeRef 
+					throw new Error("Could not resolve reference to type " + typeRef.indexedName
 							+ " from definition " + definition.name);
 				
 				// Compute nested types depth first before merging in this type
 				this.resolveTypeReferences(typeDef);
 				
-				this.mergeType(definition, typeDef);
+				this.mergeType(definition, typeDef, typeRef.mergeMode);
 			}
+		}
+		if (definition.elements) {
+			$.each(definition.elements, function(){
+				self.resolveTypeReferences(this);
+			});
+		}
+		if (definition.attributes != null) {
+			$.each(definition.attributes, function(){
+				self.resolveTypeReferences(this);
+			});
 		}
 	}
 };
@@ -342,17 +372,68 @@ SchemaManager.prototype.resolveSchema = function(schema, name) {
 	return this;
 };
 
-SchemaManager.prototype.mergeType = function(base, type) {
+SchemaManager.prototype.mergeType = function(base, type, mergeMode) {
 	for (var key in type) {
 		if (type.hasOwnProperty(key)) {
 			var value = type[key];
 			if (value != null && base[key] == null){
 				base[key] = value;
-			} else if ($.isArray(value) && $.isArray(type[key])){
-				base[key] = base[key].concat(value);
+			} else if ($.isArray(value) && $.isArray(base[key])){
+				base[key] = this.mergeTypeArray(base[key], value, key, mergeMode);
 			}
 		}
 	}
+};
+
+SchemaManager.prototype.mergeTypeArray = function(baseArray, typeArray, key, mergeMode) {
+	var mergeFunction = this['mergeType_' + key + '_' + mergeMode];
+	if (mergeFunction === undefined) {
+		throw Error('Invalid definition key ' + JSON.stringify(key) + ' or merge mode ' + JSON.stringify(mergeMode));
+	}
+	return mergeFunction.call(this, baseArray, typeArray);
+};
+
+SchemaManager.prototype.mergeType_choices_extension = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
+};
+
+SchemaManager.prototype.mergeType_choices_restriction = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
+};
+
+SchemaManager.prototype.mergeType_attributes_extension = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
+};
+
+SchemaManager.prototype.mergeType_attributes_restriction = function(baseArray, typeArray) {
+	var baseNames = {};
+	for (var i = 0; i < baseArray.length; i++) {
+		baseNames[baseArray[i].name] = true;
+	}
+	var typeResult = [];
+	for (var j = 0; j < typeArray.length; j++) {
+		var typeItem = typeArray[j];
+		if (!baseNames[typeItem.name]) {
+			typeResult.push(typeItem);
+		}
+	}
+	return typeResult.concat(baseArray);
+};
+
+SchemaManager.prototype.mergeType_elements_extension = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
+};
+
+SchemaManager.prototype.mergeType_elements_restriction = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
+};
+
+SchemaManager.prototype.mergeType_values_extension = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
+};
+
+SchemaManager.prototype.mergeType_values_restriction = function(baseArray, typeArray) {
+	return baseArray;
 };
 
 SchemaManager.prototype.mergeRef = function(base, ref) {
@@ -360,7 +441,8 @@ SchemaManager.prototype.mergeRef = function(base, ref) {
 		base.name = ref.name;
 	base.ns = ref.ns;
 	
-	this.mergeType(base, ref);
+	var mergeMode = 'extension';
+	this.mergeType(base, ref, mergeMode);
 }
 
 //Register a namespace if it is new

@@ -2,6 +2,7 @@
  * Unpacks the elements of the schema object into structures to accomodate lookup
  * of definitions by name and position within the schema hierarchy.
  */
+
 function SchemaTree(rootElement) {
 	// Map of elements stored by name.  If there are name collisions, then elements are stored in a list
 	this.nameToDef = {};

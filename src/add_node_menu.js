@@ -42,32 +42,32 @@ AddNodeMenu.prototype.populate = function(xmlElement) {
 	}
 
 	if (xmlElement.allowChildren) {
-		$("<li>Add Element</li>").data('xml', {
+		$("<li>" + this.editor.options.i18n[this.editor.options.userLang].addElement  + "</li>").data('xml', {
 			target : xmlElement,
 			nodeType : "element"
 		}).appendTo(this.menuContent);
 	}
 
 	if (xmlElement.allowAttributes) {
-		$("<li>Add Attribute</li>").data('xml', {
+		$("<li>" + this.editor.options.i18n[this.editor.options.userLang].addAttribute + "</li>").data('xml', {
 			target : xmlElement,
 			nodeType : "attribute"
 		}).appendTo(this.menuContent);
 	}
 
-	$("<li>Add CDATA</li>").data('xml', {
+	$("<li>" + this.editor.options.i18n[this.editor.options.userLang].addCData + "</li>").data('xml', {
 		target : xmlElement,
 		nodeType : "cdata"
 	}).appendTo(this.menuContent);
 
-	$("<li>Add comment</li>").data('xml', {
+	$("<li>" + this.editor.options.i18n[this.editor.options.userLang].addComment + "</li>").data('xml', {
 		target : xmlElement,
 		nodeType : "comment"
 	}).appendTo(this.menuContent);
 
 	if (xmlElement.objectType.type != null && xmlElement.allowText) {
-		this.addButton = $("<li>Add text</li>").attr({
-			title : 'Add text'
+		this.addButton = $("<li>" + this.editor.options.i18n[this.editor.options.userLang].addText + "</li>").attr({
+			title : this.editor.options.i18n[this.editor.options.userLang].addText
 		}).data('xml', {
 			target : xmlElement,
 			nodeType : "text"

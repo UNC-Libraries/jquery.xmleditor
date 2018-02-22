@@ -1,6 +1,7 @@
 /**
  * Manages and tracks the state of the underlying XML document being edited.
  */
+
 function DocumentState(baseXML, editor) {
 	this.baseXML = baseXML;
 	this.xml = null;
@@ -67,9 +68,9 @@ DocumentState.prototype.unsyncedChangeEvent = function() {
 
 DocumentState.prototype.updateStateMessage = function () {
 	if (this.isChanged()) {
-		$("." + submissionStatusClass).html("Unsaved changes");
+		$("." + submissionStatusClass).html(this.editor.options.i18n[this.editor.options.userLang].unsavedChanges);
 	} else {
-		$("." + submissionStatusClass).html("All changes saved");
+		$("." + submissionStatusClass).html(this.editor.options.i18n[this.editor.options.userLang].savedChanges);
 	}
 };
 
@@ -178,9 +179,9 @@ DocumentState.prototype.setXMLFromString = function(xmlString) {
 		xmlDoc.async = false;
 		xmlDoc.loadXML(xmlString);
 		if (xmlDoc.parseError.errorCode != 0) {
-			throw new Error("Error in line " + xmlDoc.parseError.line + " position " + xmlDoc.parseError.linePos
-					+ "\nError Code: " + xmlDoc.parseError.errorCode + "\nError Reason: "
-					+ xmlDoc.parseError.reason + "Error Line: " + xmlDoc.parseError.srcText);
+			throw new Error(this.options.i18n[this.options.userLang].xmlDocErrorInLine + xmlDoc.parseError.line + this.options.i18n[this.options.userLang].xmlDocErrorAtPos + xmlDoc.parseError.linePos
+					+ "\n" + this.options.i18n[this.options.userLang].xmlDocErrorCode + xmlDoc.parseError.errorCode + "\n" + this.options.i18n[this.options.userLang].xmlDocErrorReason
+					+ xmlDoc.parseError.reason + this.options.i18n[this.options.userLang].xmlDocErrorLine + xmlDoc.parseError.srcText);
 		}
 	}
 	

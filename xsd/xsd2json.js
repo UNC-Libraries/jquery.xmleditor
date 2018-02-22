@@ -1,5 +1,5 @@
-;var Xsd2Json = function() {
-
+//= require_self
+//= require_tree .
 /*
 
     Copyright 2008 The University of North Carolina at Chapel Hill
@@ -29,11 +29,9 @@
  * 
  * @author Ben Pennell
  */
-
 function Xsd2Json(originatingXsdName, options) {
 	var defaults = {
-		schemaURI: "",
-		rootElement: null
+		schemaURI: ""
 	};
 	this.options = $.extend({}, defaults, options);
 	
@@ -105,14 +103,12 @@ Xsd2Json.prototype.exportJSON = function(filename, variableName, pretty) {
 		, false, false, false, false, 0, null
 	);
 	a.dispatchEvent(event);
-};
-/**
+};/**
  * Manages processing of a set of schemas to produce a single resulting
  * tree of elements
  * 
  * @author bbpennel
  */
-
 function SchemaManager(originatingXsdName, options) {
 	var defaults = {
 			globalNamespaces : {}
@@ -343,18 +339,49 @@ SchemaManager.prototype.mergeRootLevelElements = function() {
 SchemaManager.prototype.exportNamespaces = function() {
 
 	// Add all the namespaces from imported schemas into the registry of namespaces for the root schema
-	var namespaceRegistry = [];
-	for (var index in this.namespaceIndexes) {
-		var namespaceUri = this.namespaceIndexes[index];
-		$.each(this.originatingSchema.localNamespaces, function(key, val){
-			if (val == namespaceUri) {
-				namespaceRegistry.push({'prefix' : key, 'uri' : val});
-				return false;
-			}
+	var self = this;
+	var namespacePrefixes = {};
+	var prefixUsed = {};
+	this.addNamespacePrefixes(namespacePrefixes, prefixUsed, {'xs': self.xsNS});
+	this.addNamespacePrefixes(namespacePrefixes, prefixUsed, self.originatingSchema.localNamespaces);
+	this.addNamespacePrefixes(namespacePrefixes, prefixUsed, {'': self.originatingSchema.targetNS});
+	for (var targetNS in self.imports) {
+		self.imports[targetNS].forEach(function(schema) {
+			self.addNamespacePrefixes(namespacePrefixes, prefixUsed, schema.localNamespaces);
 		});
 	}
+	var namespaceRegistry = [];
+	var anonymousNamespaceIndex = 1;
+	this.namespaceIndexes.forEach(function(namespaceUri) {
+		var prefix = namespacePrefixes[namespaceUri];
+		if (prefix === undefined) {
+			while (true) {
+				prefix = 'ns' + anonymousNamespaceIndex;
+				anonymousNamespaceIndex++;
+				if (prefixUsed[prefix] === undefined) {
+					break;
+				}
+			}
+		}
+		namespaceRegistry.push({'prefix' : prefix, 'uri' : namespaceUri});
+	});
 	
 	this.originatingRoot.namespaces = namespaceRegistry;
+};
+
+SchemaManager.prototype.addNamespacePrefixes = function(namespacePrefixes, prefixUsed, namespaces) {
+
+	for (var prefix in namespaces) {
+		if (prefixUsed[prefix] !== undefined) {
+			continue;
+		}
+		var namespaceUri = namespaces[prefix];
+		if (namespacePrefixes[namespaceUri] !== undefined) {
+			continue;
+		}
+		namespacePrefixes[namespaceUri] = prefix;
+		prefixUsed[prefix] = true;
+	}
 };
 
 //Post processing step which recursively walks the schema tree and merges type definitions
@@ -383,17 +410,6 @@ SchemaManager.prototype.resolveTypeReferences = function(definition) {
 	} else {
 		// Process children
 		var self = this;
-		if (definition.elements) {
-			$.each(definition.elements, function(){
-				self.resolveTypeReferences(this);
-			});
-		}
-		if (definition.attributes != null) {
-			$.each(definition.attributes, function(){
-				self.resolveTypeReferences(this);
-			});
-		}
-		
 		if (definition.typeRef) {
 			// Merge in any type references
 			var typeRefs = definition.typeRef;
@@ -403,16 +419,26 @@ SchemaManager.prototype.resolveTypeReferences = function(definition) {
 				var typeRef = typeRefs[index];
 				
 				// Find the definition being referenced across all schemas
-				var typeDef = this.resolveDefinition(typeRef);
+				var typeDef = this.resolveDefinition(typeRef.indexedName);
 				if (!typeDef)
-					throw new Error("Could not resolve reference to type " + typeRef 
+					throw new Error("Could not resolve reference to type " + typeRef.indexedName
 							+ " from definition " + definition.name);
 				
 				// Compute nested types depth first before merging in this type
 				this.resolveTypeReferences(typeDef);
 				
-				this.mergeType(definition, typeDef);
+				this.mergeType(definition, typeDef, typeRef.mergeMode);
 			}
+		}
+		if (definition.elements) {
+			$.each(definition.elements, function(){
+				self.resolveTypeReferences(this);
+			});
+		}
+		if (definition.attributes != null) {
+			$.each(definition.attributes, function(){
+				self.resolveTypeReferences(this);
+			});
 		}
 	}
 };
@@ -451,17 +477,68 @@ SchemaManager.prototype.resolveSchema = function(schema, name) {
 	return this;
 };
 
-SchemaManager.prototype.mergeType = function(base, type) {
+SchemaManager.prototype.mergeType = function(base, type, mergeMode) {
 	for (var key in type) {
 		if (type.hasOwnProperty(key)) {
 			var value = type[key];
 			if (value != null && base[key] == null){
 				base[key] = value;
-			} else if ($.isArray(value) && $.isArray(type[key])){
-				base[key] = base[key].concat(value);
+			} else if ($.isArray(value) && $.isArray(base[key])){
+				base[key] = this.mergeTypeArray(base[key], value, key, mergeMode);
 			}
 		}
 	}
+};
+
+SchemaManager.prototype.mergeTypeArray = function(baseArray, typeArray, key, mergeMode) {
+	var mergeFunction = this['mergeType_' + key + '_' + mergeMode];
+	if (mergeFunction === undefined) {
+		throw Error('Invalid definition key ' + JSON.stringify(key) + ' or merge mode ' + JSON.stringify(mergeMode));
+	}
+	return mergeFunction.call(this, baseArray, typeArray);
+};
+
+SchemaManager.prototype.mergeType_choices_extension = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
+};
+
+SchemaManager.prototype.mergeType_choices_restriction = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
+};
+
+SchemaManager.prototype.mergeType_attributes_extension = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
+};
+
+SchemaManager.prototype.mergeType_attributes_restriction = function(baseArray, typeArray) {
+	var baseNames = {};
+	for (var i = 0; i < baseArray.length; i++) {
+		baseNames[baseArray[i].name] = true;
+	}
+	var typeResult = [];
+	for (var j = 0; j < typeArray.length; j++) {
+		var typeItem = typeArray[j];
+		if (!baseNames[typeItem.name]) {
+			typeResult.push(typeItem);
+		}
+	}
+	return typeResult.concat(baseArray);
+};
+
+SchemaManager.prototype.mergeType_elements_extension = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
+};
+
+SchemaManager.prototype.mergeType_elements_restriction = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
+};
+
+SchemaManager.prototype.mergeType_values_extension = function(baseArray, typeArray) {
+	return baseArray.concat(typeArray);
+};
+
+SchemaManager.prototype.mergeType_values_restriction = function(baseArray, typeArray) {
+	return baseArray;
 };
 
 SchemaManager.prototype.mergeRef = function(base, ref) {
@@ -469,7 +546,8 @@ SchemaManager.prototype.mergeRef = function(base, ref) {
 		base.name = ref.name;
 	base.ns = ref.ns;
 	
-	this.mergeType(base, ref);
+	var mergeMode = 'extension';
+	this.mergeType(base, ref, mergeMode);
 }
 
 //Register a namespace if it is new
@@ -489,8 +567,7 @@ SchemaManager.prototype.getNamespaceIndex = function(namespaceUri) {
 
 SchemaManager.prototype.getNamespaceUri = function(index) {
 	return this.namespaceIndexes[index];
-};
-/**
+};/**
  * Processes an XML schema, extracting key features and storing them into
  * javascript structures.
  * 
@@ -501,7 +578,6 @@ SchemaManager.prototype.getNamespaceUri = function(index) {
  * xsdDocument XML document representaton of the schema document to be processed
  * xsdManager schema manager which this processor belongs to
  */
-
 function SchemaProcessor(xsdDocument, xsdManager, schemaUrl, parentNSIndex) {
 	
 	this.xsd = xsdDocument;
@@ -515,22 +591,29 @@ function SchemaProcessor(xsdDocument, xsdManager, schemaUrl, parentNSIndex) {
 	// Local namespace prefix registry
 	this.localNamespaces = $.extend({}, this.xsdManager.globalNamespaces);
 
-	this.xsPrefix = "xs:";
-	
+	this.extractNamespaces();
+
 	if (parentNSIndex !== undefined) {
 		this.targetNSIndex = parentNSIndex;
 		this.targetNS = this.xsdManager.getNamespaceUri(parentNSIndex);
 	} else {
-		// The target namespace for this schema
-		this.targetNS = null;
-		// The index of the target namespace in namespaceIndexes
-		this.targetNSIndex = null;
+		this.targetNS = this.xsd.getAttribute('targetNamespace');
+		this.targetNSIndex = this.xsdManager.registerNamespace(this.targetNS);
 	}
 	
+	// Register the correct default namespace if none was specified, see:
+	// * https://www.w3.org/TR/xmlschema11-1/#src-include
+	// * https://www.w3.org/TR/xmlschema11-1/#sec-src-resolve
+	if (!('' in this.localNamespaces)) {
+		if (this.xsd.getAttribute('targetNamespace') === null) {
+			this.localNamespaces[''] = this.targetNS;
+		} else {
+			this.localNamespaces[''] = this.xsdManager.xsNS;
+		}
+	}
+
 	// Root definition for this schema, either an element or a schema object
 	this.root = null;
-	
-	this.extractNamespaces();
 };
 
 // Process the schema file to extract its structure into javascript objects
@@ -552,41 +635,13 @@ SchemaProcessor.prototype.extractNamespaces = function() {
 			var namespacePrefix = attr.nodeName.substring(5).replace(":", "");
 			var namespaceUri = attr.nodeValue;
 			this.registerNamespace(namespaceUri, namespacePrefix);
-			
-			// Store the namespace prefix for the xs namespace
-			if (attr.nodeValue == this.xsdManager.xsNS){
-				this.xsPrefix = namespacePrefix;
-				if (this.xsPrefix != "")
-					this.xsPrefix = this.xsPrefix + ":";
-			}
 		}
-	}
-	
-	// Only use target namespace if not already being provided with a namespace uri
-	if (!this.targetNS) {
-		// Store the target namespace of this schema.
-		this.targetNS = this.xsd.getAttribute("targetNamespace");
-		
-		// Determine if the targetNS is already registered locally
-		var localPrefix = this.getLocalNamespacePrefix(this.targetNS);
-		if (localPrefix == null) {
-			// Register the target namespace as the default namespace
-			localPrefix = "";
-		}
-		this.targetNSIndex = this.registerNamespace(this.targetNS, "");
-	}
-	
-	// Register the target ns as the default ns if none was specified
-	if (!("" in this.localNamespaces)) {
-		this.localNamespaces[""] = this.targetNS;
 	}
 };
 
-SchemaProcessor.prototype.createDefinition = function(node, nameParts) {
-	if (!nameParts) {
-		var name = node.getAttribute("name");
-		if (name)
-			nameParts = this.extractName(name);
+SchemaProcessor.prototype.createDefinition = function(node, name) {
+	if (!name) {
+		name = node.getAttribute("name");
 	}
 		
 	// New root definition
@@ -597,8 +652,8 @@ SchemaProcessor.prototype.createDefinition = function(node, nameParts) {
 		np : true
 	};
 	
-	if (nameParts && nameParts.localName)
-		definition.name = nameParts.localName;
+	if (name)
+		definition.name = name;
 	
 	if (node.localName == "attribute") {
 		definition.attribute = true;
@@ -620,11 +675,11 @@ SchemaProcessor.prototype.addElement = function(node, definition, parentDef) {
 		var minOccurs = node.getAttribute("minOccurs");
 		var maxOccurs = node.getAttribute("maxOccurs");
 		if (parentDef && (minOccurs || maxOccurs)) {
-			var nameOrRef = node.getAttribute("name") || node.getAttribute("ref");
-			var nameOrRefParts = this.extractName(nameOrRef);
+			var name = node.getAttribute('name');
+			var indexedNameOrRef = name ? this.indexedDefinitionName(name) : this.extractName(node.getAttribute('ref')).indexedName;
 			if (!("occurs" in parentDef))
 				parentDef.occurs = {};
-			parentDef.occurs[nameOrRefParts.indexedName] = {
+			parentDef.occurs[indexedNameOrRef] = {
 					'min' : minOccurs,
 					'max' : maxOccurs
 			};
@@ -650,13 +705,13 @@ SchemaProcessor.prototype.addReference = function(definition, refName) {
 	definition.ref = nameParts.indexedName;
 };
 
-SchemaProcessor.prototype.addTypeReference = function(definition, refName) {
+SchemaProcessor.prototype.addTypeReference = function(definition, refName, mergeMode) {
 	var nameParts = this.extractName(refName);
 	if (!definition.typeRef) {
 		definition.typeRef = [];
 	}
 	
-	definition.typeRef.push(nameParts.indexedName);
+	definition.typeRef.push({indexedName: nameParts.indexedName, mergeMode: mergeMode});
 };
 
 // Build the schema tag
@@ -665,7 +720,8 @@ SchemaProcessor.prototype.build_schema = function(node) {
 		elements : [],
 		ns : this.targetNSIndex,
 		schema : true,
-		np : true
+		np : true,
+		use : node.getAttribute("use") /* Patched for auto-add of required attributes. See also jquery.xmleditor.js : GUIEditor.prototype.addAttributeEvent and XMLElement.prototype.populateChildren */
 	};
 	var self = this;
 	var children = this.getChildren(node);
@@ -689,11 +745,10 @@ SchemaProcessor.prototype.buildTopLevel = function(node) {
 	// Root level definitions must have a name attribute
 	if (!name)
 		return;
-	var nameParts = this.extractName(name);
 	
 	// New root definition
-	var definition = this.createDefinition(node, nameParts);
-	this.rootDefinitions[nameParts.indexedName] = definition;
+	var definition = this.createDefinition(node, name);
+	this.rootDefinitions[this.indexedDefinitionName(name)] = definition;
 	
 	return this.build(node, definition);
 };
@@ -708,22 +763,29 @@ SchemaProcessor.prototype.build = function(node, definition, parentDef) {
 SchemaProcessor.prototype.build_element = function(node, definition, parentDef) {
 	
 	var ref = node.getAttribute("ref");
-	var subGroup = node.getAttribute("substitutionGroup");
 	if (ref) {
 		this.addReference(definition, ref);
-	} else if (subGroup) {
-		this.addTypeReference(definition, subGroup);
 	} else {
 		// Build or retrieve the type definition
 		var type = node.getAttribute("type");
 		if (type == null) {
-			this.build(this.getChildren(node)[0], definition);
+			var child = this.getChildren(node)[0];
+			if (child) {
+				this.build(child, definition);
+			} else {
+				var subGroup = node.getAttribute('substitutionGroup');
+				if (subGroup) {
+					this.addTypeReference(definition, subGroup, 'extension');
+				} else {
+					definition.type = 'anyType';
+				}
+			}
 		} else {
 			// Check to see if it is a built in type
 			definition.type = this.getBuiltInType(type, definition);
 			if (definition.type == null) {
 				// Was not built in, make a reference to resolve later
-				this.addTypeReference(definition, type);
+				this.addTypeReference(definition, type, 'extension');
 			}
 		}
 	}
@@ -749,7 +811,7 @@ SchemaProcessor.prototype.build_attribute = function(node, definition) {
 			definition.type = this.getBuiltInType(type, definition);
 			if (definition.type == null) {
 				// Was not built in, make a reference to resolve later
-				this.addTypeReference(definition, type);
+				this.addTypeReference(definition, type, 'extension');
 			}
 		}
 	}
@@ -790,7 +852,7 @@ SchemaProcessor.prototype.build_simpleType = function(node, definition) {
 // Process a list tag, which allows for a single tag with multiple values
 SchemaProcessor.prototype.build_list = function(node, definition) {
 	// For the moment, lists will just be treated as free text fields
-	definition.type = this.xsPrefix + "string";
+	definition.type = "string";
 	definition.multivalued = true;
 };
 
@@ -805,7 +867,7 @@ SchemaProcessor.prototype.build_union = function(node, definition) {
 			
 			definition.type = this.getBuiltInType(memberType, definition);
 			if (definition.type == null) {
-				this.addTypeReference(definition, memberType);
+				this.addTypeReference(definition, memberType, 'extension');
 			}
 		}
 	}
@@ -820,7 +882,7 @@ SchemaProcessor.prototype.build_union = function(node, definition) {
 SchemaProcessor.prototype.build_group = function(node, definition) {
 	var ref = node.getAttribute("ref");
 	if (ref){
-		this.addTypeReference(definition, ref);
+		this.addTypeReference(definition, ref, 'extension');
 		return definition;
 	}
 	var self = this;
@@ -931,7 +993,7 @@ SchemaProcessor.prototype.build_restriction = function(node, definition) {
 	
 	definition.type = this.getBuiltInType(base, definition);
 	if (definition.type == null) {
-		this.addTypeReference(definition, base);
+		this.addTypeReference(definition, base, 'restriction');
 	}
 	
 	var self = this;
@@ -959,7 +1021,7 @@ SchemaProcessor.prototype.build_extension = function(node, definition) {
 	
 	definition.type = this.getBuiltInType(base, definition);
 	if (definition.type == null) {
-		this.addTypeReference(definition, base);
+		this.addTypeReference(definition, base, 'extension');
 	}
 	
 	var self = this;
@@ -982,7 +1044,7 @@ SchemaProcessor.prototype.build_extension = function(node, definition) {
 SchemaProcessor.prototype.build_attributeGroup = function(node, definition) {
 	var ref = node.getAttribute("ref");
 	if (ref){
-		this.addTypeReference(definition, ref);
+		this.addTypeReference(definition, ref, 'extension');
 		return definition;
 	}
 	
@@ -1003,13 +1065,9 @@ SchemaProcessor.prototype.build_attributeGroup = function(node, definition) {
 SchemaProcessor.prototype.getBuiltInType = function(type, definition) {
 	if (definition.type != null)
 		return definition.type;
-	if (type.indexOf(":") == -1) {
-		if (this.xsPrefix == "")
-			return type;
-	} else {
-		if (type.indexOf(this.xsPrefix) == 0){
-			return type.substring(this.xsPrefix.length);
-		}
+	var nameParts = this.extractName(type);
+	if (nameParts.namespaceUri === this.xsdManager.xsNS) {
+		return nameParts.localName;
 	}
 	return null;
 };
@@ -1050,6 +1108,10 @@ SchemaProcessor.prototype.containsChild = function(definition, child) {
 	return false;
 };
 
+SchemaProcessor.prototype.indexedDefinitionName = function(name) {
+	return this.targetNSIndex + ':' + name;
+};
+
 SchemaProcessor.prototype.extractName = function(name) {
 	if (!name)
 		return null;
@@ -1062,7 +1124,9 @@ SchemaProcessor.prototype.extractName = function(name) {
 		result['localName'] = name.substring(index + 1);
 		result['prefix'] = name.substring(0, index);
 	}
-	result['namespace'] = this.xsdManager.getNamespaceIndex(this.localNamespaces[result.prefix]);
+	var namespaceUri = this.localNamespaces[result.prefix];
+	result['namespaceUri'] = namespaceUri;
+	result['namespace'] = this.xsdManager.getNamespaceIndex(namespaceUri);
 	result['indexedName'] = result.namespace + ":" + result.localName;
 	return result;
 };
@@ -1084,4 +1148,3 @@ SchemaProcessor.prototype.getLocalNamespacePrefix = function(namespaceUri) {
 	}
 	return null;
 };
-; return Xsd2Json;}.call();

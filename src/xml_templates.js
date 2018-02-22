@@ -3,6 +3,7 @@
  * @param init_object
  * @constructor
  */
+
 function XMLTemplates(init_object) {
     this.template_path = init_object.options.templateOptions.templatePath;
     this.templates = init_object.options.templateOptions.templates;
@@ -26,9 +27,9 @@ XMLTemplates.prototype.createDialog = function() {
     var self = this;
     var buttons = {};
     if (self.editor.options.templateOptions.cancelFunction) {
-        buttons["Cancel"] = $.proxy(self.editor.options.templateOptions.cancelFunction, self);
+        buttons[self.editor.options.i18n[self.editor.options.userLang].cancel] = $.proxy(self.editor.options.templateOptions.cancelFunction, self);
     }
-    buttons["Choose"] = function() {
+    buttons[self.editor.options.i18n[self.editor.options.userLang].choose] = function() {
         self.processForm();
     };
 
@@ -112,7 +113,7 @@ XMLTemplates.prototype.loadSelectedTemplate = function(selection) {
         var xml_string = self.editor.xml2Str(data);
         self.editor._documentReady(xml_string);
     }).fail(function(jqXHR, textStatus) {
-        alert("Unable to load the requested template: " + textStatus);
+        alert(self.editor.options.i18n[self.editor.options.userLang].unableToLoadTemplate + textStatus);
     });
 };
 

@@ -104,3 +104,4 @@ XMLTextNode.prototype.focus = function() {
 XMLTextNode.prototype.isSelected = function() {
 	return AbstractXMLObject.prototype.isSelected.call(this);
 };
+
