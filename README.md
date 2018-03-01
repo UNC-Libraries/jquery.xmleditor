@@ -6,6 +6,8 @@ Additionally, this project includes a tool for generating JSON objects from XML 
 Try it out in our [jquery.xmleditor demo page](http://unc-libraries.github.com/jquery.xmleditor) using the MODS 3.4 schema.
 
 And here's a [demo starting from an existing xml file](http://unc-libraries.github.com/jquery.xmleditor/demo/mods.html)
+And here's a [demo as above, but with translated UI](http://unc-libraries.github.com/jquery.xmleditor/demo/mods_de.html)
+And here's a [demo as above, but with translated UI and forced required attributes](http://unc-libraries.github.com/jquery.xmleditor/demo/requiredAttributes.html)
 
 This project was developed as a part of the [Carolina Digital Repository](https://cdr.lib.unc.edu/) for use in our administrative tools, but is fully functional as a standalone client. 
 This tool is intended to serve as a general schema driven XML editor that runs in web browsers, although some default behaviors are oriented towards it.  
@@ -193,6 +195,8 @@ $("#xml_editor").xmlEditor({
 - sourceDesignSwitch - This is true by default - allows to hide the switch between Text and XML display
 - initialEditMode - Switch to predefined view: XML or HTML-DIV editor. 0=HTML-DIV editor, 1=XML Source editor
 - i18n - This is a map in form ["en"] or ["de"] which holds all the labels used in the application for translation. More translations can be added.
+- userLang - This selects the map to be used from i18n for the UI translation.
+- enforceRequired - This does render required attributes to get no (x) button for remove and will automatically create the attributes. Works only together with enforceOccurs: true.
 
 
 ### Interacting with the editor
@@ -229,6 +233,8 @@ Authors
 [Dean Farrell](https://github.com/lfarrell)
 
 [Volker Diels-Grabsch (m-click.aero)](https://github.com/m-click)
+
+[Marc Höschele](https://github.com/mhoesche)
 
 Attribution
 ------

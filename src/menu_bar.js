@@ -27,6 +27,7 @@ function MenuBar(editor) {
 		show: true,
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
+				id: 'submitChanges',
 				label : self.editor.options.i18n[self.editor.options.userLang].submitChanges,
 				enabled : defaultSubmitConfig != null,
 				show: self.editor.options.enableEdit,
@@ -35,6 +36,7 @@ function MenuBar(editor) {
 					self.editor.uploadXML.call(self.editor, defaultSubmitConfig);
 				}
 			}, {
+				id: 'export',
 				label : self.editor.options.i18n[self.editor.options.userLang].export,
 				enabled : (typeof(Blob) !== undefined),
 				show: true,
@@ -42,27 +44,31 @@ function MenuBar(editor) {
 				action : $.proxy(self.editor.exportXML, self.editor)
 			} ]
 	}, {
+		id: 'edit',
 		label : self.editor.options.i18n[self.editor.options.userLang].edit,
 		enabled : self.editor.options.enableEdit, // readonly mode
 		show: self.editor.options.enableEdit, // readonly mode
 		action : function(event) {self.activateMenu(event);},
 		items : [ {
+			id: 'undoMenuitem',
 			label : self.editor.options.i18n[self.editor.options.userLang].undoMenuitem,
 			enabled : true,
 			show: true,
-			binding : self.editor.options.i18n[self.editor.options.userLang].undo,
+			binding : self.editor.options.i18n[self.editor.options.userLang].ctrlZ,
 			action : function() {
 				self.editor.undoHistory.changeHead(-1);
 			}
 		}, {
+			id: 'redoMenuitem',
 			label : self.editor.options.i18n[self.editor.options.userLang].redoMenuitem,
 			enabled : true,
 			show: true,
-			binding : self.editor.options.i18n[self.editor.options.userLang].redo,
+			binding : self.editor.options.i18n[self.editor.options.userLang].ctrlY,
 			action : function() {
 				self.editor.undoHistory.changeHead(1);
 			}
 		}, {
+			id: 'deleteElement',
 			label : self.editor.options.i18n[self.editor.options.userLang].deleteElement,
 			enabled : true,
 			show: true,
@@ -71,6 +77,7 @@ function MenuBar(editor) {
 				self.editor.guiEditor.deleteSelected();
 			}
 		}, {
+			id: 'moveElementUp',
 			label : self.editor.options.i18n[self.editor.options.userLang].moveElementUp,
 			enabled : true,
 			show: true,
@@ -79,6 +86,7 @@ function MenuBar(editor) {
 				self.editor.guiEditor.moveSelected(true);
 			}
 		}, {
+			id: 'moveElementDown',
 			label : self.editor.options.i18n[self.editor.options.userLang].moveElementDown,
 			enabled : true,
 			show: true,
@@ -88,11 +96,13 @@ function MenuBar(editor) {
 			}
 		} ]
 	}, {
+		id: 'select',
 		label : self.editor.options.i18n[self.editor.options.userLang].select,
 		enabled : self.editor.options.enableEdit, // readonly mode
 		show: self.editor.options.enableEdit, // readonly mode
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
+				id: 'deselect',
 				label : self.editor.options.i18n[self.editor.options.userLang].deselect,
 				enabled : true,
 				show: true,
@@ -101,6 +111,7 @@ function MenuBar(editor) {
 					self.editor.guiEditor.deselect();
 				}
 			},{
+				id: 'nextElement',
 				label : self.editor.options.i18n[self.editor.options.userLang].nextElement,
 				enabled : true,
 				show: true,
@@ -109,6 +120,7 @@ function MenuBar(editor) {
 					self.editor.guiEditor.selectNext();
 				}
 			}, {
+				id: 'previousElement',
 				label : self.editor.options.i18n[self.editor.options.userLang].previousElement,
 				enabled : true,
 				show: true,
@@ -117,6 +129,7 @@ function MenuBar(editor) {
 					self.editor.guiEditor.selectNext(true);
 				}
 			}, {
+				id: 'nextAttribute',
 				label : self.editor.options.i18n[self.editor.options.userLang].nextAttribute,
 				enabled : true,
 				show: true,
@@ -125,6 +138,7 @@ function MenuBar(editor) {
 					self.editor.guiEditor.selectAttribute();
 				}
 			}, {
+				id: 'previousAttribute',
 				label : self.editor.options.i18n[self.editor.options.userLang].previousAttribute,
 				enabled : true,
 				show: true,
@@ -133,6 +147,7 @@ function MenuBar(editor) {
 					self.editor.guiEditor.selectAttribute(true);
 				}
 			}, {
+				id: 'parentElement',
 				label : self.editor.options.i18n[self.editor.options.userLang].parentElement,
 				enabled : true,
 				show: true,
@@ -141,6 +156,7 @@ function MenuBar(editor) {
 					self.editor.guiEditor.selectParent();
 				}
 			}, {
+				id: 'firstChild',
 				label : self.editor.options.i18n[self.editor.options.userLang].firstChild,
 				enabled : true,
 				show: true,
@@ -149,6 +165,7 @@ function MenuBar(editor) {
 					self.editor.guiEditor.selectParent(true);
 				}
 			}, {
+				id: 'nextSibling',
 				label : self.editor.options.i18n[self.editor.options.userLang].nextSibling,
 				enabled : true,
 				show: true,	
@@ -157,6 +174,7 @@ function MenuBar(editor) {
 					self.editor.guiEditor.selectSibling();
 				}
 			}, {
+				id: 'previousSibling',
 				label : self.editor.options.i18n[self.editor.options.userLang].previousSibling,
 				enabled : true,
 				show: true,
@@ -166,11 +184,13 @@ function MenuBar(editor) {
 				}
 			} ]
 	}, {
+		id: 'insert',
 		label : self.editor.options.i18n[self.editor.options.userLang].insert,
 		enabled : true,
 		show: self.editor.options.enableEdit,
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
+				id: 'addAttribute',
 				label : self.editor.options.i18n[self.editor.options.userLang].addAttribute,
 				enabled : true,
 				show: true,
@@ -181,6 +201,7 @@ function MenuBar(editor) {
 						self.editor.addNode(selected, "attribute", false);
 				}
 			}, {
+				id: 'addElement',
 				label : self.editor.options.i18n[self.editor.options.userLang].addElement,
 				enabled : true,
 				show: true,
@@ -192,6 +213,7 @@ function MenuBar(editor) {
 					}
 				}
 			}, {
+				id: 'addChildElement',
 				label : self.editor.options.i18n[self.editor.options.userLang].addChildElement,
 				enabled : true,
 				show: true,
@@ -202,6 +224,7 @@ function MenuBar(editor) {
 						self.editor.addNode(selected, "element", false);
 				}
 			}, {
+				id: 'addSiblingElement',
 				label : self.editor.options.i18n[self.editor.options.userLang].addSiblingElement,
 				enabled : true,
 				show: true,
@@ -212,6 +235,7 @@ function MenuBar(editor) {
 						self.editor.addNode(selected.parentElement, "element", false, selected);
 				}
 			}, {
+				id: 'addElementToParent',
 				label : self.editor.options.i18n[self.editor.options.userLang].addElementToParent,
 				enabled : true,
 				show: true,
@@ -222,6 +246,7 @@ function MenuBar(editor) {
 						self.editor.addNode(selected.parentElement, "element", false);
 				}
 			}, {
+				id: 'addElementToRoot',
 				label : self.editor.options.i18n[self.editor.options.userLang].addElementToRoot,
 				enabled : true,
 				show: true,
@@ -230,6 +255,7 @@ function MenuBar(editor) {
 					self.editor.addNode(self.editor.guiEditor.rootElement, "element", false);
 				}
 			}, {
+				id: 'addTextToElement',
 				label : self.editor.options.i18n[self.editor.options.userLang].addTextToElement,
 				enabled : true,
 				show: true,
@@ -240,6 +266,7 @@ function MenuBar(editor) {
 						self.editor.addNode(selected, "text", false);
 				}
 			}, {
+				id: 'addCommentToElement',
 				label : self.editor.options.i18n[self.editor.options.userLang].addCommentToElement,
 				enabled : true,
 				show: true,
@@ -250,6 +277,7 @@ function MenuBar(editor) {
 						self.editor.addNode(selected, "comment", false);
 				}
 			}, {
+				id: 'addCDataToElement',
 				label : self.editor.options.i18n[self.editor.options.userLang].addCDataToElement,
 				enabled : true,
 				show: true,
@@ -261,11 +289,13 @@ function MenuBar(editor) {
 				}
 			} ]
 	}, {
+		id: 'view',
 		label : self.editor.options.i18n[self.editor.options.userLang].view,
 		enabled : true,
 		show: true,
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
+			id: 'switchToXml',
 			label : self.editor.options.i18n[self.editor.options.userLang].switchToXml,
 			enabled : true,
 			binding : self.editor.options.i18n[self.editor.options.userLang].altShiftX,
@@ -273,6 +303,7 @@ function MenuBar(editor) {
 				self.editor.modeChange(0);
 			}
 		}, {
+			id: 'switchToText',
 			label :  self.editor.options.i18n[self.editor.options.userLang].switchToText,
 			enabled : true,
 			binding : self.editor.options.i18n[self.editor.options.userLang].altShiftT,
@@ -281,11 +312,13 @@ function MenuBar(editor) {
 			}
 		} ]
 	}, {
+		id: 'options',
 		label : self.editor.options.i18n[self.editor.options.userLang].options,
 		enabled : true,
 		show: true,
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
+			id: 'prettifyXml',
 			label : self.editor.options.i18n[self.editor.options.userLang].prettifyXml,
 			enabled : true,
 			show: true,
@@ -295,6 +328,7 @@ function MenuBar(editor) {
 				self.checkEntry(this, self.editor.options.prettyXML);
 			}
 		}, {
+			id: 'enableShortcuts',
 			label : self.editor.options.i18n[self.editor.options.userLang].enableShortcuts,
 			enabled : true,
 			show: true,
@@ -304,6 +338,7 @@ function MenuBar(editor) {
 				self.checkEntry(this, self.editor.options.enableGUIKeybindings);
 			}
 		}, {
+			id: 'enforeMinMaxOccurs',
 			label : self.editor.options.i18n[self.editor.options.userLang].enforceMinMaxOccurs,
 			enabled : self.editor.options.enforceOccurs,
 			show: true,
@@ -314,6 +349,7 @@ function MenuBar(editor) {
 				self.checkEntry(this, self.editor.options.enforceOccurs);
 			}
 		}, {
+			id: 'prependNewElements',
 			label : self.editor.options.i18n[self.editor.options.userLang].prependNewElements,
 			enabled : true,
 			show: true,
@@ -324,16 +360,19 @@ function MenuBar(editor) {
 			}
 		} ]
 	}/*, {
+		id: 'help',
 		label : 'Help',
 		enabled : true,
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
+			id: 'modsOutline',
 			label : 'MODS Outline of Elements',
 			enabled : true,
 			binding : null,
 			action : "http://www.loc.gov/standards/mods/mods-outline.html"
 		} ]
 	}*/, {
+		id: 'xml',
 		label : self.editor.options.i18n[self.editor.options.userLang].xml,
 		enabled : true, 
 		show: true,
@@ -342,6 +381,7 @@ function MenuBar(editor) {
 			self.editor.modeChange(0);
 		}
 	}, {
+		id: 'text',
 		label : self.editor.options.i18n[self.editor.options.userLang].text,
 		enabled : true, 
 		show: true,
@@ -418,7 +458,7 @@ MenuBar.prototype.generateMenuItem = function(menuItemData, parentMenu) {
 	}
 	
 	var menuBar = this;
-	menuItem.data("menuItemData", menuItemData).attr("id", xmlMenuHeaderPrefix + menuItemData.label.replace(/ /g, "_"));
+	menuItem.data("menuItemData", menuItemData).attr("id", xmlMenuHeaderPrefix + menuItemData.id);
 	if (menuItemData.items !== undefined && menuItemData.items.length > 0) {
 		var subMenu = $("<ul/>").addClass('sub_menu').appendTo(menuItem);
 		$.each(menuItemData.items, function() {

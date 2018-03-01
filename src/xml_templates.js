@@ -3,7 +3,6 @@
  * @param init_object
  * @constructor
  */
-
 function XMLTemplates(init_object) {
     this.template_path = init_object.options.templateOptions.templatePath;
     this.templates = init_object.options.templateOptions.templates;

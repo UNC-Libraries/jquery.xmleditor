@@ -1,7 +1,6 @@
 /**
  * Menu object for adding new elements to an existing element or document
  */
-
 function ModifyElementMenu(menuID, label, expanded, enabled, owner, editor, getRelativeToFunction) {
 	this.menuID = menuID;
 	this.label = label;

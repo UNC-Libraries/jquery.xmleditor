@@ -1,7 +1,6 @@
 /**
  * Stores data representing a single attribute for an element
  */
-
 function XMLAttribute(objectType, xmlElement, editor) {
 	AbstractXMLObject.call(this, objectType, editor);
 	// the XMLElement object which this attribute belongs to.
@@ -37,7 +36,8 @@ XMLAttribute.prototype.render = function (){
 	}).data('xmlAttribute', this).appendTo(this.xmlElement.getAttributeContainer());
 	
 	var self = this;
-	if ("required" != this.objectType.use && this.editor.options.enableEdit) { // Don't add required attributes in readonly mode
+	var allowRemove = !this.editor.options.enforceRequired || "required" != this.objectType.use;
+	if (allowRemove && this.editor.options.enableEdit) { // Don't add required attributes in readonly mode
 		var removeButton = document.createElement('a');
 		removeButton.appendChild(document.createTextNode('(x) '));
 		this.domNode[0].appendChild(removeButton);

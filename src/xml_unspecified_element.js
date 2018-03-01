@@ -88,7 +88,7 @@ XMLUnspecifiedElement.prototype.addContentContainers = function (recursive) {
 	var placeholder = document.createElement('div');
 	placeholder.className = 'placeholder';
 
-	placeholder.appendChild(document.createTextNode(this.editor.options.i18n[this.options.userLang].useMenuToAddContents));
+	placeholder.appendChild(document.createTextNode(this.editor.options.i18n[this.editor.options.userLang].useMenuToAddContents));
 
 	this.contentContainer.appendChild(placeholder);
 	this.placeholder = $(placeholder);

@@ -75,30 +75,6 @@ var localName = function(node) {
 	return node.nodeName.substring(index + 1);
 };
 
-// Extracts and returns URL parameters or the given default.
-function getParam(name, def) {
-    name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-    var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
-        results = regex.exec(location.search);
-    return results === null ? def : decodeURIComponent(results[1].replace(/\+/g, " "));
-}
-
-// Add method to String.
-String.prototype.replaceAll = function(search, replace) {
-    //if replace is null, return original string otherwise it will
-    //replace search string with 'undefined'.
-    if(!replace) 
-        return this;
-    return this.replace(new RegExp('[' + search + ']', 'g'), replace);
-};
-
-// Extract the user language first from the browsers default and let it overwrite via URL parameter "lang=".
-var userLang = navigator.language || navigator.userLanguage;
-userLang = getParam("lang", userLang);
-if ("de" != userLang && "en" != userLang) {
-	userLang = "en";
-}
-
 $.widget( "xml.xmlEditor", {
 	options: {
 		// Schema object to be used
@@ -198,8 +174,8 @@ $.widget( "xml.xmlEditor", {
 				noDocument:"Could not load specified document and no fallback provided, cannot start.",
 				noStartingDocument:"No starting document.",
 				failedToAddChild:"Failed to add child of type ",
-				undo:"ctrl+z",
-				redo:"ctrl+y",
+				ctrlZ:"ctrl+z",
+				ctrlY:"ctrl+y",
 				del:"del",
 				enter:"enter",
 				elementUp:"alt+up",
@@ -214,7 +190,7 @@ $.widget( "xml.xmlEditor", {
 				shiftLeft:"shift+left",
 				shiftRight:"shift+right",
 				altA:"alt+a",
-				ltShiftE:"alt+shift+e",
+				altShiftE:"alt+shift+e",
 				altShiftX:"alt+shift+x",
 				altShiftS:"alt+shift+s",
 				altShiftT:"alt+shift+t",
@@ -323,8 +299,8 @@ $.widget( "xml.xmlEditor", {
 				noDocument:"Das angegebene Dokument konnte nicht geladen werden und es ist kein Rückfalldokument definiert. Der Editor kann nicht starten.",
 				noStartingDocument:"Es ist kein Startdokument definiert.",
 				failedToAddChild:"Das Element des folgenden Typs konnte nicht hinzugefügt werden: ",
-				undo:"Strg+z",
-				redo:"Strg+y",
+				ctrlZ:"Strg+z",
+				ctrlY:"Strg+y",
 				del:"Entf",
 				enter:"Enter",
 				elementUp:"Alt+oben",
@@ -419,7 +395,9 @@ $.widget( "xml.xmlEditor", {
 			}
 		},
 
-		userLang: getParam("lang", "en")
+		userLang: "en",
+
+		enforceRequired: false
 
 	},
 	
@@ -611,8 +589,6 @@ $.widget( "xml.xmlEditor", {
 
 		// Start loading the document for editing
 		this.loadDocument(this.options.ajaxOptions, localXMLContent);
-		var editor = this.activeEditor;
-		setTimeout(function () { if (!!editor['selectNext']) { editor.selectNext(); } }, 200);
 	},
 	
 	// Load the schema object
@@ -870,7 +846,7 @@ $.widget( "xml.xmlEditor", {
 	},
 
 	addChildElement: function(parentElement, newElementDefinition, relativeTo, prepend) {
-		if (!parentElement.allowChildren)
+		if (!parentElement.allowChildren || !this.activeEditor.editor.options.enableEdit) 
 			return null;
 
 		// If in the text editor view, synchronous the text to the xml model and ensure wellformedness
@@ -945,6 +921,11 @@ $.widget( "xml.xmlEditor", {
 
 	addAttribute: function(xmlElement, attrDefinition, instigator) {
 
+		// if we are in readonly mode, return without changing anything
+		if (!this.activeEditor.editor.options.enableEdit) {
+			return;
+		}
+
 		// Synchronize xml document if there are unsynchronized changes in the text editor
 		if (this.xmlState.changesNotSynced()) {
 			try {
@@ -1007,6 +988,11 @@ $.widget( "xml.xmlEditor", {
 	},
 
 	addNode: function(parentElement, nodeType, prepend, relativeTo) {
+
+		// if we are in readonly mode, return without changing anything
+		if (!this.activeEditor.editor.options.enableEdit) {
+			return;
+		}
 
 		// Synchronize xml document if there are unsynchronized changes in the text editor
 		if (this.xmlState.changesNotSynced()) {
@@ -1076,10 +1062,10 @@ $.widget( "xml.xmlEditor", {
 			this.activeEditor = this.guiEditor;
 			var editor = this.activeEditor;
 			setTimeout(function() {editor.selectNext();}, 200);
-			$("#" + xmlMenuHeaderPrefix + this.options.i18n[this.options.userLang].xml.replace(/ /g, "_")).addClass("active_mode_tab");
+			$("#" + xmlMenuHeaderPrefix + 'xml').addClass("active_mode_tab");
 		} else {
 			this.activeEditor = this.textEditor;
-			$("#" + xmlMenuHeaderPrefix + this.options.i18n[this.options.userLang].text.replace(/ /g, "_")).addClass("active_mode_tab");
+			$("#" + xmlMenuHeaderPrefix + 'text').addClass("active_mode_tab");
 		}
 		this.activeEditor.activate();
 		if (this.ready)
@@ -1505,31 +1491,22 @@ $.widget( "xml.xmlEditor", {
 	// Menu Update functions
 	refreshMenuUndo: function(self) {
 		if (self.undoHistory.headIndex > 0) {
-			$("#" + xmlMenuHeaderPrefix + self.options.i18n[self.options.userLang].undoMenuitem.replaceAll(' ','_')).removeClass("disabled").data("menuItemData").enabled = true;
+			$("#" + xmlMenuHeaderPrefix + 'undoMenuitem').removeClass("disabled").data("menuItemData").enabled = true;
 		} else {
-			$("#" + xmlMenuHeaderPrefix + self.options.i18n[self.options.userLang].undoMenuitem.replaceAll(' ','_')).addClass("disabled").data("menuItemData").enabled = false;
+			$("#" + xmlMenuHeaderPrefix + 'undoMenuitem').addClass("disabled").data("menuItemData").enabled = false;
 		}
 		if (self.undoHistory.headIndex < self.undoHistory.states.length - 1) {
-			$("#" + xmlMenuHeaderPrefix + self.options.i18n[self.options.userLang].redoMenuitem.replaceAll(' ','_')).removeClass("disabled").data("menuItemData").enabled = true;
+			$("#" + xmlMenuHeaderPrefix + 'redoMenuitem').removeClass("disabled").data("menuItemData").enabled = true;
 		} else {
-			$("#" + xmlMenuHeaderPrefix + self.options.i18n[self.options.userLang].redoMenuitem.replaceAll(' ','_')).addClass("disabled").data("menuItemData").enabled = false;
+			$("#" + xmlMenuHeaderPrefix + 'redoMenuitem').addClass("disabled").data("menuItemData").enabled = false;
 		}
 	},
 	
 	// Performs updates to the menu for changing element/attribute selection
 	refreshMenuSelected: function(self) {
-		var suffixes = [self.options.i18n[self.options.userLang].deselect.replaceAll(' ','_'), 
-						self.options.i18n[self.options.userLang].nextElement.replaceAll(' ','_'), 
-						self.options.i18n[self.options.userLang].previousElement.replaceAll(' ','_'), 
-						self.options.i18n[self.options.userLang].parentElement.replaceAll(' ','_'), 
-						self.options.i18n[self.options.userLang].firstChild.replaceAll(' ','_'), 
-						self.options.i18n[self.options.userLang].nextSibling.replaceAll(' ','_'),
-						self.options.i18n[self.options.userLang].previousSibling.replaceAll(' ','_'), 
-						self.options.i18n[self.options.userLang].nextAttribute.replaceAll(' ','_'), 
-						self.options.i18n[self.options.userLang].previousAttribute.replaceAll(' ','_'), 
-						self.options.i18n[self.options.userLang].deleteElement.replaceAll(' ','_'), 
-						self.options.i18n[self.options.userLang].moveElementUp.replaceAll(' ','_'), 
-						self.options.i18n[self.options.userLang].moveElementDown.replaceAll(' ','_')];
+		var suffixes = ['deselect', 'nextElement', 'previousElement', 'parentElement', 'firstChild', 
+						'nextSibling', 'previousSibling', 'nextAttribute', 'previousAttribute', 'deleteElement', 
+						'moveElementUp', 'moveElementDown'];
 		var hasSelected = self.guiEditor.selectedElement != null && self.guiEditor.active;
 		$.each(suffixes, function(){
 			if (hasSelected)
@@ -1648,8 +1625,11 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 		// Set width of generated fields manually.
 		if (this.objectType.attribute && startingValue) {
 			var len = startingValue.length * 10;
-			if (len < 80) { len = 80; }
-			else if (len > 600) { len = 600; }
+			if (len < 80) { 
+				len = 80;
+			} else if (len > 600) {
+				len = 600;
+			}
 			if (len != -1) {
 				input.style.width = len + "px";
 			}
@@ -2824,6 +2804,7 @@ function MenuBar(editor) {
 		show: true,
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
+				id: 'submitChanges',
 				label : self.editor.options.i18n[self.editor.options.userLang].submitChanges,
 				enabled : defaultSubmitConfig != null,
 				show: self.editor.options.enableEdit,
@@ -2832,6 +2813,7 @@ function MenuBar(editor) {
 					self.editor.uploadXML.call(self.editor, defaultSubmitConfig);
 				}
 			}, {
+				id: 'export',
 				label : self.editor.options.i18n[self.editor.options.userLang].export,
 				enabled : (typeof(Blob) !== undefined),
 				show: true,
@@ -2839,27 +2821,31 @@ function MenuBar(editor) {
 				action : $.proxy(self.editor.exportXML, self.editor)
 			} ]
 	}, {
+		id: 'edit',
 		label : self.editor.options.i18n[self.editor.options.userLang].edit,
 		enabled : self.editor.options.enableEdit, // readonly mode
 		show: self.editor.options.enableEdit, // readonly mode
 		action : function(event) {self.activateMenu(event);},
 		items : [ {
+			id: 'undoMenuitem',
 			label : self.editor.options.i18n[self.editor.options.userLang].undoMenuitem,
 			enabled : true,
 			show: true,
-			binding : self.editor.options.i18n[self.editor.options.userLang].undo,
+			binding : self.editor.options.i18n[self.editor.options.userLang].ctrlZ,
 			action : function() {
 				self.editor.undoHistory.changeHead(-1);
 			}
 		}, {
+			id: 'redoMenuitem',
 			label : self.editor.options.i18n[self.editor.options.userLang].redoMenuitem,
 			enabled : true,
 			show: true,
-			binding : self.editor.options.i18n[self.editor.options.userLang].redo,
+			binding : self.editor.options.i18n[self.editor.options.userLang].ctrlY,
 			action : function() {
 				self.editor.undoHistory.changeHead(1);
 			}
 		}, {
+			id: 'deleteElement',
 			label : self.editor.options.i18n[self.editor.options.userLang].deleteElement,
 			enabled : true,
 			show: true,
@@ -2868,6 +2854,7 @@ function MenuBar(editor) {
 				self.editor.guiEditor.deleteSelected();
 			}
 		}, {
+			id: 'moveElementUp',
 			label : self.editor.options.i18n[self.editor.options.userLang].moveElementUp,
 			enabled : true,
 			show: true,
@@ -2876,6 +2863,7 @@ function MenuBar(editor) {
 				self.editor.guiEditor.moveSelected(true);
 			}
 		}, {
+			id: 'moveElementDown',
 			label : self.editor.options.i18n[self.editor.options.userLang].moveElementDown,
 			enabled : true,
 			show: true,
@@ -2885,11 +2873,13 @@ function MenuBar(editor) {
 			}
 		} ]
 	}, {
+		id: 'select',
 		label : self.editor.options.i18n[self.editor.options.userLang].select,
 		enabled : self.editor.options.enableEdit, // readonly mode
 		show: self.editor.options.enableEdit, // readonly mode
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
+				id: 'deselect',
 				label : self.editor.options.i18n[self.editor.options.userLang].deselect,
 				enabled : true,
 				show: true,
@@ -2898,6 +2888,7 @@ function MenuBar(editor) {
 					self.editor.guiEditor.deselect();
 				}
 			},{
+				id: 'nextElement',
 				label : self.editor.options.i18n[self.editor.options.userLang].nextElement,
 				enabled : true,
 				show: true,
@@ -2906,6 +2897,7 @@ function MenuBar(editor) {
 					self.editor.guiEditor.selectNext();
 				}
 			}, {
+				id: 'previousElement',
 				label : self.editor.options.i18n[self.editor.options.userLang].previousElement,
 				enabled : true,
 				show: true,
@@ -2914,6 +2906,7 @@ function MenuBar(editor) {
 					self.editor.guiEditor.selectNext(true);
 				}
 			}, {
+				id: 'nextAttribute',
 				label : self.editor.options.i18n[self.editor.options.userLang].nextAttribute,
 				enabled : true,
 				show: true,
@@ -2922,6 +2915,7 @@ function MenuBar(editor) {
 					self.editor.guiEditor.selectAttribute();
 				}
 			}, {
+				id: 'previousAttribute',
 				label : self.editor.options.i18n[self.editor.options.userLang].previousAttribute,
 				enabled : true,
 				show: true,
@@ -2930,6 +2924,7 @@ function MenuBar(editor) {
 					self.editor.guiEditor.selectAttribute(true);
 				}
 			}, {
+				id: 'parentElement',
 				label : self.editor.options.i18n[self.editor.options.userLang].parentElement,
 				enabled : true,
 				show: true,
@@ -2938,6 +2933,7 @@ function MenuBar(editor) {
 					self.editor.guiEditor.selectParent();
 				}
 			}, {
+				id: 'firstChild',
 				label : self.editor.options.i18n[self.editor.options.userLang].firstChild,
 				enabled : true,
 				show: true,
@@ -2946,6 +2942,7 @@ function MenuBar(editor) {
 					self.editor.guiEditor.selectParent(true);
 				}
 			}, {
+				id: 'nextSibling',
 				label : self.editor.options.i18n[self.editor.options.userLang].nextSibling,
 				enabled : true,
 				show: true,	
@@ -2954,6 +2951,7 @@ function MenuBar(editor) {
 					self.editor.guiEditor.selectSibling();
 				}
 			}, {
+				id: 'previousSibling',
 				label : self.editor.options.i18n[self.editor.options.userLang].previousSibling,
 				enabled : true,
 				show: true,
@@ -2963,11 +2961,13 @@ function MenuBar(editor) {
 				}
 			} ]
 	}, {
+		id: 'insert',
 		label : self.editor.options.i18n[self.editor.options.userLang].insert,
 		enabled : true,
 		show: self.editor.options.enableEdit,
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
+				id: 'addAttribute',
 				label : self.editor.options.i18n[self.editor.options.userLang].addAttribute,
 				enabled : true,
 				show: true,
@@ -2978,6 +2978,7 @@ function MenuBar(editor) {
 						self.editor.addNode(selected, "attribute", false);
 				}
 			}, {
+				id: 'addElement',
 				label : self.editor.options.i18n[self.editor.options.userLang].addElement,
 				enabled : true,
 				show: true,
@@ -2989,6 +2990,7 @@ function MenuBar(editor) {
 					}
 				}
 			}, {
+				id: 'addChildElement',
 				label : self.editor.options.i18n[self.editor.options.userLang].addChildElement,
 				enabled : true,
 				show: true,
@@ -2999,6 +3001,7 @@ function MenuBar(editor) {
 						self.editor.addNode(selected, "element", false);
 				}
 			}, {
+				id: 'addSiblingElement',
 				label : self.editor.options.i18n[self.editor.options.userLang].addSiblingElement,
 				enabled : true,
 				show: true,
@@ -3009,6 +3012,7 @@ function MenuBar(editor) {
 						self.editor.addNode(selected.parentElement, "element", false, selected);
 				}
 			}, {
+				id: 'addElementToParent',
 				label : self.editor.options.i18n[self.editor.options.userLang].addElementToParent,
 				enabled : true,
 				show: true,
@@ -3019,6 +3023,7 @@ function MenuBar(editor) {
 						self.editor.addNode(selected.parentElement, "element", false);
 				}
 			}, {
+				id: 'addElementToRoot',
 				label : self.editor.options.i18n[self.editor.options.userLang].addElementToRoot,
 				enabled : true,
 				show: true,
@@ -3027,6 +3032,7 @@ function MenuBar(editor) {
 					self.editor.addNode(self.editor.guiEditor.rootElement, "element", false);
 				}
 			}, {
+				id: 'addTextToElement',
 				label : self.editor.options.i18n[self.editor.options.userLang].addTextToElement,
 				enabled : true,
 				show: true,
@@ -3037,6 +3043,7 @@ function MenuBar(editor) {
 						self.editor.addNode(selected, "text", false);
 				}
 			}, {
+				id: 'addCommentToElement',
 				label : self.editor.options.i18n[self.editor.options.userLang].addCommentToElement,
 				enabled : true,
 				show: true,
@@ -3047,6 +3054,7 @@ function MenuBar(editor) {
 						self.editor.addNode(selected, "comment", false);
 				}
 			}, {
+				id: 'addCDataToElement',
 				label : self.editor.options.i18n[self.editor.options.userLang].addCDataToElement,
 				enabled : true,
 				show: true,
@@ -3058,11 +3066,13 @@ function MenuBar(editor) {
 				}
 			} ]
 	}, {
+		id: 'view',
 		label : self.editor.options.i18n[self.editor.options.userLang].view,
 		enabled : true,
 		show: true,
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
+			id: 'switchToXml',
 			label : self.editor.options.i18n[self.editor.options.userLang].switchToXml,
 			enabled : true,
 			binding : self.editor.options.i18n[self.editor.options.userLang].altShiftX,
@@ -3070,6 +3080,7 @@ function MenuBar(editor) {
 				self.editor.modeChange(0);
 			}
 		}, {
+			id: 'switchToText',
 			label :  self.editor.options.i18n[self.editor.options.userLang].switchToText,
 			enabled : true,
 			binding : self.editor.options.i18n[self.editor.options.userLang].altShiftT,
@@ -3078,11 +3089,13 @@ function MenuBar(editor) {
 			}
 		} ]
 	}, {
+		id: 'options',
 		label : self.editor.options.i18n[self.editor.options.userLang].options,
 		enabled : true,
 		show: true,
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
+			id: 'prettifyXml',
 			label : self.editor.options.i18n[self.editor.options.userLang].prettifyXml,
 			enabled : true,
 			show: true,
@@ -3092,6 +3105,7 @@ function MenuBar(editor) {
 				self.checkEntry(this, self.editor.options.prettyXML);
 			}
 		}, {
+			id: 'enableShortcuts',
 			label : self.editor.options.i18n[self.editor.options.userLang].enableShortcuts,
 			enabled : true,
 			show: true,
@@ -3101,6 +3115,7 @@ function MenuBar(editor) {
 				self.checkEntry(this, self.editor.options.enableGUIKeybindings);
 			}
 		}, {
+			id: 'enforeMinMaxOccurs',
 			label : self.editor.options.i18n[self.editor.options.userLang].enforceMinMaxOccurs,
 			enabled : self.editor.options.enforceOccurs,
 			show: true,
@@ -3111,6 +3126,7 @@ function MenuBar(editor) {
 				self.checkEntry(this, self.editor.options.enforceOccurs);
 			}
 		}, {
+			id: 'prependNewElements',
 			label : self.editor.options.i18n[self.editor.options.userLang].prependNewElements,
 			enabled : true,
 			show: true,
@@ -3121,16 +3137,19 @@ function MenuBar(editor) {
 			}
 		} ]
 	}/*, {
+		id: 'help',
 		label : 'Help',
 		enabled : true,
 		action : function(event) {self.activateMenu(event);}, 
 		items : [ {
+			id: 'modsOutline',
 			label : 'MODS Outline of Elements',
 			enabled : true,
 			binding : null,
 			action : "http://www.loc.gov/standards/mods/mods-outline.html"
 		} ]
 	}*/, {
+		id: 'xml',
 		label : self.editor.options.i18n[self.editor.options.userLang].xml,
 		enabled : true, 
 		show: true,
@@ -3139,6 +3158,7 @@ function MenuBar(editor) {
 			self.editor.modeChange(0);
 		}
 	}, {
+		id: 'text',
 		label : self.editor.options.i18n[self.editor.options.userLang].text,
 		enabled : true, 
 		show: true,
@@ -3215,7 +3235,7 @@ MenuBar.prototype.generateMenuItem = function(menuItemData, parentMenu) {
 	}
 	
 	var menuBar = this;
-	menuItem.data("menuItemData", menuItemData).attr("id", xmlMenuHeaderPrefix + menuItemData.label.replace(/ /g, "_"));
+	menuItem.data("menuItemData", menuItemData).attr("id", xmlMenuHeaderPrefix + menuItemData.id);
 	if (menuItemData.items !== undefined && menuItemData.items.length > 0) {
 		var subMenu = $("<ul/>").addClass('sub_menu').appendTo(menuItem);
 		$.each(menuItemData.items, function() {
@@ -3262,7 +3282,6 @@ MenuBar.prototype.checkEntry = function(menuItem, checked) {
 /**
  * Menu object for adding new elements to an existing element or document
  */
-
 function ModifyElementMenu(menuID, label, expanded, enabled, owner, editor, getRelativeToFunction) {
 	this.menuID = menuID;
 	this.label = label;
@@ -3417,7 +3436,6 @@ ModifyElementMenu.prototype.populate = function(xmlElement) {
 /**
  * Menu panel for managing individual modification menus.
  */
-
 function ModifyMenuPanel(editor) {
 	this.editor = editor;
 	this.menus = {};
@@ -4054,7 +4072,6 @@ TextEditor.prototype.addAttributeEvent = function() {
  * Current implementation involves storing previous states of the XML document,
  * recorded each time a significant change occurs or the document is regenerated
  */
-
 function UndoHistory(xmlState, editor) {
 	this.xmlState = xmlState;
 	this.editor = editor;
@@ -4134,7 +4151,6 @@ UndoHistory.prototype.captureSnapshot = function () {
 /**
  * Stores data representing a single attribute for an element
  */
-
 function XMLAttribute(objectType, xmlElement, editor) {
 	AbstractXMLObject.call(this, objectType, editor);
 	// the XMLElement object which this attribute belongs to.
@@ -4170,7 +4186,8 @@ XMLAttribute.prototype.render = function (){
 	}).data('xmlAttribute', this).appendTo(this.xmlElement.getAttributeContainer());
 	
 	var self = this;
-	if ("required" != this.objectType.use && this.editor.options.enableEdit) { // Don't add required attributes in readonly mode
+	var allowRemove = !this.editor.options.enforceRequired || "required" != this.objectType.use;
+	if (allowRemove && this.editor.options.enableEdit) { // Don't add required attributes in readonly mode
 		var removeButton = document.createElement('a');
 		removeButton.appendChild(document.createTextNode('(x) '));
 		this.domNode[0].appendChild(removeButton);
@@ -4505,7 +4522,6 @@ XMLCommentNode.prototype.isSelected = function() {
  * Stores data related to a single xml element as it is represented in both the base XML 
  * document and GUI
  */
-
 function XMLElement(xmlNode, objectType, editor) {
 	AbstractXMLObject.call(this, objectType, editor);
 	// jquery object reference to the xml node represented by this object in the active xml document
@@ -4728,13 +4744,15 @@ XMLElement.prototype.populateChildren = function() {
 		}
 	});
 	// Patch to add "required" attributes. Does require a secondary change to know the "use" attribute also. See xsd2json-use.js : SchemaProcessor.prototype.createDefinition
-	$.each(this.objectType.attributes, function(){
-		if ("required" == this.use) {
-			var childElement = self.addAttribute(this);
-			// Needs a patch in addAttributeEvent, too -> non-provided addButton parameter must be handled.
-			self.editor.activeEditor.addAttributeEvent(self, childElement);
-		}
-	});
+	if (self.editor.options.enforceRequired) {
+		$.each(this.objectType.attributes, function(){
+			if ("required" == this.use) {
+				var childElement = self.addAttribute(this);
+				// Needs a patch in addAttributeEvent, too -> non-provided addButton parameter must be handled.
+				self.editor.activeEditor.addAttributeEvent(self, childElement);
+			}
+		});
+	}
 };
 
 XMLElement.prototype.initializeGUI = function () {
@@ -5395,7 +5413,6 @@ XMLElementStub.prototype.focus = function() {
  * @param init_object
  * @constructor
  */
-
 function XMLTemplates(init_object) {
     this.template_path = init_object.options.templateOptions.templatePath;
     this.templates = init_object.options.templateOptions.templates;
@@ -5761,7 +5778,7 @@ XMLUnspecifiedElement.prototype.addContentContainers = function (recursive) {
 	var placeholder = document.createElement('div');
 	placeholder.className = 'placeholder';
 
-	placeholder.appendChild(document.createTextNode(this.editor.options.i18n[this.options.userLang].useMenuToAddContents));
+	placeholder.appendChild(document.createTextNode(this.editor.options.i18n[this.editor.options.userLang].useMenuToAddContents));
 
 	this.contentContainer.appendChild(placeholder);
 	this.placeholder = $(placeholder);

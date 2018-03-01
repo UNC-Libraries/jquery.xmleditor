@@ -56,8 +56,11 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 		// Set width of generated fields manually.
 		if (this.objectType.attribute && startingValue) {
 			var len = startingValue.length * 10;
-			if (len < 80) { len = 80; }
-			else if (len > 600) { len = 600; }
+			if (len < 80) { 
+				len = 80;
+			} else if (len > 600) {
+				len = 600;
+			}
 			if (len != -1) {
 				input.style.width = len + "px";
 			}

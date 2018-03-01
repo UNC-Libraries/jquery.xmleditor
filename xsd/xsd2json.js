@@ -649,7 +649,8 @@ SchemaProcessor.prototype.createDefinition = function(node, name) {
 		values : [],
 		type : null,
 		ns: this.targetNSIndex,
-		np : true
+		np : true,
+		use : node.getAttribute("use") /* Patched for auto-add of required attributes. See also jquery.xmleditor.js : GUIEditor.prototype.addAttributeEvent and XMLElement.prototype.populateChildren */
 	};
 	
 	if (name)

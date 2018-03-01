@@ -74,30 +74,6 @@ var localName = function(node) {
 	return node.nodeName.substring(index + 1);
 };
 
-// Extracts and returns URL parameters or the given default.
-function getParam(name, def) {
-    name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-    var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
-        results = regex.exec(location.search);
-    return results === null ? def : decodeURIComponent(results[1].replace(/\+/g, " "));
-}
-
-// Add method to String.
-String.prototype.replaceAll = function(search, replace) {
-    //if replace is null, return original string otherwise it will
-    //replace search string with 'undefined'.
-    if(!replace) 
-        return this;
-    return this.replace(new RegExp('[' + search + ']', 'g'), replace);
-};
-
-// Extract the user language first from the browsers default and let it overwrite via URL parameter "lang=".
-var userLang = navigator.language || navigator.userLanguage;
-userLang = getParam("lang", userLang);
-if ("de" != userLang && "en" != userLang) {
-	userLang = "en";
-}
-
 $.widget( "xml.xmlEditor", {
 	options: {
 		// Schema object to be used
@@ -197,8 +173,8 @@ $.widget( "xml.xmlEditor", {
 				noDocument:"Could not load specified document and no fallback provided, cannot start.",
 				noStartingDocument:"No starting document.",
 				failedToAddChild:"Failed to add child of type ",
-				undo:"ctrl+z",
-				redo:"ctrl+y",
+				ctrlZ:"ctrl+z",
+				ctrlY:"ctrl+y",
 				del:"del",
 				enter:"enter",
 				elementUp:"alt+up",
@@ -213,7 +189,7 @@ $.widget( "xml.xmlEditor", {
 				shiftLeft:"shift+left",
 				shiftRight:"shift+right",
 				altA:"alt+a",
-				ltShiftE:"alt+shift+e",
+				altShiftE:"alt+shift+e",
 				altShiftX:"alt+shift+x",
 				altShiftS:"alt+shift+s",
 				altShiftT:"alt+shift+t",
@@ -322,8 +298,8 @@ $.widget( "xml.xmlEditor", {
 				noDocument:"Das angegebene Dokument konnte nicht geladen werden und es ist kein Rückfalldokument definiert. Der Editor kann nicht starten.",
 				noStartingDocument:"Es ist kein Startdokument definiert.",
 				failedToAddChild:"Das Element des folgenden Typs konnte nicht hinzugefügt werden: ",
-				undo:"Strg+z",
-				redo:"Strg+y",
+				ctrlZ:"Strg+z",
+				ctrlY:"Strg+y",
 				del:"Entf",
 				enter:"Enter",
 				elementUp:"Alt+oben",
@@ -418,7 +394,9 @@ $.widget( "xml.xmlEditor", {
 			}
 		},
 
-		userLang: getParam("lang", "en")
+		userLang: "en",
+
+		enforceRequired: false
 
 	},
 	
@@ -610,8 +588,6 @@ $.widget( "xml.xmlEditor", {
 
 		// Start loading the document for editing
 		this.loadDocument(this.options.ajaxOptions, localXMLContent);
-		var editor = this.activeEditor;
-		setTimeout(function () { if (!!editor['selectNext']) { editor.selectNext(); } }, 200);
 	},
 	
 	// Load the schema object
@@ -869,7 +845,7 @@ $.widget( "xml.xmlEditor", {
 	},
 
 	addChildElement: function(parentElement, newElementDefinition, relativeTo, prepend) {
-		if (!parentElement.allowChildren)
+		if (!parentElement.allowChildren || !this.activeEditor.editor.options.enableEdit) 
 			return null;
 
 		// If in the text editor view, synchronous the text to the xml model and ensure wellformedness
@@ -944,6 +920,11 @@ $.widget( "xml.xmlEditor", {
 
 	addAttribute: function(xmlElement, attrDefinition, instigator) {
 
+		// if we are in readonly mode, return without changing anything
+		if (!this.activeEditor.editor.options.enableEdit) {
+			return;
+		}
+
 		// Synchronize xml document if there are unsynchronized changes in the text editor
 		if (this.xmlState.changesNotSynced()) {
 			try {
@@ -1006,6 +987,11 @@ $.widget( "xml.xmlEditor", {
 	},
 
 	addNode: function(parentElement, nodeType, prepend, relativeTo) {
+
+		// if we are in readonly mode, return without changing anything
+		if (!this.activeEditor.editor.options.enableEdit) {
+			return;
+		}
 
 		// Synchronize xml document if there are unsynchronized changes in the text editor
 		if (this.xmlState.changesNotSynced()) {
@@ -1075,10 +1061,10 @@ $.widget( "xml.xmlEditor", {
 			this.activeEditor = this.guiEditor;
 			var editor = this.activeEditor;
 			setTimeout(function() {editor.selectNext();}, 200);
-			$("#" + xmlMenuHeaderPrefix + this.options.i18n[this.options.userLang].xml.replace(/ /g, "_")).addClass("active_mode_tab");
+			$("#" + xmlMenuHeaderPrefix + 'xml').addClass("active_mode_tab");
 		} else {
 			this.activeEditor = this.textEditor;
-			$("#" + xmlMenuHeaderPrefix + this.options.i18n[this.options.userLang].text.replace(/ /g, "_")).addClass("active_mode_tab");
+			$("#" + xmlMenuHeaderPrefix + 'text').addClass("active_mode_tab");
 		}
 		this.activeEditor.activate();
 		if (this.ready)
@@ -1504,31 +1490,22 @@ $.widget( "xml.xmlEditor", {
 	// Menu Update functions
 	refreshMenuUndo: function(self) {
 		if (self.undoHistory.headIndex > 0) {
-			$("#" + xmlMenuHeaderPrefix + self.options.i18n[self.options.userLang].undoMenuitem.replaceAll(' ','_')).removeClass("disabled").data("menuItemData").enabled = true;
+			$("#" + xmlMenuHeaderPrefix + 'undoMenuitem').removeClass("disabled").data("menuItemData").enabled = true;
 		} else {
-			$("#" + xmlMenuHeaderPrefix + self.options.i18n[self.options.userLang].undoMenuitem.replaceAll(' ','_')).addClass("disabled").data("menuItemData").enabled = false;
+			$("#" + xmlMenuHeaderPrefix + 'undoMenuitem').addClass("disabled").data("menuItemData").enabled = false;
 		}
 		if (self.undoHistory.headIndex < self.undoHistory.states.length - 1) {
-			$("#" + xmlMenuHeaderPrefix + self.options.i18n[self.options.userLang].redoMenuitem.replaceAll(' ','_')).removeClass("disabled").data("menuItemData").enabled = true;
+			$("#" + xmlMenuHeaderPrefix + 'redoMenuitem').removeClass("disabled").data("menuItemData").enabled = true;
 		} else {
-			$("#" + xmlMenuHeaderPrefix + self.options.i18n[self.options.userLang].redoMenuitem.replaceAll(' ','_')).addClass("disabled").data("menuItemData").enabled = false;
+			$("#" + xmlMenuHeaderPrefix + 'redoMenuitem').addClass("disabled").data("menuItemData").enabled = false;
 		}
 	},
 	
 	// Performs updates to the menu for changing element/attribute selection
 	refreshMenuSelected: function(self) {
-		var suffixes = [self.options.i18n[self.options.userLang].deselect.replaceAll(' ','_'), 
-						self.options.i18n[self.options.userLang].nextElement.replaceAll(' ','_'), 
-						self.options.i18n[self.options.userLang].previousElement.replaceAll(' ','_'), 
-						self.options.i18n[self.options.userLang].parentElement.replaceAll(' ','_'), 
-						self.options.i18n[self.options.userLang].firstChild.replaceAll(' ','_'), 
-						self.options.i18n[self.options.userLang].nextSibling.replaceAll(' ','_'),
-						self.options.i18n[self.options.userLang].previousSibling.replaceAll(' ','_'), 
-						self.options.i18n[self.options.userLang].nextAttribute.replaceAll(' ','_'), 
-						self.options.i18n[self.options.userLang].previousAttribute.replaceAll(' ','_'), 
-						self.options.i18n[self.options.userLang].deleteElement.replaceAll(' ','_'), 
-						self.options.i18n[self.options.userLang].moveElementUp.replaceAll(' ','_'), 
-						self.options.i18n[self.options.userLang].moveElementDown.replaceAll(' ','_')];
+		var suffixes = ['deselect', 'nextElement', 'previousElement', 'parentElement', 'firstChild', 
+						'nextSibling', 'previousSibling', 'nextAttribute', 'previousAttribute', 'deleteElement', 
+						'moveElementUp', 'moveElementDown'];
 		var hasSelected = self.guiEditor.selectedElement != null && self.guiEditor.active;
 		$.each(suffixes, function(){
 			if (hasSelected)

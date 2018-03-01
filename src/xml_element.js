@@ -2,7 +2,6 @@
  * Stores data related to a single xml element as it is represented in both the base XML 
  * document and GUI
  */
-
 function XMLElement(xmlNode, objectType, editor) {
 	AbstractXMLObject.call(this, objectType, editor);
 	// jquery object reference to the xml node represented by this object in the active xml document
@@ -225,13 +224,15 @@ XMLElement.prototype.populateChildren = function() {
 		}
 	});
 	// Patch to add "required" attributes. Does require a secondary change to know the "use" attribute also. See xsd2json-use.js : SchemaProcessor.prototype.createDefinition
-	$.each(this.objectType.attributes, function(){
-		if ("required" == this.use) {
-			var childElement = self.addAttribute(this);
-			// Needs a patch in addAttributeEvent, too -> non-provided addButton parameter must be handled.
-			self.editor.activeEditor.addAttributeEvent(self, childElement);
-		}
-	});
+	if (self.editor.options.enforceRequired) {
+		$.each(this.objectType.attributes, function(){
+			if ("required" == this.use) {
+				var childElement = self.addAttribute(this);
+				// Needs a patch in addAttributeEvent, too -> non-provided addButton parameter must be handled.
+				self.editor.activeEditor.addAttributeEvent(self, childElement);
+			}
+		});
+	}
 };
 
 XMLElement.prototype.initializeGUI = function () {

@@ -1,7 +1,6 @@
 /**
  * Menu panel for managing individual modification menus.
  */
-
 function ModifyMenuPanel(editor) {
 	this.editor = editor;
 	this.menus = {};

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:dm="http://www.example.com/datamodel"
+            targetNamespace="http://www.example.com/datamodel"
+            elementFormDefault="qualified"
+            attributeFormDefault="unqualified">
+
+  <xs:element name="datamodel" type="dm:DataModel" />
+  <xs:element name="dataobject"    type="dm:DataObject"/>
+
+  <xs:complexType name="DataModel">
+    <xs:sequence>
+      <xs:element name="dataobject" type="dm:DataObject" minOccurs="0" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="DataObject">
+    <xs:sequence>
+      <xs:element name="attribute"  type="dm:Attribute" minOccurs="0" maxOccurs="unbounded" />
+      <xs:element name="dataobject" type="dm:DataObject" minOccurs="0" maxOccurs="unbounded" />
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:string" use="optional" />
+    <xs:attribute name="name" type="xs:string" use="required" />
+  </xs:complexType>
+
+  <xs:complexType name="Attribute">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute name="name" type="xs:string" use="required"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  
+</xs:schema>
