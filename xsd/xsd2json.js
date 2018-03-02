@@ -1,5 +1,4 @@
-//= require_self
-//= require_tree .
+;var Xsd2Json = function() {
 /*
 
     Copyright 2008 The University of North Carolina at Chapel Hill
@@ -103,7 +102,8 @@ Xsd2Json.prototype.exportJSON = function(filename, variableName, pretty) {
 		, false, false, false, false, 0, null
 	);
 	a.dispatchEvent(event);
-};/**
+};
+/**
  * Manages processing of a set of schemas to produce a single resulting
  * tree of elements
  * 
@@ -567,7 +567,8 @@ SchemaManager.prototype.getNamespaceIndex = function(namespaceUri) {
 
 SchemaManager.prototype.getNamespaceUri = function(index) {
 	return this.namespaceIndexes[index];
-};/**
+};
+/**
  * Processes an XML schema, extracting key features and storing them into
  * javascript structures.
  * 
@@ -1148,4 +1149,4 @@ SchemaProcessor.prototype.getLocalNamespacePrefix = function(namespaceUri) {
 			return prefix;
 	}
 	return null;
-};
+};; return Xsd2Json;}.call();

@@ -497,7 +497,7 @@ $.widget( "xml.xmlEditor", {
 			// Either an upload button or an export button
 			this.submitButtonConfigs = [{
 				url : this.options.ajaxOptions.xmlUploadPath,
-				label : exporting? "Export" : "Submit changes",
+				label : exporting? this.options.i18n[this.options.userLang].export : this.options.i18n[this.options.userLang].submitChanges,
 				onSubmit : exporting? this.exportXML : null,
 				disabled : typeof(Blob) === undefined && exporting
 			}];
@@ -876,7 +876,7 @@ $.widget( "xml.xmlEditor", {
 
 			// No matching child definition and parent doesn't allow "any", so can't add child
 			if (!objectType && !parentElement.objectType.any) {
-				return "Could not add child " + newElementDefinition + ", it is not a valid child of " + parentElement.objectType.localName;
+				return this.options.i18n[this.options.userLang].couldNotAdd1 + newElementDefinition + this.options.i18n[this.options.userLang].couldNotAdd2 + parentElement.objectType.localName;
 			}
 		} else {
 			objectType = newElementDefinition;
