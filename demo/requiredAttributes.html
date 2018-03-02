@@ -28,14 +28,14 @@
 	</div>
 	<script>
 		var extractor = new Xsd2Json("testmodel.xsd", {
-			"schemaURI":"examples/requiredAttribute/", 
+			"schemaURI":"requiredAttribute/", 
 			"topLevelElement": "datamodel"});
 		$(function() {
 			$("#xml_editor").xmlEditor({
 				schema : extractor.getSchema(),
 				documentTitle : "Testmodel",
 				ajaxOptions: {
-					xmlRetrievalPath: "examples/requiredAttribute/testmodel_example.xml"
+					xmlRetrievalPath: "requiredAttribute/testmodel_example.xml"
 				},
 				libPath : '../lib/',
 				userLang: "de",
