@@ -1149,4 +1149,5 @@ SchemaProcessor.prototype.getLocalNamespacePrefix = function(namespaceUri) {
 			return prefix;
 	}
 	return null;
-};; return Xsd2Json;}.call();
+};
+; return Xsd2Json;}.call();
