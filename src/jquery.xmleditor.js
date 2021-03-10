@@ -106,11 +106,6 @@ $.widget( "xml.xmlEditor", {
 		elementUpdated : undefined,
 		// Title for the document, displayed in the header
 		documentTitle : null,
-		addTopMenuHeaderText : 'Add Top Element',
-		addAttrMenuHeaderText : 'Add Attribute',
-		addElementMenuHeaderText : 'Add Subelement',
-		xmlEditorLabel : 'XML',
-		textEditorLabel : 'Text',
 		
 		// Set to false to get rid of the 
 		enableDocumentStatusPanel : true,
@@ -131,7 +126,278 @@ $.widget( "xml.xmlEditor", {
 		prependNewElements: false,
 		autocomplete: true,
 		
-		targetNS: null
+		targetNS: null,
+
+		// Flag to disable the export button
+		showExport: true,
+		
+		// Switch to readonly mode
+		enableEdit: true,
+		
+		// Hide the ability to switch between the modes
+		sourceDesignSwitch: true,
+		
+		// Switch to predefined view: XML or HTML-DIV editor. 0=HTML-DIV editor, 1=XML Source editor
+		initialEditMode: 0,
+
+		// i18n resources
+		i18n: { 
+			"en": {
+				uploadedFiles:"Uploaded files:",
+				addNodes:"Add nodes",
+				addRoot:"Add top element",
+				addAttribute:"Add attribute",
+				addElement:"Add Element",
+				addSubelement:"Add subelement",
+				insert:"Insert",
+				xml:"Design",
+				text:"Source",
+				editing:"Editing ",
+				noBrowserExportSupport:"Browser does not support saving files via this editor.  To save, copy and paste the document from the Text view.",
+				filename:"Filename",
+				saveFailedXmlInvalid:"The XML is not valid. The content cannot be processed.",
+				saveFailedSeeErrors:"Save failed<br/>See error message.",
+				export:"Export",
+				download:"Download",
+				submitting:"Processing...",
+				failedToSubmit:"The XML document could not be successfully submitted",
+				documentUnchanged:"No changes",
+				submitChanges:"Apply",
+				noElements:"There are no elements in this document.  Use the menu on the right to add new top level elements.",
+				unsavedChanges:"Unapplied changes",
+				savedChanges:"Changes applied.",
+				couldNotAdd1:"Could not add child ",
+				couldNotAdd2:", it is not a valid child of ",
+				couldNotAddAttr1:"Could not add attribute ",
+				couldNotAddAttr2:", it is not a valid for element ",
+				noDocument:"Could not load specified document and no fallback provided, cannot start.",
+				noStartingDocument:"No starting document.",
+				failedToAddChild:"Failed to add child of type ",
+				ctrlZ:"ctrl+z",
+				ctrlY:"ctrl+y",
+				del:"del",
+				enter:"enter",
+				elementUp:"alt+up",
+				elementDown:"alt+down",
+				esc:"esc",
+				down:"down",
+				up:"up",
+				left:"left",
+				right:"right",
+				shiftDown:"shift+down",
+				shiftUp:"shift+up",
+				shiftLeft:"shift+left",
+				shiftRight:"shift+right",
+				altA:"alt+a",
+				altShiftE:"alt+shift+e",
+				altShiftX:"alt+shift+x",
+				altShiftS:"alt+shift+s",
+				altShiftT:"alt+shift+t",
+				file:"File",
+				edit:"Edit",
+				select:"Select",
+				view:"View",
+				options:"Options",
+				deselect:"Deselect",
+				nextElement:"Next Element",
+				previousElement:"Previous Element",
+				parentElement:"Parent",
+				firstChild:"First Child",
+				nextSibling:"Next Sibling",
+				previousSibling:"Previous Sibling",
+				nextAttribute:"Next Attribute",
+				previousAttribute:"Previous Attribute",
+				deleteElement:"Delete",
+				moveElementUp:"Move up",
+				moveElementDown:"Move down",
+				undoMenuitem:"Undo",
+				redoMenuitem:"Redo",
+				switchToXml:"Graphical XML",
+				switchToText:"Raw XML",
+				prettifyXml:"Automatic XML formatting",
+				enableShortcuts:"Enable shortcuts",
+				enforceMinMaxOccurs:"Enforce Min/Max",
+				prependNewElements:"Prepend adding new elements",
+				noConnection:"No connection.\nPlease check network.",
+				pageNotFound:"The requested page could not be found. [404]",
+				internalServerError:"Internal server error [500].",
+				jsonParseFailed:"JSON parse failed.",
+				timeout:"timeout while contacting server.",
+				ajaxAborted:"AJAX request aborted.",
+				uncaughtError:"Unexpected error\n",
+				xmlSerializerNotSupported:"XML Serializer not supported.",
+				alreadyExistent:"Already existent",
+				useTheMenuToAddSubElementsAndAttr:"Use the menu to add subelements and attributes.",
+				useTheMenuToAddAttr:"Use the menu to add attributes.",
+				useTheMenuToAddSubElements:"Use the menu to add subelements.",
+				cannotSubmitNoPostOption:"Cannot submit because no post Options",
+				useMenuToAdd:"Use the menu to add subelements, attributes and text.",
+				useMenuToAddAttributesText:"Use the menu to add attributes and text.",
+				useMenuToAddSubelementsText:"Use the menu to add subelements and text.",
+				useMenuToAddText:"Use the menu to add text.",
+				useMenuToAddSubelementsAttributes:"Use the menu to add subelements and attributes.",
+				useMenuToAddAttributes:"Use the menu to add attributes.",
+				useMenuToAddSubelements:"Use the menu to add subelements.",
+				unableToAddFixSyntax:"Unable to add element, please fix existing XML syntax first.",
+				addCData:"Add CDATA",
+				addComment:"Add Comment",
+				addText:"Add Text",
+				add:"Add ",
+				xmlDocErrorInLine:"Error in line ",
+				xmlDocErrorAtPos:" position ",
+				xmlDocErrorCode:"Error Code: ",
+				xmlDocErrorReason:"Error Reason: ",
+				xmlDocErrorLine:"Error Line: ",
+				addChildElement:"Add child element",
+				addSiblingElement:"Add sibling element",
+				addElementToParent:"Add element to parent",
+				addElementToRoot:"Add element to root",
+				addTextToElement:"Add text to element",
+				addCommentToElement:"Add comment to element",
+				addCDataToElement:"Add CDATA to element",
+				altE:"alt+2",
+				altS:"alt+s",
+				altP:"alt+p",
+				altR:"alt+r",
+				altT:"alt+t",
+				altSlash:"alt+/",
+				altComma:"alt+,",
+				cancel:"Cancel",
+				choose:"Choose",
+				unableToLoadTemplate:"Unable to load the requested template: ",
+				useMenuToAddContents:"Use the menu to add contents."
+			},
+			"de": {
+				uploadedFiles:"Hochgeladene Dateien:",
+				addNodes:"Elemente hinzufügen",
+				addRoot:"Hauptelement hinzufügen",
+				addAttribute:"Attribut hinzufügen",
+				addElement:"Element hinzufügen",
+				addSubelement:"Unterelement hinzufügen",
+				insert:"Einfügen",
+				xml:"Design",
+				text:"Quelle",
+				editing:"Bearbeite ",
+				noBrowserExportSupport:"Ihr Webbrowser unterstützt das übernehmen der Inhalte nicht. Um die Inhalte zu speichern wechseln sie bitte in the Textansicht und markieren und kopieren sie den Inhalt.",
+				filename:"Dateiname",
+				saveFailedXmlInvalid:"XML ist ungültig. Daten können nicht verarbeitet werden.",
+				saveFailedSeeErrors:"Die Übernahme der Änderungen ist fehlgeschlagen<br/>Siehe Fehlermeldung.",
+				export:"Export",
+				download:"Download",
+				submitting:"Verarbeite...",
+				failedToSubmit:"Das XML Dokument konnte nicht verabeitet werden",
+				documentUnchanged:"Keine Änderungen",
+				submitChanges:"Übernehmen",
+				noElements:"Das XML Dokument ist leer. Verwenden sie das Menü rechts um ein neuen Hauptelement einzufügen.",
+				unsavedChanges:"Nicht übernommene Änderungen",
+				savedChanges:"Änderungen gespeichert",
+				couldNotAdd1:"Das Kind-Element  ",
+				couldNotAdd2:" kann nicht hinzugefügt werden, da es kein gültiges Kind des folgenden Tags is: ",
+				couldNotAddAttr1:"Das Attribut ",
+				couldNotAddAttr2:"kann nicht hinzugefügt werden, da es kein gültiges Attribut des folgenden Tags ist: ",
+				noDocument:"Das angegebene Dokument konnte nicht geladen werden und es ist kein Rückfalldokument definiert. Der Editor kann nicht starten.",
+				noStartingDocument:"Es ist kein Startdokument definiert.",
+				failedToAddChild:"Das Element des folgenden Typs konnte nicht hinzugefügt werden: ",
+				ctrlZ:"Strg+z",
+				ctrlY:"Strg+y",
+				del:"Entf",
+				enter:"Enter",
+				elementUp:"Alt+oben",
+				elementDown:"Alt+unten",
+				esc:"Esc",
+				down:"unten",
+				up:"oben",
+				left:"links",
+				right:"rechts",
+				shiftDown:"Umschalt+unten",
+				shiftUp:"Umschalt+oben",
+				shiftLeft:"Umschalt+links",
+				shiftRight:"Umschalt+rechts",
+				altA:"alt+a",
+				altShiftE:"Alt+Umschalt+e",
+				altShiftX:"Alt+Umschalt+x",
+				altShiftS:"Alt+Umschalt+s",
+				altShiftT:"Alt+Umschalt+t",
+				file:"Datei",
+				edit:"Bearbeiten",
+				select:"Auswählen",
+				view:"Ansicht",
+				options:"Optionen",
+				deselect:"Abwählen",
+				nextElement:"Nächstes Element",
+				previousElement:"Vorheriges Element",
+				parentElement:"Eine Ebene höher",
+				firstChild:"Erstes Unterelement",
+				nextSibling:"Nächstes Paar",
+				previousSibling:"Vorheriges Paar",
+				nextAttribute:"Nächstes Attribut",
+				previousAttribute:"Vorheriges Attribut",
+				deleteElement:"Löschen",
+				moveElementUp:"nach oben",
+				moveElementDown:"nach unten",
+				undoMenuitem:"Rückgängig",
+				redoMenuitem:"Wiederherstellen",
+				switchToXml:"Grafische XML Anzeige",
+				switchToText:"XML-Quelle",
+				prettifyXml:"Automatische XML Formatierung",
+				enableShortcuts:"Direktzugriffstasten aktiv",
+				enforceMinMaxOccurs:"Min/Max Vorgaben erzwingen",
+				prependNewElements:"Keine neuen Elemente zulassen",
+				noConnection:"Kann keine Verbindung aufbauen.\nBitte Netzwerkverbindung prüfen.",
+				pageNotFound:"Die angeforderte Seite wurde nicht gefunden. [404]",
+				internalServerError:"Interner Server Fehler [500].",
+				jsonParseFailed:"Parsen des angeforderten JSON ist fehlgeschlagen.",
+				timeout:"Zeitüberschreitung der Serververbindung.",
+				ajaxAborted:"AJAX Anfrage abgebrochen.",
+				uncaughtError:"Unerwarteter Fehler.\n",
+				xmlSerializerNotSupported:"XML Serialisierung nicht unterstützt.",
+				alreadyExistent:"Existiert bereits",
+				useTheMenuToAddSubElementsAndAttr:"Weitere Elemente und Attribute über das Menü rechts hinzufügen.",
+				useTheMenuToAddAttr:"Weitere Attribute über das Menü hinzufügen.",
+				useTheMenuToAddSubElements:"Weitere Elemente über das Menü rechts hinzufügen.",
+				cannotSubmitNoPostOption:"Datei kann nicht übertragen werden - keine HTTP POST Optionen definiert.",
+				useMenuToAdd:"Unterelemente, Attribute und Text können über das Menü hinzugefügt werden.",
+				useMenuToAddAttributesText:"Attribute und Text können über das Menü hinzugefügt werden.",
+				useMenuToAddSubelementsText:"Unterelemente und Text können über das Menü hinzugefügt werden.",
+				useMenuToAddText:"Text kann über das Menü hinzugefügt werden.",
+				useMenuToAddSubelementsAttributes:"Unterelemente und Attribute können über das Menü hinzugefügt werden.",
+				useMenuToAddAttributes:"Attribute können über das Menü hinzugefügt werden.",
+				useMenuToAddSubelements:"Unterelemente können über das Menü hinzugefügt werden.",
+				unableToAddFixSyntax:"Element kann nicht hinzugefügt werden. Bitte zuerst die XML Syntax korrigieren.",
+				addCData:"CDATA hinzufügen",
+				addComment:"Kommentar hinzufügen",
+				addText:"Text hinzufügen",
+				add:"Hinzufügen von ",
+				xmlDocErrorInLine:"Fehler in der Zeile ",
+				xmlDocErrorAtPos:" an Position ",
+				xmlDocErrorCode:"Fehlercode: ",
+				xmlDocErrorReason:"Fehlergrund: ",
+				xmlDocErrorLine:"Fehlerzeile: ",
+				addChildElement:"Kind-Element hinzufügen",
+				addSiblingElement:"Schwesterelement hinzufügen",
+				addElementToParent:"Element zum übergeordneten Element hinzufügen",
+				addElementToRoot:"Element zum Wurzelelement hinzufügen",
+				addTextToElement:"Text zum Element hinzufügen",
+				addCommentToElement:"Kommentar zum Element hinzufügen",
+				addCDataToElement:"CDATA zum Element hinzufügen",
+				altE:"Alt+2",
+				altS:"Alt+s",
+				altP:"Alt+p",
+				altR:"Alt+r",
+				altT:"Alt+t",
+				altSlash:"Alt+/",
+				altComma:"Alt+,",
+				cancel:"Abbrechen",
+				choose:"Auswählen",
+				unableToLoadTemplate:"Die gewählte Vorlage konnte nicht geladen werden: ",
+				useMenuToAddContents:"Inhalte können über das Menü hinzugefügt werden."
+			}
+		},
+
+		userLang: "en",
+
+		enforceRequired: false
+
 	},
 	
 	_create: function() {
@@ -231,7 +497,7 @@ $.widget( "xml.xmlEditor", {
 			// Either an upload button or an export button
 			this.submitButtonConfigs = [{
 				url : this.options.ajaxOptions.xmlUploadPath,
-				label : exporting? "Export" : "Submit changes",
+				label : exporting? this.options.i18n[this.options.userLang].export : this.options.i18n[this.options.userLang].submitChanges,
 				onSubmit : exporting? this.exportXML : null,
 				disabled : typeof(Blob) === undefined && exporting
 			}];
@@ -240,19 +506,19 @@ $.widget( "xml.xmlEditor", {
 		if (this.options.submitErrorHandler == null) {
 			this.options.submitErrorHandler = function(jqXHR, exception) {
 				if (jqXHR.status === 0) {
-					alert('Not connect.\n Verify Network.');
+					alert(this.options.i18n[this.options.userLang].noConnection);
 				} else if (jqXHR.status == 404) {
-					alert('Requested page not found. [404]');
+					alert(this.options.i18n[this.options.userLang].pageNotFound);
 				} else if (jqXHR.status == 500) {
-					alert('Internal Server Error [500].');
+					alert(this.options.i18n[this.options.userLang].internalServerError);
 				} else if (exception === 'parsererror') {
-					alert('Requested JSON parse failed.');
+					alert(this.options.i18n[this.options.userLang].jsonParseFailed);
 				} else if (exception === 'timeout') {
-					alert('Time out error.');
+					alert(this.options.i18n[this.options.userLang].timeout);
 				} else if (exception === 'abort') {
-					alert('Ajax request aborted.');
+					alert(this.options.i18n[this.options.userLang].ajaxAborted);
 				} else {
-					alert('Uncaught Error.\n' + jqXHR.responseText);
+					alert(this.options.i18n[this.options.userLang].uncaughtError + jqXHR.responseText);
 				}
 			};
 		}
@@ -312,7 +578,7 @@ $.widget( "xml.xmlEditor", {
 		if (this.options.confirmExitWhenUnsubmitted) {
 			$(window).bind('beforeunload', function(e) {
 				if (self.xmlState != null && self.xmlState.isChanged()) {
-					return "The document contains unsaved changes.";
+					return this.options.i18n[this.options.userLang].unsavedChanges;
 				}
 			});
 		}
@@ -404,7 +670,7 @@ $.widget( "xml.xmlEditor", {
 						// Document path didn't retrieve anything
 						self._templating();
 					} else {
-						console.error("Could not specified document and no fallback provided, cannot start.");
+						console.error(self.options.i18n[self.options.userLang].noDocument);
 					}
 				}
 			});
@@ -415,7 +681,7 @@ $.widget( "xml.xmlEditor", {
 			// Fall back to templating if it was specified
 			this._templating();
 		} else {
-			console.error("No starting document");
+			console.error(self.options.i18n[self.options.userLang].noStartingDocument);
 		}
 	},
 
@@ -493,6 +759,8 @@ $.widget( "xml.xmlEditor", {
 		this.constructEditor();
 		this.refreshDisplay();
 		this.activeEditor.selectRoot();
+		this.modeChange(this.options.initialEditMode); // Optional initial source view change
+		this.refreshDisplay();
 		// Capture baseline undo state
 		this.undoHistory.captureSnapshot();
 	},
@@ -506,7 +774,7 @@ $.widget( "xml.xmlEditor", {
 		var editorHeaderBacking = $("<div/>").addClass(editorHeaderClass + "_backing").appendTo(this.xmlWorkAreaContainer);
 		this.editorHeader = $("<div/>").attr('class', editorHeaderClass).appendTo(this.xmlWorkAreaContainer);
 		if (this.options.documentTitle != null)
-			$("<h2/>").html("Editing Description: " + this.options.documentTitle).appendTo(this.editorHeader);
+			$("<h2/>").html(this.options.i18n[this.options.userLang].editing + this.options.documentTitle).appendTo(this.editorHeader);
 		this.menuBar.render(this.editorHeader);
 		editorHeaderBacking.height(this.editorHeader.outerHeight());
 		// Create grouping of header elements that need to be positioned together
@@ -522,12 +790,12 @@ $.widget( "xml.xmlEditor", {
 		$(window).resize($.proxy(this.resize, this));
 		
 		this.modifyMenu.initialize(this.xmlEditorContainer);
-		this.modifyMenu.addMenu(addElementMenuClass, this.options.addElementMenuHeaderText, 
+		this.modifyMenu.addMenu(addElementMenuClass, this.options.i18n[this.options.userLang].addSubelement, 
 				true, false, true);
-		this.modifyMenu.addAttributeMenu(addAttrMenuClass, this.options.addAttrMenuHeaderText, 
+		this.modifyMenu.addAttributeMenu(addAttrMenuClass, this.options.i18n[this.options.userLang].addAttribute, 
 				true, false, true);
-		this.modifyMenu.addNodeMenu(addNodeMenuClass, "Add Nodes", true, false);
-		this.addTopLevelMenu = this.modifyMenu.addMenu(addTopMenuClass, this.options.addTopMenuHeaderText, 
+		this.modifyMenu.addNodeMenu(addNodeMenuClass, this.options.i18n[this.options.userLang].addNodes, true, false);
+		this.addTopLevelMenu = this.modifyMenu.addMenu(addTopMenuClass, this.options.i18n[this.options.userLang].addRoot, 
 				true, true, false, function(target) {
 			var selectedElement = self.guiEditor.selectedElement;
 			if (!selectedElement || selectedElement.length == 0 || selectedElement.isRootElement) 
@@ -553,13 +821,16 @@ $.widget( "xml.xmlEditor", {
 	
 	// Resize event for refreshing menu and editor sizes
 	resize: function () {
-		this.xmlTabContainer.width(this.xmlEditorContainer.outerWidth() - this.modifyMenu.menuColumn.outerWidth());
+		this.xmlTabContainer.width(this.xmlEditorContainer.outerWidth() - (this.modifyMenu.menuColumn != null ? this.modifyMenu.menuColumn.outerWidth() : 0));
 		if (this.activeEditor != null){
 			this.activeEditor.resize();
 		}
 		this.editorHeader.width(this.xmlTabContainer.width());
 		if (this.options.floatingMenu) {
 			this.modifyMenu.setMenuPosition();
+		}
+		if (!this.options.enableEdit && this.modifyMenu.menuColumn != null) { // no edit enabled => don't show modify menu
+			this.modifyMenu.menuColumn.style.width = "0px";
 		}
 	},
 	
@@ -574,7 +845,7 @@ $.widget( "xml.xmlEditor", {
 	},
 
 	addChildElement: function(parentElement, newElementDefinition, relativeTo, prepend) {
-		if (!parentElement.allowChildren)
+		if (!parentElement.allowChildren || !this.activeEditor.editor.options.enableEdit) 
 			return null;
 
 		// If in the text editor view, synchronous the text to the xml model and ensure wellformedness
@@ -583,7 +854,7 @@ $.widget( "xml.xmlEditor", {
 				try {
 					this.setXMLFromEditor();
 				} catch (e) {
-					this.addProblem("Unable to add element, please fix existing XML syntax first.", e);
+					this.addProblem(this.options.i18n[this.options.userLang].unableToAddFixSyntax, e);
 					return;
 				}
 			}
@@ -605,7 +876,7 @@ $.widget( "xml.xmlEditor", {
 
 			// No matching child definition and parent doesn't allow "any", so can't add child
 			if (!objectType && !parentElement.objectType.any) {
-				return "Could not add child " + newElementDefinition + ", it is not a valid child of " + parentElement.objectType.localName;
+				return this.options.i18n[this.options.userLang].couldNotAdd1 + newElementDefinition + this.options.i18n[this.options.userLang].couldNotAdd2 + parentElement.objectType.localName;
 			}
 		} else {
 			objectType = newElementDefinition;
@@ -628,7 +899,7 @@ $.widget( "xml.xmlEditor", {
 		}
 		
 		if (newElement == null) {
-			return "Failed to add child of type " + newElementDefinition;
+			return this.options.i18n[this.options.userLang].failedToAddChild + newElementDefinition;
 		}
 		
 		// Trigger post element creation event in the currently active editor to handle UI updates
@@ -648,6 +919,11 @@ $.widget( "xml.xmlEditor", {
 	},
 
 	addAttribute: function(xmlElement, attrDefinition, instigator) {
+
+		// if we are in readonly mode, return without changing anything
+		if (!this.activeEditor.editor.options.enableEdit) {
+			return;
+		}
 
 		// Synchronize xml document if there are unsynchronized changes in the text editor
 		if (this.xmlState.changesNotSynced()) {
@@ -676,7 +952,7 @@ $.widget( "xml.xmlEditor", {
 			}
 
 			if (!objectType && !xmlElement.objectType.anyAttribute) {
-				return "Could not add attribute " + attrDefinition + ", it is not a valid for element " + xmlElement.objectType.localName;
+				return this.options.i18n[this.options.userLang].couldNotAddAttr1 + attrDefinition + this.options.i18n[this.options.userLang].couldNotAddAttr2 + xmlElement.objectType.localName;
 			}
 		}
 
@@ -711,6 +987,11 @@ $.widget( "xml.xmlEditor", {
 	},
 
 	addNode: function(parentElement, nodeType, prepend, relativeTo) {
+
+		// if we are in readonly mode, return without changing anything
+		if (!this.activeEditor.editor.options.enableEdit) {
+			return;
+		}
 
 		// Synchronize xml document if there are unsynchronized changes in the text editor
 		if (this.xmlState.changesNotSynced()) {
@@ -778,10 +1059,12 @@ $.widget( "xml.xmlEditor", {
 		}
 		if (mode == 0) {
 			this.activeEditor = this.guiEditor;
-			$("#" + xmlMenuHeaderPrefix + this.options.xmlEditorLabel.replace(/ /g, "_")).addClass("active_mode_tab");
+			var editor = this.activeEditor;
+			setTimeout(function() {editor.selectNext();}, 200);
+			$("#" + xmlMenuHeaderPrefix + 'xml').addClass("active_mode_tab");
 		} else {
 			this.activeEditor = this.textEditor;
-			$("#" + xmlMenuHeaderPrefix + this.options.textEditorLabel.replace(/ /g, "_")).addClass("active_mode_tab");
+			$("#" + xmlMenuHeaderPrefix + 'text').addClass("active_mode_tab");
 		}
 		this.activeEditor.activate();
 		if (this.ready)
@@ -797,7 +1080,13 @@ $.widget( "xml.xmlEditor", {
 		if (this.options.floatingMenu) {
 			this.modifyMenu.setMenuPosition();
 		}
-		this.xmlWorkAreaContainer.width(this.xmlEditorContainer.outerWidth() - this.modifyMenu.menuColumn.outerWidth());
+		try {
+			if (this.modifyMenu.menuColumn != null) {
+				this.xmlWorkAreaContainer.width(this.xmlEditorContainer.outerWidth() - this.modifyMenu.menuColumn.outerWidth());
+			}
+		} catch(e) {
+			console.log(e);
+		}
 	},
 	
 	setTextArea : function(xmlString) {
@@ -849,12 +1138,12 @@ $.widget( "xml.xmlEditor", {
 	// Export the contents of the editor as text to a file, as supported by browsers
 	exportXML: function() {
 		if (typeof(Blob) === "undefined") {
-			this.addProblem("Browser does not support saving files via this editor.  To save, copy and paste the document from the Text view.");
+			this.addProblem(this.options.i18n[this.options.userLang].noBrowserExportSupport);
 			return false;
 		}
 		
-		var exportDialog = $("<form><input type='text' class='xml_export_filename' placeholder='file.xml'/><input type='submit' value='Export'/></form>")
-				.dialog({modal: true, dialogClass: 'xml_dialog', resizable : false, title: 'Enter file name', height: 80});
+		var exportDialog = $("<form><input type='text' class='xml_export_filename' placeholder='file.xml'/><input type='submit' value='" + this.options.i18n[this.options.userLang].export + "'/></form>")
+				.dialog({modal: true, dialogClass: 'xml_dialog', resizable : false, title: this.options.i18n[this.options.userLang].filename, height: 80});
 		var self = this;
 		exportDialog.submit(function(){
 			if (self.textEditor.active) {
@@ -862,8 +1151,8 @@ $.widget( "xml.xmlEditor", {
 					self.setXMLFromEditor();
 				} catch (e) {
 					self.xmlState.setDocumentHasChanged(true);
-					$("." + submissionStatusClass).html("Failed to save<br/>See errors at top").css("background-color", "#ffbbbb").animate({backgroundColor: "#ffffff"}, 1000);
-					self.addProblem("Cannot save due to invalid xml", e);
+					$("." + submissionStatusClass).html(this.options.i18n[this.options.userLang].saveFailedSeeErrors).css("background-color", "#ffbbbb").animate({backgroundColor: "#ffffff"}, 1000);
+					self.addProblem(this.options.i18n[this.options.userLang].saveFailedXmlInvalid, e);
 					return false;
 				}
 			}
@@ -875,7 +1164,7 @@ $.widget( "xml.xmlEditor", {
 			var fileName = exportDialog.find('input[type="text"]').val();
 			if (!fileName)
 				fileName = "file.xml";
-			var download = $('<a>Download ' + fileName + '</a>').attr("href", url);
+			var download = $('<a>' + this.options.i18n[this.options.userLang].download + ' ' + fileName + '</a>').attr("href", url);
 			download.attr("download", fileName);
 			exportDialog.empty().append(download);
 			return false;
@@ -888,24 +1177,25 @@ $.widget( "xml.xmlEditor", {
 			if (this.submitButtonConfigs.length > 0 && this.submitButtonConfigs[0].url) {
 				config = this.submitButtonConfigs[0];
 			} else {
-				this.addProblem("Cannot submit because no post Options");
+				this.addProblem(this.options.i18n[this.options.userLang].cannotSubmitNoPostOption);
 				return;
 			}
 		}
 
+		$(':focus').blur(); // Ensure focus is removed before saving, so that finished content saved
 		if (this.textEditor.active) {
 			try {
 				this.setXMLFromEditor();
 			} catch (e) {
 				this.xmlState.setDocumentHasChanged(true);
-				$("." + submissionStatusClass).html("Failed to submit<br/>See errors at top").css("background-color", "#ffbbbb").animate({backgroundColor: "#ffffff"}, 1000);
-				this.addProblem("Cannot submit due to invalid xml", e);
+				$("." + submissionStatusClass).html(this.options.i18n[this.options.userLang].saveFailedSeeErrors).css("background-color", "#ffbbbb").animate({backgroundColor: "#ffffff"}, 1000);
+				this.addProblem(this.options.i18n[this.options.userLang].saveFailedXmlInvalid, e);
 				return false;
 			}
 		}
 		// convert XML DOM to string
 		var xmlString = this.xml2Str(this.xmlState.xml);
-		$("." + submissionStatusClass).html("Submitting...");
+		$("." + submissionStatusClass).html(this.options.i18n[this.options.userLang].submitting);
 		var self = this;
 		$.ajax({
 			url : config.url,
@@ -922,8 +1212,8 @@ $.widget( "xml.xmlEditor", {
 					self.clearProblemPanel();
 				} else {
 					self.xmlState.syncedChangeEvent();
-					$("." + submissionStatusClass).html("Failed to submit<br/>See errors at top").css("background-color", "#ffbbbb").animate({backgroundColor: "#ffffff"}, 1000);
-					self.addProblem("Failed to submit xml document", outcome);
+					$("." + submissionStatusClass).html(this.options.i18n[this.options.userLang].saveFailedSeeErrors).css("background-color", "#ffbbbb").animate({backgroundColor: "#ffffff"}, 1000);
+					self.addProblem(this.options.i18n[this.options.userLang].failedToSubmit, outcome);
 				}
 			},
 			error : function(jqXHR, exception) {
@@ -963,7 +1253,7 @@ $.widget( "xml.xmlEditor", {
 					// Internet Explorer.
 					return xmlNode.xml;
 				} catch (e) {
-					this.addProblem('Xmlserializer not supported', e);
+					this.addProblem(this.options.i18n[this.options.userLang].xmlSerializerNotSupported, e);
 					return false;
 				}
 			}
@@ -1014,11 +1304,15 @@ $.widget( "xml.xmlEditor", {
 	setEnableKeybindings : function(enable) {
 		if (enable) {
 			this.options.enableGUIKeybindings = true;
-			this.menuBar.menuBarContainer.removeClass("xml_bindings_disabled");
+			if (this.menuBar.menuBarContainer) {
+				this.menuBar.menuBarContainer.removeClass("xml_bindings_disabled");
+			}
 			$(window).on("keydown.xml_keybindings", $.proxy(this.keydownCallback, this));
 		} else {
 			this.options.enableGUIKeybindings = false;
-			this.menuBar.menuBarContainer.addClass("xml_bindings_disabled");
+			if (this.menuBar.menuBarContainer) {
+				this.menuBar.menuBarContainer.addClass("xml_bindings_disabled");
+			}
 			$(window).off("keydown.xml_keybindings");
 		}
 	},
@@ -1196,22 +1490,22 @@ $.widget( "xml.xmlEditor", {
 	// Menu Update functions
 	refreshMenuUndo: function(self) {
 		if (self.undoHistory.headIndex > 0) {
-			$("#" + xmlMenuHeaderPrefix + "Undo").removeClass("disabled").data("menuItemData").enabled = true;
+			$("#" + xmlMenuHeaderPrefix + 'undoMenuitem').removeClass("disabled").data("menuItemData").enabled = true;
 		} else {
-			$("#" + xmlMenuHeaderPrefix + "Undo").addClass("disabled").data("menuItemData").enabled = false;
+			$("#" + xmlMenuHeaderPrefix + 'undoMenuitem').addClass("disabled").data("menuItemData").enabled = false;
 		}
 		if (self.undoHistory.headIndex < self.undoHistory.states.length - 1) {
-			$("#" + xmlMenuHeaderPrefix + "Redo").removeClass("disabled").data("menuItemData").enabled = true;
+			$("#" + xmlMenuHeaderPrefix + 'redoMenuitem').removeClass("disabled").data("menuItemData").enabled = true;
 		} else {
-			$("#" + xmlMenuHeaderPrefix + "Redo").addClass("disabled").data("menuItemData").enabled = false;
+			$("#" + xmlMenuHeaderPrefix + 'redoMenuitem').addClass("disabled").data("menuItemData").enabled = false;
 		}
 	},
 	
 	// Performs updates to the menu for changing element/attribute selection
 	refreshMenuSelected: function(self) {
-		var suffixes = ['Deselect', 'Next_Element', 'Previous_Element', 'Parent', 'First_Child', 'Next_Sibling', 
-						'Previous_Sibling', 'Next_Attribute', 'Previous_Attribute', 'Delete', 'Move_Element_Up', 
-						'Move_Element_Down'];
+		var suffixes = ['deselect', 'nextElement', 'previousElement', 'parentElement', 'firstChild', 
+						'nextSibling', 'previousSibling', 'nextAttribute', 'previousAttribute', 'deleteElement', 
+						'moveElementUp', 'moveElementDown'];
 		var hasSelected = self.guiEditor.selectedElement != null && self.guiEditor.active;
 		$.each(suffixes, function(){
 			if (hasSelected)

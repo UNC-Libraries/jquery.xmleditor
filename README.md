@@ -6,6 +6,8 @@ Additionally, this project includes a tool for generating JSON objects from XML 
 Try it out in our [jquery.xmleditor demo page](http://unc-libraries.github.com/jquery.xmleditor) using the MODS 3.4 schema.
 
 And here's a [demo starting from an existing xml file](http://unc-libraries.github.com/jquery.xmleditor/demo/mods.html)
+And here's a [demo as above, but with translated UI](http://unc-libraries.github.com/jquery.xmleditor/demo/mods_de.html)
+And here's a [demo as above, but with translated UI and forced required attributes](http://unc-libraries.github.com/jquery.xmleditor/demo/requiredAttributes.html)
 
 This project was developed as a part of the [Carolina Digital Repository](https://cdr.lib.unc.edu/) for use in our administrative tools, but is fully functional as a standalone client. 
 This tool is intended to serve as a general schema driven XML editor that runs in web browsers, although some default behaviors are oriented towards it.  
@@ -166,6 +168,21 @@ Alternatively, any number of buttons can be created by providing the submitButto
 
 Providing a submitButtonConfigs option will override the creation of the standard submit/export button.
 
+#### Translated UI
+
+Use URL parameters or the userLang parameter of the editor options to switch between the available UI languages "en" (original English) or "de" (German translation).
+
+Two options: Add URL parameter lang= 
+.../index.html?lang=de
+
+or set target language in the options:
+
+```javascript
+$("#xml_editor").xmlEditor({
+  userLang : "de"
+});
+```
+
 #### Other editor configuration
 
 - documentTitle - Title for the document being edited, which is displayed at the top of the editor.
@@ -173,6 +190,14 @@ Providing a submitButtonConfigs option will override the creation of the standar
 - menuEntries - A list of additional entries to add to the top menu bar, such as adding new help entries.
 - confirmExitWhenUnsubmitted - Causes web browsers to prompt users if they try to navigate away from the editor while there are unsubmitted changes.  Valid values: True or false.
 - undoHistorySize - The number of history states remembered by the undo/redo feature.  Default is 20.
+- showExport - This is true by default - allows to hide the "Export" button.
+- enableEdit - This is true by default - if set to false, the editor will behave as a viewer and will also set the ace editor to readonly (plus removing some menus).
+- sourceDesignSwitch - This is true by default - allows to hide the switch between Text and XML display
+- initialEditMode - Switch to predefined view: XML or HTML-DIV editor. 0=HTML-DIV editor, 1=XML Source editor
+- i18n - This is a map in form ["en"] or ["de"] which holds all the labels used in the application for translation. More translations can be added.
+- userLang - This selects the map to be used from i18n for the UI translation.
+- enforceRequired - This does render required attributes to get no (x) button for remove and will automatically create the attributes. Works only together with enforceOccurs: true.
+
 
 ### Interacting with the editor
 There are two ways to externally retrieve the contents of the editor as a string:
@@ -208,6 +233,8 @@ Authors
 [Dean Farrell](https://github.com/lfarrell)
 
 [Volker Diels-Grabsch (m-click.aero)](https://github.com/m-click)
+
+[Marc Höschele](https://github.com/mhoesche)
 
 Attribution
 ------

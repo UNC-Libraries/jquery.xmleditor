@@ -1,13 +1,14 @@
 {
   "name": "jquery.xmleditor",
   "main": "jquery.xmleditor.js",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "homepage": "https://github.com/UNC-Libraries/jquery.xmleditor",
   "authors": [
     "Ben Pennell (https://github.com/bbpennel)",
     "Mike Daines (https://github.com/mdaines)",
     "Dean Farrell <lfarrell@email.unc.edu>",
-    "Volker Diels-Grabsch <m-click.aero> (https://github.com/m-click)"
+    "Volker Diels-Grabsch <m-click.aero> (https://github.com/m-click)",
+    "Marc Höschele (https://github.com/mhoesche)"
   ],
   "description": "A web browser based XML editor. It provides a general use graphical tool for creating new or modifying existing XML documents in your web browser. Information is extracted from an XML schema (XSD file) to provide the user with information about what elements, subelements and attributes are available at different points in the structure, and a GUI based means of adding or removing them from the document.",
   "keywords": [

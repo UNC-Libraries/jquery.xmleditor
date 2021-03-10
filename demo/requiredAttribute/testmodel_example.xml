@@ -1,0 +1,31 @@
+﻿<datamodel xmlns="http://www.example.com/datamodel">
+  <dataobject name="obj1">
+    <attribute name="attr11">Value 1.1</attribute>
+    <attribute name="attr12">Value 1.2</attribute>
+    <attribute name="attr13">Value 1.3</attribute>
+    <dataobject name="obj1.1">
+      Object 1.1
+      <attribute name="attr111">Value 1.1.1</attribute>
+      <attribute name="attr112">Value 1.1.2</attribute>
+      <attribute name="attr113">Value 1.1.3</attribute>
+      <![CDATA[Object 1.1]]>
+      <!--This is Object 1.1-->
+    </dataobject>
+    <dataobject name="obj1.2">
+      <attribute name="attr121">Value 1.2.1</attribute>
+      <attribute name="attr122">Value 1.2.2</attribute>
+      <attribute name="attr123">Value 1.2.3</attribute>
+      <![CDATA[Object 1.2]]>
+      <!--This is Object 1.2-->
+    </dataobject>
+    <![CDATA[Object 1]]>
+    <!--This is Object 1-->
+  </dataobject>
+  <dataobject name="obj2">
+    <attribute name="attr21">Value 2.1</attribute>
+    <attribute name="attr22">Value 2.2</attribute>
+    <attribute name="attr23">Value 2.3</attribute>
+    <![CDATA[Object 2]]>
+    <!--This is Object 2-->
+  </dataobject>
+</datamodel>

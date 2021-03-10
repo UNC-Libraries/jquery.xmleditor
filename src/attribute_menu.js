@@ -44,7 +44,7 @@ AttributeMenu.prototype.populate = function (xmlElement) {
 				
 			var attrName = nsPrefix + attribute.localName;
 			var addButton = $("<li/>").attr({
-					title : 'Add ' + attrName,
+					title : self.editor.options.i18n[self.editor.options.userLang].add + attrName,
 					'id' : xmlElement.domNodeID + "_" + attrName.replace(":", "_") + "_add"
 				}).html(attrName)
 				.data('xml', {

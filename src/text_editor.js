@@ -1,6 +1,7 @@
 /**
  * Editor object for doing text editing of the XML document using the cloud9 editor
  */
+
 function TextEditor(editor) {
 	this.editor = editor;
 	this.aceEditor = null;
@@ -22,6 +23,7 @@ TextEditor.prototype.initialize = function(parentContainer) {
 	this.xmlContent = $("<div/>").attr({'id' : textContentClass + this.editor.instanceNumber, 'class' : textContentClass}).appendTo(parentContainer);
 	this.xmlEditorDiv = $("<div/>").attr('id', 'text_editor').appendTo(this.xmlContent);
 	this.aceEditor = ace.edit("text_editor");
+	this.aceEditor.setReadOnly(!this.editor.options.enableEdit); // readonly for the ace editor
 	this.aceEditor.setTheme("ace/theme/textmate");
 	this.aceEditor.getSession().setMode("ace/mode/xml");
 	this.aceEditor.setShowPrintMargin(false);
@@ -145,9 +147,13 @@ TextEditor.prototype.resize = function() {
 	this.xmlContent.css({'height': xmlEditorHeight + 'px'});
 	this.xmlEditorDiv.width(this.xmlContent.innerWidth());
 	this.xmlEditorDiv.height(xmlEditorHeight);
-	if (this.editor.modifyMenu.menuContainer != null){
+	if (this.editor.modifyMenu.menuContainer != null && this.editor.modifyMenu.menuContainer.offset() != null){
 		this.editor.modifyMenu.menuContainer.css({
 			'max-height': $(this.editor.xmlWorkAreaContainer).height() - this.editor.modifyMenu.menuContainer.offset().top
+		});
+	} else {
+		this.editor.modifyMenu.menuContainer.css({
+			'max-height': $(this.editor.xmlWorkAreaContainer).height() - 10
 		});
 	}
 	if (this.aceEditor != null)

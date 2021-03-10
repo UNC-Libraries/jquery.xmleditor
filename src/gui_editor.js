@@ -1,6 +1,7 @@
 /**
  * Graphical editor
  */
+
 function GUIEditor(editor) {
 	this.editor = editor;
 	this.guiContent = null;
@@ -13,7 +14,7 @@ function GUIEditor(editor) {
 GUIEditor.prototype.initialize = function(parentContainer) {
 	this.xmlContent = $("<div class='" + xmlContentClass + "'/>");
 	this.xmlContent.data("xml", {});
-	this.placeholder = $("<div/>").attr("class", "placeholder").html("There are no elements in this document.  Use the menu on the right to add new top level elements.")
+	this.placeholder = $("<div/>").attr("class", "placeholder").html(this.editor.options.i18n[this.editor.options.userLang].noElements)
 			.appendTo(this.xmlContent);
 	
 	this.guiContent = $("<div/>").attr({'id' : guiContentClass + this.editor.instanceNumber, 'class' : guiContentClass}).appendTo(parentContainer);
@@ -204,8 +205,10 @@ GUIEditor.prototype.addAttributeEvent = function(parentElement, attribute, addBu
 	parentElement.updated({action : 'attributeAdded', target : attribute.objectType.name});
 	this.focusObject(attribute.domNode);
 	attribute.select();
-	addButton.addClass("disabled");
-	attribute.addButton = addButton;
+	if (addButton) { // Ensure this also works, when there was an event not from the addButton
+		addButton.addClass("disabled");
+		attribute.addButton = addButton;
+	}
 	this.editor.xmlState.documentChangedEvent();
 	this.editor.resize();
 };

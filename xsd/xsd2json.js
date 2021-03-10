@@ -1,5 +1,4 @@
 ;var Xsd2Json = function() {
-
 /*
 
     Copyright 2008 The University of North Carolina at Chapel Hill
@@ -29,7 +28,6 @@
  * 
  * @author Ben Pennell
  */
-
 function Xsd2Json(originatingXsdName, options) {
 	var defaults = {
 		schemaURI: ""
@@ -111,7 +109,6 @@ Xsd2Json.prototype.exportJSON = function(filename, variableName, pretty) {
  * 
  * @author bbpennel
  */
-
 function SchemaManager(originatingXsdName, options) {
 	var defaults = {
 			globalNamespaces : {}
@@ -582,7 +579,6 @@ SchemaManager.prototype.getNamespaceUri = function(index) {
  * xsdDocument XML document representaton of the schema document to be processed
  * xsdManager schema manager which this processor belongs to
  */
-
 function SchemaProcessor(xsdDocument, xsdManager, schemaUrl, parentNSIndex) {
 	
 	this.xsd = xsdDocument;
@@ -654,7 +650,8 @@ SchemaProcessor.prototype.createDefinition = function(node, name) {
 		values : [],
 		type : null,
 		ns: this.targetNSIndex,
-		np : true
+		np : true,
+		use : node.getAttribute("use") /* Patched for auto-add of required attributes. See also jquery.xmleditor.js : GUIEditor.prototype.addAttributeEvent and XMLElement.prototype.populateChildren */
 	};
 	
 	if (name)
@@ -725,7 +722,8 @@ SchemaProcessor.prototype.build_schema = function(node) {
 		elements : [],
 		ns : this.targetNSIndex,
 		schema : true,
-		np : true
+		np : true,
+		use : node.getAttribute("use") /* Patched for auto-add of required attributes. See also jquery.xmleditor.js : GUIEditor.prototype.addAttributeEvent and XMLElement.prototype.populateChildren */
 	};
 	var self = this;
 	var children = this.getChildren(node);

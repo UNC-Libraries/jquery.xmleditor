@@ -10,16 +10,17 @@ function ModifyMenuPanel(editor) {
 }
 
 ModifyMenuPanel.prototype.initialize = function (parentContainer) {
-	this.menuColumn = $("<div/>").attr('class', menuColumnClass).appendTo(parentContainer);
+	if (this.editor.options.enableEdit) // Enable edit switch does control the visibility of some elements.
+		this.menuColumn = $("<div/>").attr('class', menuColumnClass).appendTo(parentContainer);
 
 	// Generate the document status panel, which shows a save/export button as well as if there are changes to the document
 	if (this.editor.options.enableDocumentStatusPanel) {
 		var self = this;
 		var documentStatusPanel = $(self.editor.options.documentStatusPanelDomId);
-		$("<span/>").addClass(submissionStatusClass).html("Document is unchanged")
+		$("<span/>").addClass(submissionStatusClass).html(self.editor.options.i18n[self.editor.options.userLang].documentUnchanged)
 			.appendTo(documentStatusPanel);
 
-		if (self.editor.submitButtonConfigs != null){
+		if (self.editor.options.showExport && self.editor.submitButtonConfigs != null){
 			$.each(self.editor.submitButtonConfigs, function(index, config){
 				var submitButton;
 				if (config.id && ('createDomElement' in config) && !config.createDomElement) {

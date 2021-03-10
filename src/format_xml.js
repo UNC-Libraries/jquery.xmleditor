@@ -96,3 +96,4 @@ function formatXML(element, indent, options) {
 	}
 	
 }
+;

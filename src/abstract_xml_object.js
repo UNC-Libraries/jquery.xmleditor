@@ -27,6 +27,7 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 		var selectionValues = this.objectType.values;
 		input = document.createElement('select');
 		input.id = inputID;
+		input.readOnly = !this.editor.options.enableEdit; // Added readonly behaviour 
 		input.className = 'xml_select';
 		appendTarget.appendChild(input);
 		
@@ -46,9 +47,25 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 			|| this.objectType.attribute || this.objectType.cdata || this.objectType.comment){
 		input = document.createElement('textarea');
 		input.id = inputID;
+		input.rows = 1; // added start size of 1 row
+		input.style.height = '18px'; // Predefined height for 1 row. Will be expanded using jQuery.autosize
+		input.readOnly = !this.editor.options.enableEdit; // Added readonly behaviour
 		input.className = 'xml_textarea';
 		// Text areas start out with a space so that the pretty formating won't collapse the field
 		input.value = startingValue? startingValue : " ";
+		// Set width of generated fields manually.
+		if (this.objectType.attribute && startingValue) {
+			var len = startingValue.length * 10;
+			if (len < 80) { 
+				len = 80;
+			} else if (len > 600) {
+				len = 600;
+			}
+			if (len != -1) {
+				input.style.width = len + "px";
+			}
+		}
+		// End feature of resized fields.
 		appendTarget.appendChild(input);
 		
 		$input = $(input);
@@ -56,7 +73,7 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 		// Clear out the starting space on first focus.  This space is there to prevent field collapsing
 		// on new elements in the text editor view
 		$input.one('focus', function() {
-			if (self.editor.options.expandingTextAreas)
+			if (!self.objectType.attribute && self.editor.options.expandingTextAreas) // No autosize when attribute is set
 				$input.autosize();
 			if (this.value == " ")
 				this.value = "";
@@ -66,6 +83,7 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 		input = document.createElement('input');
 		input.type = 'date';
 		input.id = inputID;
+		input.readOnly = !this.editor.options.enableEdit; // Added readonly mode
 		input.className = 'xml_date';
 		input.value = startingValue? startingValue : "";
 		appendTarget.appendChild(input);
@@ -87,6 +105,7 @@ AbstractXMLObject.prototype.createElementInput = function (inputID, startingValu
 			input.className = 'xml_input';
 		}
 		input.id = inputID;
+		input.readOnly = !this.editor.options.enableEdit; // Added readonly mode
 		input.value = startingValue? startingValue : "";
 		appendTarget.appendChild(input);
 		
