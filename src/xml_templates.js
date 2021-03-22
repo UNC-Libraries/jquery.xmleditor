@@ -1,7 +1,6 @@
 /**
  * Create class to focus, select and load default XML templates
  * @param init_object
- * @param overrideExistingMods
  * @constructor
  */
 function XMLTemplates(init_object) {

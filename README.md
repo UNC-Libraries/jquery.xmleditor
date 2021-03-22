@@ -186,7 +186,7 @@ Note: You'll need the sprockets gem installed for the rake task to complete prop
 ### Running tests
 At the root of the project run `python -m SimpleHTTPServer 8000` if using python 2 or 
 `python -m http.server 8000 --bind 127.0.0.1` if using python 3. Then in a web browser navigate to
-http://127.0.0.1:8000/tests/. The test will run automatically.
+http://127.0.0.1:8000/tests/. The tests will run automatically.
 
 
 License Information
