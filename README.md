@@ -183,6 +183,12 @@ There are two ways to externally retrieve the contents of the editor as a string
 If we wish to build the combined jquery.xmleditor.js yourself, you can use the provided rake script.  With rake installed, simple type "rake" in the root directory of this project.
 Note: You'll need the sprockets gem installed for the rake task to complete properly.
 
+### Running tests
+At the root of the project run `python -m SimpleHTTPServer 8000` if using python 2 or 
+`python -m http.server 8000 --bind 127.0.0.1` if using python 3. Then in a web browser navigate to
+http://127.0.0.1:8000/tests/. The test will run automatically.
+
+
 License Information
 ---------
 Copyright 2013 The University of North Carolina at Chapel Hill
