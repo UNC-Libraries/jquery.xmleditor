@@ -1,12 +1,14 @@
 /**
  * Create class to focus, select and load default XML templates
  * @param init_object
+ * @param overrideExistingMods
  * @constructor
  */
-function XMLTemplates(init_object) {
+function XMLTemplates(init_object, overrideExistingMods) {
     this.template_path = init_object.options.templateOptions.templatePath;
     this.templates = init_object.options.templateOptions.templates;
     this.editor = init_object;
+    this.overrideExistingMods = overrideExistingMods;
     this.extension_regx = /\.\w{3,}$/;
 }
 
@@ -86,8 +88,6 @@ XMLTemplates.prototype.templateForm = function() {
 
 /**
  * Select a template from the form
- * @param dialog
- * @param self
  */
 XMLTemplates.prototype.processForm = function() {
     // Split on mdash if description present
@@ -100,7 +100,6 @@ XMLTemplates.prototype.processForm = function() {
 /**
  * Load selected template.
  * @param selection
- * @param self
  */
 XMLTemplates.prototype.loadSelectedTemplate = function(selection) {
     var self = this;
@@ -110,7 +109,14 @@ XMLTemplates.prototype.loadSelectedTemplate = function(selection) {
         dataType: "xml"
     }).done(function(data) {
         var xml_string = self.editor.xml2Str(data);
-        self.editor._documentReady(xml_string);
+        if (self.overrideExistingMods) {
+            self.editor.xmlState = null; // Remove old state for garbage collection
+            self.editor.xmlState = new DocumentState(xml_string, self.editor);
+            self.editor.xmlState.extractNamespacePrefixes();
+            self.editor.refreshDisplay();
+        } else {
+            self.editor._documentReady(xml_string);
+        }
     }).fail(function(jqXHR, textStatus) {
         alert("Unable to load the requested template: " + textStatus);
     });
@@ -119,7 +125,6 @@ XMLTemplates.prototype.loadSelectedTemplate = function(selection) {
 /**
  * Highlight and focus currently selected template
  * If enter hit go ahead and load focused template
- * @param dialog
  */
 XMLTemplates.prototype.focusTemplate = function() {
     var self = this;

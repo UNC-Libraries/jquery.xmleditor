@@ -312,6 +312,19 @@ function MenuBar(editor) {
 			self.editor.modeChange(1);
 		}
 	} ];
+
+
+	// Add overriding current MODS from a template
+	if (self.options.templateOptions.templatePath) {
+		this.headerMenu[0].items.push({
+			label: 'New from Template',
+			enabled: true,
+			binding: "ctrl+alt+n",
+			action: function () {
+				self.editor._templating(true);
+			}
+		});
+	}
 }
 
 // Causes the targeted menu to be displayed, as well as triggering update functions
