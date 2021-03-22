@@ -4,11 +4,10 @@
  * @param overrideExistingMods
  * @constructor
  */
-function XMLTemplates(init_object, overrideExistingMods) {
+function XMLTemplates(init_object) {
     this.template_path = init_object.options.templateOptions.templatePath;
     this.templates = init_object.options.templateOptions.templates;
     this.editor = init_object;
-    this.overrideExistingMods = overrideExistingMods;
     this.extension_regx = /\.\w{3,}$/;
 }
 
@@ -109,7 +108,7 @@ XMLTemplates.prototype.loadSelectedTemplate = function(selection) {
         dataType: "xml"
     }).done(function(data) {
         var xml_string = self.editor.xml2Str(data);
-        if (self.overrideExistingMods) {
+        if (self.editor.xmlState !== null) {
             self.editor.xmlState = null; // Remove old state for garbage collection
             self.editor.xmlState = new DocumentState(xml_string, self.editor);
             self.editor.xmlState.extractNamespacePrefixes();

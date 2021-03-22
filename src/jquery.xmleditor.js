@@ -402,7 +402,7 @@ $.widget( "xml.xmlEditor", {
 						self._documentReady(data);
 					} else if (self.options.templateOptions.templatePath) {
 						// Document path didn't retrieve anything
-						self._templating(false);
+						self._templating();
 					} else {
 						console.error("Could not specified document and no fallback provided, cannot start.");
 					}
@@ -413,7 +413,7 @@ $.widget( "xml.xmlEditor", {
 			this._documentReady(localXMLContent);
 		} else if (this.options.templateOptions.templatePath) {
 			// Fall back to templating if it was specified
-			this._templating(false);
+			this._templating();
 		} else {
 			console.error("No starting document");
 		}
@@ -450,9 +450,9 @@ $.widget( "xml.xmlEditor", {
 		});
 	},
 
-	_templating : function(overrideExistingMods) {
+	_templating : function() {
 		var self = this;
-		self.template = new XMLTemplates(self, overrideExistingMods);
+		self.template = new XMLTemplates(self);
 
 		self.template.createChooseTemplate();
 	},
@@ -1108,7 +1108,7 @@ $.widget( "xml.xmlEditor", {
 			}
 
 			if (this.options.templateOptions.templatePath && e.which == 'N'.charCodeAt(0)) {
-				this._templating(true);
+				this._templating();
 				return false;
 			}
 			
