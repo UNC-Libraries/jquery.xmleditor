@@ -2783,7 +2783,7 @@ function MenuBar(editor) {
 			enabled: true,
 			binding: "ctrl+alt+n",
 			action: function() {
-				self.editor._templating(true);
+				self.editor._templating();
 			}
 		});
 	}
@@ -5031,7 +5031,7 @@ XMLTemplates.prototype.createDialog = function() {
 	var self = this;
 	var buttons = {};
 	if (self.editor.options.templateOptions.cancelFunction) {
-		var cancelTemplate = $.proxy(self.editor.options.templateOptions.cancelFunction(self.editor), self);
+		var cancelTemplate = $.proxy(self.editor.options.templateOptions.cancelFunction, self);
 		if (self.editor.xmlState !== null) {
 			cancelTemplate = function() {
 				self.form.dialog("close");

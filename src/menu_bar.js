@@ -321,7 +321,7 @@ function MenuBar(editor) {
 			enabled: true,
 			binding: "ctrl+alt+n",
 			action: function() {
-				self.editor._templating(true);
+				self.editor._templating();
 			}
 		});
 	}
