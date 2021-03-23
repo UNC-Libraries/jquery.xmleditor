@@ -315,12 +315,12 @@ function MenuBar(editor) {
 
 
 	// Add overriding current MODS from a template
-	if (this.editor.options.templateOptions.templatePath) {
+	if (self.editor.options.templateOptions.templatePath) {
 		this.headerMenuData[0].items.push({
 			label: 'New from Template',
 			enabled: true,
 			binding: "ctrl+alt+n",
-			action: function () {
+			action: function() {
 				self.editor._templating(true);
 			}
 		});

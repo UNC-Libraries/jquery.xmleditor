@@ -26,7 +26,14 @@ XMLTemplates.prototype.createDialog = function() {
 	var self = this;
 	var buttons = {};
 	if (self.editor.options.templateOptions.cancelFunction) {
-		buttons["Cancel"] = $.proxy(self.editor.options.templateOptions.cancelFunction, self);
+		var cancelTemplate = $.proxy(self.editor.options.templateOptions.cancelFunction(self.editor), self);
+		if (self.editor.xmlState !== null) {
+			cancelTemplate = function() {
+				self.form.dialog("close");
+				return false
+			}
+		}
+		buttons["Cancel"] = cancelTemplate;
 	}
 	buttons["Choose"] = function() {
 		self.processForm();
@@ -112,6 +119,7 @@ XMLTemplates.prototype.loadSelectedTemplate = function(selection) {
 			self.editor.xmlState = new DocumentState(xml_string, self.editor);
 			self.editor.xmlState.extractNamespacePrefixes();
 			self.editor.refreshDisplay();
+			self.editor.activeEditor.selectRoot();
 		} else {
 			self.editor._documentReady(xml_string);
 		}
@@ -129,7 +137,6 @@ XMLTemplates.prototype.focusTemplate = function() {
 
 	// Focus selected template
 	this.form.on('keydown click', '.templating', function(e) {
-
 		var key = e.which;
 		var number_of_forms, base_element, current, form_id, next_element;
 
