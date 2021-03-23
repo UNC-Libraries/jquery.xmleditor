@@ -451,7 +451,6 @@ $.widget( "xml.xmlEditor", {
 	},
 
 	_templating : function() {
-		var dialog;
 		var self = this;
 		self.template = new XMLTemplates(self);
 
@@ -1105,6 +1104,11 @@ $.widget( "xml.xmlEditor", {
 			
 			if (e.which == 'E'.charCodeAt(0)) {
 				this.exportXML();
+				return false;
+			}
+
+			if (this.options.templateOptions.templatePath && e.which == 'N'.charCodeAt(0)) {
+				this._templating();
 				return false;
 			}
 			

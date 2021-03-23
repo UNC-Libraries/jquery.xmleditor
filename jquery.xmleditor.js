@@ -451,7 +451,6 @@ $.widget( "xml.xmlEditor", {
 	},
 
 	_templating : function() {
-		var dialog;
 		var self = this;
 		self.template = new XMLTemplates(self);
 
@@ -1107,6 +1106,11 @@ $.widget( "xml.xmlEditor", {
 				this.exportXML();
 				return false;
 			}
+
+			if (this.options.templateOptions.templatePath && e.which == 'N'.charCodeAt(0)) {
+				this._templating();
+				return false;
+			}
 			
 			// Switch to the GUI editor
 			if (e.which == '1'.charCodeAt(0)) {
@@ -1613,7 +1617,6 @@ AttributeMenu.prototype.populate = function (xmlElement) {
 /**
  * Manages and tracks the state of the underlying XML document being edited.
  */
-
 function DocumentState(baseXML, editor) {
 	this.baseXML = baseXML;
 	this.xml = null;
@@ -1898,12 +1901,10 @@ function formatXML(element, indent, options) {
 		return contents;
 	}
 	
-}
-;
+};
 /**
  * Graphical editor
  */
-
 function GUIEditor(editor) {
 	this.editor = editor;
 	this.guiContent = null;
@@ -2464,7 +2465,6 @@ GUIEditor.prototype.focusObject = function(focusTarget) {
  * menus or options may be added as well.  Supports refreshing of menu items states via externally
  * defined updateFunctions
  */
-
 function MenuBar(editor) {
 	this.editor = editor;
 	this.menuBarContainer = null;
@@ -2774,6 +2774,19 @@ function MenuBar(editor) {
 			self.editor.modeChange(1);
 		}
 	} ];
+
+
+	// Add overriding current MODS from a template
+	if (self.editor.options.templateOptions.templatePath) {
+		this.headerMenuData[0].items.push({
+			label: 'New from Template',
+			enabled: true,
+			binding: "ctrl+alt+n",
+			action: function() {
+				self.editor._templating();
+			}
+		});
+	}
 }
 
 // Causes the targeted menu to be displayed, as well as triggering update functions
@@ -2885,7 +2898,6 @@ MenuBar.prototype.checkEntry = function(menuItem, checked) {
 /**
  * Menu object for adding new elements to an existing element or document
  */
-
 function ModifyElementMenu(menuID, label, expanded, enabled, owner, editor, getRelativeToFunction) {
 	this.menuID = menuID;
 	this.label = label;
@@ -3040,7 +3052,6 @@ ModifyElementMenu.prototype.populate = function(xmlElement) {
 /**
  * Menu panel for managing individual modification menus.
  */
-
 function ModifyMenuPanel(editor) {
 	this.editor = editor;
 	this.menus = {};
@@ -3254,7 +3265,6 @@ NamespaceList.prototype.getNamespacePrefix = function(nsURI) {
  * Unpacks the elements of the schema object into structures to accomodate lookup
  * of definitions by name and position within the schema hierarchy.
  */
-
 function SchemaTree(rootElement) {
 	// Map of elements stored by name.  If there are name collisions, then elements are stored in a list
 	this.nameToDef = {};
@@ -3371,7 +3381,6 @@ SchemaTree.prototype.pathMatches = function(elementNode, definition) {
 /**
  * Editor object for doing text editing of the XML document using the cloud9 editor
  */
-
 function TextEditor(editor) {
 	this.editor = editor;
 	this.aceEditor = null;
@@ -3671,7 +3680,6 @@ TextEditor.prototype.addAttributeEvent = function() {
  * Current implementation involves storing previous states of the XML document,
  * recorded each time a significant change occurs or the document is regenerated
  */
-
 function UndoHistory(xmlState, editor) {
 	this.xmlState = xmlState;
 	this.editor = editor;
@@ -3751,7 +3759,6 @@ UndoHistory.prototype.captureSnapshot = function () {
 /**
  * Stores data representing a single attribute for an element
  */
-
 function XMLAttribute(objectType, xmlElement, editor) {
 	AbstractXMLObject.call(this, objectType, editor);
 	// the XMLElement object which this attribute belongs to.
@@ -3912,10 +3919,10 @@ XMLAttributeStub.prototype.focus = function() {
 	this.nameInput.focus();
 };
 $.widget( "custom.xml_autocomplete", $.ui.autocomplete, {
-    messages: {
-        noResults: '',
-        results: function() {}
-    },
+	messages: {
+		noResults: '',
+		results: function() {}
+	},
 
 	_create: function() {
 		this._super();
@@ -4121,7 +4128,6 @@ XMLCommentNode.prototype.isSelected = function() {
  * Stores data related to a single xml element as it is represented in both the base XML 
  * document and GUI
  */
-
 function XMLElement(xmlNode, objectType, editor) {
 	AbstractXMLObject.call(this, objectType, editor);
 	// jquery object reference to the xml node represented by this object in the active xml document
@@ -5002,20 +5008,19 @@ XMLElementStub.prototype.focus = function() {
  * @param init_object
  * @constructor
  */
-
 function XMLTemplates(init_object) {
-    this.template_path = init_object.options.templateOptions.templatePath;
-    this.templates = init_object.options.templateOptions.templates;
-    this.editor = init_object;
-    this.extension_regx = /\.\w{3,}$/;
+	this.template_path = init_object.options.templateOptions.templatePath;
+	this.templates = init_object.options.templateOptions.templates;
+	this.editor = init_object;
+	this.extension_regx = /\.\w{3,}$/;
 }
 
 XMLTemplates.prototype.constructor = XMLTemplates;
 
 XMLTemplates.prototype.createChooseTemplate = function() {
-    this.templateForm();
-    this.createDialog();
-    this.loadEvents();
+	this.templateForm();
+	this.createDialog();
+	this.loadEvents();
 };
 
 /**
@@ -5023,23 +5028,23 @@ XMLTemplates.prototype.createChooseTemplate = function() {
  * @returns {*|jQuery}
  */
 XMLTemplates.prototype.createDialog = function() {
-    var self = this;
-    var buttons = {};
-    if (self.editor.options.templateOptions.cancelFunction) {
-        buttons["Cancel"] = $.proxy(self.editor.options.templateOptions.cancelFunction, self);
-    }
-    buttons["Choose"] = function() {
-        self.processForm();
-    };
+	var self = this;
+	var buttons = {};
+	if (self.editor.options.templateOptions.cancelFunction) {
+		buttons["Cancel"] = $.proxy(self.editor.options.templateOptions.cancelFunction, self);
+	}
+	buttons["Choose"] = function() {
+		self.processForm();
+	};
 
-    this.form.dialog({
-        autoOpen: true,
-        dialogClass: "jquery-editor-no-close template-form",
-        height: 350,
-        width: 500,
-        modal: true,
-        buttons: buttons
-    });
+	this.form.dialog({
+		autoOpen: true,
+		dialogClass: "jquery-editor-no-close template-form",
+		height: 350,
+		width: 500,
+		modal: true,
+		buttons: buttons
+	});
 };
 
 /**
@@ -5047,115 +5052,118 @@ XMLTemplates.prototype.createDialog = function() {
  * Don't think we can assume user will build this form themselves
  */
 XMLTemplates.prototype.templateForm = function() {
-    var form = '<div class="template-form" title="Choose Template">' +
-        '<ul>';
+	var form = '<div class="template-form" title="Choose Template">' +
+		'<ul>';
 
-    for(var i=0; i<this.templates.length; i++) {
-        var current = this.templates[i];
+	for(var i=0; i<this.templates.length; i++) {
+		var current = this.templates[i];
 
-        form += '<li class="templating"'  + ' id="template_' + i + '">' +
-            '<a href="' + current.filename + '">';
+		form += '<li class="templating"'  + ' id="template_' + i + '">' +
+			'<a href="' + current.filename + '">';
 
-        if (current.icon_url) {
-           form += '<img class="' + current.icon_class + '" src="' + current.icon_url + '"/> ';
-        }
+		if (current.icon_url) {
+		   form += '<img class="' + current.icon_class + '" src="' + current.icon_url + '"/> ';
+		}
 
-        if (current.icon_class) {
-           form += '<i class="' + current.icon_class + '"></i> ';
-        }
-        form += '<div>';
-        form += current.title? current.title : current.filename;
+		if (current.icon_class) {
+		   form += '<i class="' + current.icon_class + '"></i> ';
+		}
+		form += '<div>';
+		form += current.title? current.title : current.filename;
 
-        if (current.description) {
-            form += '<span>' + current.description + '</span>';
-        }
+		if (current.description) {
+			form += '<span>' + current.description + '</span>';
+		}
 
-        form += '</div>';
+		form += '</div>';
 
-        form += '</a>' +
-            '</li>';
-    }
+		form += '</a>' +
+			'</li>';
+	}
 
-    form += '</ul>' +
-        '</div>';
+	form += '</ul>' +
+		'</div>';
 
-    this.form = $(form);
-    this.form.insertAfter("body");
-    $('li:first', this.form).addClass('focus');
+	this.form = $(form);
+	this.form.insertAfter("body");
+	$('li:first', this.form).addClass('focus');
 };
 
 /**
  * Select a template from the form
- * @param dialog
- * @param self
  */
 XMLTemplates.prototype.processForm = function() {
-    // Split on mdash if description present
-    var selection = $(".focus a", this.form).attr('href');
+	// Split on mdash if description present
+	var selection = $(".focus a", this.form).attr('href');
 
-    this.form.dialog("close");
-    this.loadSelectedTemplate(selection);
+	this.form.dialog("close");
+	this.loadSelectedTemplate(selection);
 };
 
 /**
  * Load selected template.
  * @param selection
- * @param self
  */
 XMLTemplates.prototype.loadSelectedTemplate = function(selection) {
-    var self = this;
-    // Default template loading doesn't have access to xml_templates constructor
-    $.ajax({
-        url: this.template_path + selection,
-        dataType: "xml"
-    }).done(function(data) {
-        var xml_string = self.editor.xml2Str(data);
-        self.editor._documentReady(xml_string);
-    }).fail(function(jqXHR, textStatus) {
-        alert("Unable to load the requested template: " + textStatus);
-    });
+	var self = this;
+	// Default template loading doesn't have access to xml_templates constructor
+	$.ajax({
+		url: this.template_path + selection,
+		dataType: "xml"
+	}).done(function(data) {
+		var xml_string = self.editor.xml2Str(data);
+		if (self.editor.xmlState !== null) {
+			self.editor.xmlState = null; // Remove old state for garbage collection
+			self.editor.xmlState = new DocumentState(xml_string, self.editor);
+			self.editor.xmlState.extractNamespacePrefixes();
+			self.editor.refreshDisplay();
+			self.editor.activeEditor.selectRoot();
+		} else {
+			self.editor._documentReady(xml_string);
+		}
+	}).fail(function(jqXHR, textStatus) {
+		alert("Unable to load the requested template: " + textStatus);
+	});
 };
 
 /**
  * Highlight and focus currently selected template
  * If enter hit go ahead and load focused template
- * @param dialog
  */
 XMLTemplates.prototype.focusTemplate = function() {
-    var self = this;
+	var self = this;
 
-    // Focus selected template
-    this.form.on('keydown click', '.templating', function(e) {
+	// Focus selected template
+	this.form.on('keydown click', '.templating', function(e) {
+		var key = e.which;
+		var number_of_forms, base_element, current, form_id, next_element;
 
-        var key = e.which;
-        var number_of_forms, base_element, current, form_id, next_element;
+		if (key === 1 || key === 9) {
+			e.preventDefault();
+			number_of_forms = $('.templating').length;
 
-        if (key === 1 || key === 9) {
-            e.preventDefault();
-            number_of_forms = $('.templating').length;
+			// Left click, select the clicked target
+			if (key == 1) {
+				base_element = $(e.target);
+				if (!base_element.hasClass("templating")) {
+					base_element = base_element.parent(".templating");
+				}
+			} else {
+				current = $('.focus', self.form).attr('id');
+				form_id = parseInt(current.slice(-1)) + 1;
+				next_element = (form_id === number_of_forms) ? 0 : form_id;
+				base_element = $('#template_' + next_element);
+			}
 
-            // Left click, select the clicked target
-            if (key == 1) {
-                base_element = $(e.target);
-                if (!base_element.hasClass("templating")) {
-                    base_element = base_element.parent(".templating");
-                }
-            } else {
-                current = $('.focus', self.form).attr('id');
-                form_id = parseInt(current.slice(-1)) + 1;
-                next_element = (form_id === number_of_forms) ? 0 : form_id;
-                base_element = $('#template_' + next_element);
-            }
+			$('.templating', self.form).removeClass('focus');
+			base_element.addClass('focus').focus();
+		}
 
-            $('.templating', self.form).removeClass('focus');
-            base_element.addClass('focus').focus();
-        }
-
-        // Load currently focused form if enter or escape is hit
-        if (key == 13 || key == 27) {
-            self.processForm();
-        }
-    });
+		// Load currently focused form if enter or escape is hit
+		if (key == 13 || key == 27) {
+			self.processForm();
+		}
+	});
 };
 
 /**
@@ -5163,13 +5171,13 @@ XMLTemplates.prototype.focusTemplate = function() {
  * @param dialog
  */
 XMLTemplates.prototype.loadEvents = function(dialog) {
-    var self = this;
+	var self = this;
 
-    this.focusTemplate();
+	this.focusTemplate();
 
-    this.form.on('dblclick', function() {
-        self.processForm();
-    });
+	this.form.on('dblclick', function() {
+		self.processForm();
+	});
 };
 function XMLTextNode(textNode, dataType, editor, vocabulary) {
 	var textType = {
@@ -5281,7 +5289,6 @@ XMLTextNode.prototype.isSelected = function() {
  * Stores data related to a single xml element as it is represented in both the base XML 
  * document and GUI
  */
-
 function XMLUnspecifiedElement(xmlNode, editor) {
 	var unspecifiedType = {
 		element : true,
