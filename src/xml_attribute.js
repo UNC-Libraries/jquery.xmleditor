@@ -35,10 +35,11 @@ XMLAttribute.prototype.render = function (){
 		'class' : attributeContainerClass
 	}).data('xmlAttribute', this).appendTo(this.xmlElement.getAttributeContainer());
 	
-	var self = this;
-	var removeButton = document.createElement('a');
-	removeButton.appendChild(document.createTextNode('(x) '));
-	this.domNode[0].appendChild(removeButton);
+	if(this.objectType.use != 'required') {
+		var removeButton = document.createElement('a');
+		removeButton.appendChild(document.createTextNode('(x) '));
+		this.domNode[0].appendChild(removeButton);
+	}
 	
 	var label = document.createElement('label');
 	var prefix = this.editor.xmlState.namespaces.getNamespacePrefix(this.objectType.namespace);
