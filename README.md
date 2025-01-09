@@ -3,9 +3,9 @@ A web browser based XML editor.   It provides a general use graphical tool for c
 
 Additionally, this project includes a tool for generating JSON objects from XML schemas, which can either be directly used in browsers or precompiled (see xsd/xsd2json.js).
 
-Try it out in our [jquery.xmleditor demo page](http://unc-libraries.github.com/jquery.xmleditor) using the MODS 3.4 schema.
+Try it out in our [jquery.xmleditor demo page](http://unc-libraries.github.io/jquery.xmleditor) using the MODS 3.4 schema.
 
-And here's a [demo starting from an existing xml file](http://unc-libraries.github.com/jquery.xmleditor/demo/mods.html)
+And here's a [demo starting from an existing xml file](http://unc-libraries.github.io/jquery.xmleditor/demo/mods.html)
 
 This project was developed as a part of the [Carolina Digital Repository](https://cdr.lib.unc.edu/) for use in our administrative tools, but is fully functional as a standalone client. 
 This tool is intended to serve as a general schema driven XML editor that runs in web browsers, although some default behaviors are oriented towards it.  
@@ -52,7 +52,7 @@ It'll also save your users some loading time.
 #### schema
 The editor must be provided with an XML schema via the schema parameter, which can be provided in two ways:
 
-1) Directly from an Xsd2Json object, extracted at runtime.  See the [runtime schema generation demo](http://unc-libraries.github.com/jquery.xmleditor/demo/xsd2json_example.html)
+1) Directly from an Xsd2Json object, extracted at runtime.  See the [runtime schema generation demo](http://unc-libraries.github.io/jquery.xmleditor/demo/xsd2json_example.html)
 
 ```javascript
 $(function() {
